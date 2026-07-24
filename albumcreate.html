@@ -179,7 +179,7 @@
             box-shadow: 0 0 0 3px #e65b5b, 0 0 15px rgba(230, 91, 91, 0.5) !important;
         }
 
-        /* 長押し中の視覚的フィードバック */
+        /* 長押し中の演出スタイル */
         .photo-card.holding {
             transform: scale(0.95) !important;
             border: 3px solid #e74c3c !important;
@@ -321,7 +321,7 @@
             text-align: center;
         }
 
-        /* --- モーダル共通 --- */
+        /* --- モーダル共通スタイル --- */
         .modal-overlay {
             position: fixed;
             top: 0; left: 0; width: 100vw; height: 100vh;
@@ -390,7 +390,7 @@
             font-weight: 500;
         }
 
-        /* --- TV UI 削除確認ポップアップ modal --- */
+        /* --- TV UI 削除確認ポップアップスタイル --- */
         .delete-dialog {
             background: #ffffff;
             padding: 30px 40px;
@@ -574,7 +574,7 @@
 
         modalOverlay.addEventListener('click', closeModal);
 
-        // --- 削除確認ポップアップ（TV UI / 長押し対応）制御 ---
+        // --- 削除確認ポップアップ制御 ---
         const deleteModalOverlay = document.getElementById('deleteModalOverlay');
         const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
         const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
@@ -582,7 +582,7 @@
         let pendingDeletePhotoId = null;
 
         let holdTimer = null;
-        const HOLD_DURATION = 800; // 長押し完了までの時間(ms)
+        const HOLD_DURATION = 800; // 800ms長押しで発動
         let isHoldTriggered = false;
 
         function openDeleteModal(photoId) {
@@ -590,7 +590,7 @@
             lastFocusedElement = document.activeElement;
             deleteModalOverlay.classList.add('active');
             isDeleteModalOpen = true;
-            cancelDeleteBtn.focus(); // 誤操作防止のためデフォルトはキャンセル
+            cancelDeleteBtn.focus(); // 誤操作防止のためキャンセルに初期フォーカス
         }
 
         function closeDeleteModal() {
@@ -615,13 +615,13 @@
             }
         });
 
-        // --- TV GUI キーボードナビゲーション ＆ 長押し検出 ---
+        // --- TV GUI キーボードナビゲーション ＆ 長押し処理 ---
         function getFocusables() {
             return Array.from(document.querySelectorAll('.focusable'));
         }
 
         document.addEventListener('keydown', (e) => {
-            // 削除確認モーダル開いている場合
+            // 1. 削除モーダル展開中
             if (isDeleteModalOpen) {
                 if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
                     e.preventDefault();
@@ -640,7 +640,7 @@
                 return;
             }
 
-            // 画像拡大モーダルが開いている場合
+            // 2. 拡大モーダル展開中
             if (isModalOpen) {
                 if (e.key === 'b' || e.key === 'B' || e.key === 'Escape') {
                     e.preventDefault();
@@ -661,7 +661,7 @@
             const active = document.activeElement;
             let currentIndex = focusables.indexOf(active);
 
-            // 写真カード上での Enter 長押し判定（リピートキーイベント無視）
+            // --- 長押し判定処理 (Enter) ---
             if (e.key === 'Enter' && !e.repeat && active && active.classList.contains('photo-card')) {
                 e.preventDefault();
                 isHoldTriggered = false;
@@ -724,7 +724,7 @@
 
         document.addEventListener('keyup', (e) => {
             if (e.key === 'Enter') {
-                // 長押しタイマー解除
+                // タイマー解除
                 if (holdTimer) {
                     clearTimeout(holdTimer);
                     holdTimer = null;
@@ -735,7 +735,7 @@
                     active.classList.remove('holding');
                 }
 
-                // 短押し判定（長押しが成立していなかった場合は拡大モーダル表示）
+                // 短押しの場合は拡大モーダル表示
                 if (!isHoldTriggered && !isDeleteModalOpen && !isModalOpen) {
                     if (active && active.classList.contains('photo-card')) {
                         const imgUrl = active.getAttribute('data-img');
@@ -798,7 +798,7 @@
                 const card = document.createElement('div');
                 card.className = 'photo-card focusable';
                 card.tabIndex = 0;
-                card.setAttribute('data-id', data.id);
+                card.setAttribute('data-id', data.id); // 削除用にIDを設定
                 card.setAttribute('data-img', data.imageUrl || '');
                 card.setAttribute('data-comment', data.comment || '');
                 card.setAttribute('data-date', dateStr);
@@ -824,7 +824,7 @@
                 albumContainer.appendChild(card);
             });
 
-            // 削除ボタン（マウスクリック用）イベント
+            // マウスクリック用の削除ボタンイベント
             const deleteButtons = document.querySelectorAll('.delete-btn');
             deleteButtons.forEach(button => {
                 button.addEventListener('click', (e) => {
