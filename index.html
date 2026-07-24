@@ -290,7 +290,7 @@
 
             // 通常画面（モーダル外）のキー操作
             if (e.key === 'b' || e.key === 'B') {
-                window.history.back();
+                e.preventDefault();
                 return;
             }
 
