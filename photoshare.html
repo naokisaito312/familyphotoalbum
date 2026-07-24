@@ -67,7 +67,6 @@
             font-weight: 500;
         }
 
-        /* アルバム選択セレクトボックスのスタイル */
         .album-select-wrapper {
             margin-bottom: 20px;
             text-align: left;
@@ -101,7 +100,6 @@
             border-color: var(--primary-color);
         }
 
-        /* ファイル選択ボタン */
         .file-select-btn {
             display: flex;
             align-items: center;
@@ -213,7 +211,6 @@
         <h2>写真をシェア</h2>
         <div class="subtitle">テレビのアルバムへ思い出を送ります</div>
 
-        <!-- 送り先アルバムの選択ドロップダウン -->
         <div class="album-select-wrapper">
             <label for="albumSelect">📁 送り先のアルバム</label>
             <select id="albumSelect">
@@ -265,7 +262,7 @@
         async function loadAlbums() {
             try {
                 const querySnapshot = await getDocs(collection(db, "albums"));
-                albumSelect.innerHTML = ''; // 読み込み中オプションをクリア
+                albumSelect.innerHTML = '';
 
                 if (querySnapshot.empty) {
                     const opt = document.createElement('option');
@@ -279,11 +276,14 @@
 
                 querySnapshot.forEach((doc) => {
                     const data = doc.data();
+                    
+                    // スクリーンショットの構造通り "name" フィールドからアルバム名を取得
+                    const albumTitle = data.name || data.title || `アルバム (${doc.id.substring(0, 6)})`;
+
                     const option = document.createElement('option');
                     option.value = doc.id;
-                    option.textContent = data.title || "無題のアルバム";
+                    option.textContent = albumTitle;
 
-                    // QRコードのalbumIdと一致したら初期選択
                     if (doc.id === defaultAlbumId) {
                         option.selected = true;
                         foundDefault = true;
@@ -292,11 +292,10 @@
                     albumSelect.appendChild(option);
                 });
 
-                // URLにalbumIdが無い場合や一致するアルバムがなかった場合のフォールバック
                 if (!foundDefault && defaultAlbumId) {
                     const customOpt = document.createElement('option');
                     customOpt.value = defaultAlbumId;
-                    customOpt.textContent = `現在のアルバム (${defaultAlbumId.substring(0, 6)}...)`;
+                    customOpt.textContent = `選択中のアルバム (${defaultAlbumId.substring(0, 6)})`;
                     customOpt.selected = true;
                     albumSelect.insertBefore(customOpt, albumSelect.firstChild);
                 }
@@ -306,7 +305,6 @@
             }
         }
 
-        // 初期化実行
         loadAlbums();
 
         fileInput.addEventListener('change', (e) => {
@@ -399,7 +397,6 @@
                     const base64Image = await convertToBase64(item.file);
                     const comment = item.textarea.value.trim();
 
-                    // ドロップダウンで選択されている targetAlbumId で保存
                     await addDoc(collection(db, "shared_photos"), {
                         albumId: targetAlbumId,
                         imageUrl: base64Image,
