@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- ページ間アニメーションを有効化 -->
+    <meta name="view-transition" content="same-origin">
     <title>Memory Album</title>
     <!-- Webフォント（Quicksand / M PLUS Rounded 1c） -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -21,6 +23,37 @@
             --shadow-card: 0 15px 35px -5px rgba(60, 40, 30, 0.12), 0 5px 15px -3px rgba(0, 0, 0, 0.05);
             --shadow-card-hover: 0 25px 45px -5px rgba(60, 40, 30, 0.22), 0 10px 20px -3px rgba(0, 0, 0, 0.08);
             --shadow-note: 2px 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        /* --- ページ遷移アニメーション（フェード＆ズーム） --- */
+        ::view-transition-old(root) {
+            animation: fade-zoom-out 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+
+        ::view-transition-new(root) {
+            animation: fade-zoom-in 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+
+        @keyframes fade-zoom-out {
+            from {
+                opacity: 1;
+                transform: scale(1);
+            }
+            to {
+                opacity: 0;
+                transform: scale(0.96);
+            }
+        }
+
+        @keyframes fade-zoom-in {
+            from {
+                opacity: 0;
+                transform: scale(1.04);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
         }
 
         * {
@@ -288,7 +321,6 @@
         <a href="index.html" class="back-link">
             <span class="arrow">←</span> アルバム一覧
         </a>
-        <!-- アルバム名を表示するh1（初期値は読み込み中） -->
         <h1 id="albumTitle">アルバム</h1>
     </header>
 
@@ -338,7 +370,6 @@
             }
         }
         fetchAlbumTitle();
-        // ----------------------------------------
 
         // --- QRコード自動生成処理 ---
         const baseUrl = window.location.origin + window.location.pathname.replace(/albumcreate\.html$/, '');
