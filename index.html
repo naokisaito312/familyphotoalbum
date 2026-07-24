@@ -71,13 +71,6 @@
             padding: 20px;
             width: 100%;
         }
-        
-        .album-grid.has-empty-state {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            flex: 1;
-        }
 
         .album-card {
             background: rgba(255, 255, 255, 0.85);
@@ -93,13 +86,13 @@
             align-items: center;
         }
 
-        /* 新規作成用カード */
+        /* 新規作成用カード（左上配置） */
         .create-album-card {
             border: 2px dashed #e2cfc4;
             background: rgba(255, 255, 255, 0.5);
             justify-content: center;
             min-height: 280px;
-            width: 320px;
+            width: 100%;
         }
 
         .create-album-icon {
@@ -330,7 +323,6 @@
 
         let isModalOpen = false;
 
-        // モーダルを開く関数
         function openCreateModal() {
             isModalOpen = true;
             createModal.classList.add('active');
@@ -341,18 +333,15 @@
             }, 100);
         }
 
-        // モーダルを閉じる関数
         function closeCreateModal() {
             isModalOpen = false;
             createModal.classList.remove('active');
-            // フォーカスを新規作成カードに戻す
             const createCard = document.querySelector('.create-album-card');
             if (createCard) createCard.focus();
         }
 
         cancelModalBtn.addEventListener('click', closeCreateModal);
 
-        // 作成実行処理
         async function handleCreateAlbum() {
             const albumName = albumNameInput.value.trim() || "無題のアルバム";
             try {
@@ -379,16 +368,23 @@
 
         // アルバム一覧のリアルタイム取得
         onSnapshot(collection(db, "albums"), async (snapshot) => {
-            if (isModalOpen) return; // モーダル操作中の再描画を防ぐ
+            if (isModalOpen) return;
+            
+            // 一度コンテナ内を空にする
             albumGrid.innerHTML = '';
 
-            if (snapshot.empty) {
-                albumGrid.classList.add('has-empty-state');
-            } else {
-                albumGrid.classList.remove('has-empty-state');
-            }
+            // 1. 【最優先】「新しいアルバムを作成する」カードを真っ先に作成して追加する
+            const createCard = document.createElement('div');
+            createCard.className = 'album-card create-album-card focusable';
+            createCard.tabIndex = 0;
+            createCard.innerHTML = `
+                <div class="create-album-icon">＋</div>
+                <div class="create-album-text">新しいアルバムを作成する</div>
+            `;
+            createCard.addEventListener('click', openCreateModal);
+            albumGrid.appendChild(createCard);
 
-            // 1. 既存のアルバムカードを生成して追加
+            // 2. その後、既存のアルバムカードを順番に追加していく
             for (const docSnap of snapshot.docs) {
                 const albumData = docSnap.data();
                 const albumId = docSnap.id;
@@ -438,20 +434,6 @@
                 albumGrid.appendChild(card);
             }
 
-            // 2. 「新しいアルバムを作成する」カードを最後尾に追加
-            const createCard = document.createElement('div');
-            createCard.className = 'album-card create-album-card focusable';
-            createCard.tabIndex = 0;
-            createCard.innerHTML = `
-                <div class="create-album-icon">＋</div>
-                <div class="create-album-text">新しいアルバムを作成する</div>
-            `;
-
-            // クリック時にモーダルを表示する
-            createCard.addEventListener('click', openCreateModal);
-
-            albumGrid.appendChild(createCard);
-
             const firstCard = document.querySelector('.album-card.focusable');
             if (firstCard && !isModalOpen) firstCard.focus();
         });
@@ -459,7 +441,6 @@
         // TVリモコン・キーボード操作対応
         document.addEventListener('keydown', (e) => {
             if (isModalOpen) {
-                // モーダルが開いているときのフォーカス移動・キャンセル制御
                 const modalFocusables = Array.from(document.querySelectorAll('.modal-focusable'));
                 const active = document.activeElement;
                 let index = modalFocusables.indexOf(active);
