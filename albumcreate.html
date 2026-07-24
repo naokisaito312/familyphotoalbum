@@ -324,20 +324,24 @@
         /* --- モーダル共通スタイル --- */
         .modal-overlay {
             position: fixed;
-            top: 0; left: 0; width: 100vw; height: 100vh;
+            top: 0; 
+            left: 0; 
+            width: 100vw; 
+            height: 100vh;
             background: rgba(15, 12, 10, 0.85);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
-            display: flex;
+            display: none; /* ← 通常時は完全に非表示(none)にする */
             align-items: center;
             justify-content: center;
             opacity: 0;
             pointer-events: none;
             transition: opacity 0.3s ease;
-            z-index: 1000;
+            z-index: 9999; /* ← 他の要素(theme-barやqr-container: z-index 100)より確実に前面に配置 */
         }
-
+        
         .modal-overlay.active {
+            display: flex !important; /* ← activeクラスがついたらflex表示にする */
             opacity: 1;
             pointer-events: auto;
         }
@@ -588,9 +592,14 @@
         function openDeleteModal(photoId) {
             pendingDeletePhotoId = photoId;
             lastFocusedElement = document.activeElement;
+            
             deleteModalOverlay.classList.add('active');
             isDeleteModalOpen = true;
-            cancelDeleteBtn.focus(); // 誤操作防止のためキャンセルに初期フォーカス
+            
+            // ダイアログ内のキャンセルボタンへ確実にフォーカスをあてる
+            setTimeout(() => {
+                cancelDeleteBtn.focus();
+            }, 50);
         }
 
         function closeDeleteModal() {
