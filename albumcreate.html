@@ -8,13 +8,13 @@
     <!-- Webフォント -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;500;700&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;500;700&family=Quicksand:wght@500;700&family=Shippori+Mincho:wght@500;700&display=swap" rel="stylesheet">
     
     <style>
         /* ==========================================================================
-           デザインテーマ定義 (CSS変数切り替え)
+           デザインテーマ ＆ カードデザイン拡張
            ========================================================================== */
-        /* --- 1. デフォルト: 暖色クラシック (現状のデザイン) --- */
+        /* --- 1. デフォルト: 暖色クラシック (ポラロイド・あたたかみ) --- */
         :root, body[data-theme="default"] {
             --bg-gradient: linear-gradient(135deg, #fefaf6 0%, #f7ede2 50%, #f5e6d8 100%);
             --primary-color: #f7a072;
@@ -22,18 +22,22 @@
             --text-main: #3d3531;
             --text-sub: #8c7d75;
             --card-bg: #ffffff;
-            --card-border: rgba(255, 255, 255, 0.9);
+            --card-border: 1px solid rgba(255, 255, 255, 0.9);
+            --card-radius: 16px;
+            --card-shadow: 0 15px 35px -5px rgba(60, 40, 30, 0.12), 0 5px 15px -3px rgba(0, 0, 0, 0.05);
+            --img-radius: 10px;
+            --title-font: 'Quicksand', 'M PLUS Rounded 1c', sans-serif;
             --title-gradient: linear-gradient(45deg, #4a3e3d, #8f6b58);
             --note-bg: #fffdf0;
-            --note-border: #f2e394;
-            --note-text: #4a403a;
+            --note-border: 3px solid #f2e394;
+            --note-radius: 4px 4px 12px 4px;
+            --note-transform: rotate(-1deg);
             --glass-bg: rgba(255, 255, 255, 0.75);
             --glass-border: rgba(255, 255, 255, 0.85);
-            --shadow-card: 0 15px 35px -5px rgba(60, 40, 30, 0.12), 0 5px 15px -3px rgba(0, 0, 0, 0.05);
             --focus-glow: 0 0 0 4px #f7a072, 0 0 25px rgba(247, 160, 114, 0.65);
         }
 
-        /* --- 2. パステルスイート (やわらかいピンク・イエロー) --- */
+        /* --- 2. パステルスイート (ポップ・マステ風装飾) --- */
         body[data-theme="pastel"] {
             --bg-gradient: linear-gradient(135deg, #fff5f7 0%, #ffedf2 50%, #f0fff4 100%);
             --primary-color: #ff9ebb;
@@ -41,72 +45,102 @@
             --text-main: #4a353d;
             --text-sub: #9e7d89;
             --card-bg: #ffffff;
-            --card-border: rgba(255, 255, 255, 0.9);
+            --card-border: 2px dashed #ffc0d0;
+            --card-radius: 24px;
+            --card-shadow: 0 12px 28px rgba(255, 180, 200, 0.2);
+            --img-radius: 16px;
+            --title-font: 'M PLUS Rounded 1c', sans-serif;
             --title-gradient: linear-gradient(45deg, #633b4d, #a86b84);
-            --note-bg: #fff9f0;
-            --note-border: #ffd185;
-            --note-text: #4d3e38;
-            --glass-bg: rgba(255, 255, 255, 0.8);
+            --note-bg: #fffbf3;
+            --note-border: 2px solid #ffd185;
+            --note-radius: 12px;
+            --note-transform: rotate(1deg);
+            --glass-bg: rgba(255, 255, 255, 0.85);
             --glass-border: rgba(255, 255, 255, 0.9);
-            --shadow-card: 0 15px 35px -5px rgba(80, 40, 60, 0.1), 0 5px 15px -3px rgba(0, 0, 0, 0.04);
             --focus-glow: 0 0 0 4px #ff9ebb, 0 0 25px rgba(255, 158, 187, 0.65);
         }
+        /* マスキングテープ装飾（パステル時のみ表示） */
+        body[data-theme="pastel"] .photo-card::before {
+            content: "";
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%) rotate(-2deg);
+            width: 70px;
+            height: 20px;
+            background: rgba(255, 220, 150, 0.7);
+            border-left: 2px dashed rgba(255,255,255,0.5);
+            border-right: 2px dashed rgba(255,255,255,0.5);
+            z-index: 5;
+        }
 
-        /* --- 3. シーサイドブルー (爽やかな水色・ビーチ風) --- */
+        /* --- 3. シーサイドブルー (モダン・クリア) --- */
         body[data-theme="ocean"] {
             --bg-gradient: linear-gradient(135deg, #eef9ff 0%, #e1f3fe 50%, #d8f0fa 100%);
             --primary-color: #43b0f1;
             --primary-hover: #1c92d2;
             --text-main: #1e3240;
             --text-sub: #637f94;
-            --card-bg: #ffffff;
-            --card-border: rgba(255, 255, 255, 0.9);
+            --card-bg: rgba(255, 255, 255, 0.85);
+            --card-border: 1px solid #bce3fb;
+            --card-radius: 10px;
+            --card-shadow: 0 10px 30px rgba(30, 80, 120, 0.1);
+            --img-radius: 6px;
+            --title-font: 'Quicksand', sans-serif;
             --title-gradient: linear-gradient(45deg, #1c3b57, #3a7bd5);
-            --note-bg: #f2faff;
-            --note-border: #a8dadc;
-            --note-text: #223a4e;
+            --note-bg: rgba(230, 245, 255, 0.7);
+            --note-border: 1px solid #82cdff;
+            --note-radius: 8px;
+            --note-transform: rotate(0deg);
             --glass-bg: rgba(255, 255, 255, 0.8);
             --glass-border: rgba(255, 255, 255, 0.9);
-            --shadow-card: 0 15px 35px -5px rgba(20, 50, 80, 0.12), 0 5px 15px -3px rgba(0, 0, 0, 0.04);
             --focus-glow: 0 0 0 4px #43b0f1, 0 0 25px rgba(67, 176, 241, 0.65);
         }
 
-        /* --- 4. ノスタルジックヴィンテージ (シックな落ち着いたレトロ感) --- */
+        /* --- 4. ノスタルジックヴィンテージ (クラシック・ステッチ感) --- */
         body[data-theme="vintage"] {
             --bg-gradient: linear-gradient(135deg, #f4efe9 0%, #e8dfd5 50%, #ded3c5 100%);
             --primary-color: #a0826c;
             --primary-hover: #836551;
             --text-main: #362f2d;
             --text-sub: #7a6e6a;
-            --card-bg: #fcfaf7;
-            --card-border: rgba(255, 255, 255, 0.7);
+            --card-bg: #f7f3ec;
+            --card-border: 2px dashed #bdaaa0;
+            --card-radius: 4px;
+            --card-shadow: 0 10px 25px rgba(50, 40, 30, 0.15);
+            --img-radius: 2px;
+            --title-font: 'Shippori Mincho', serif;
             --title-gradient: linear-gradient(45deg, #3d312a, #735a4c);
-            --note-bg: #f7f1e5;
-            --note-border: #d4c3ae;
-            --note-text: #3d3531;
+            --note-bg: #eae3d5;
+            --note-border: 1px solid #c4b5a3;
+            --note-radius: 2px;
+            --note-transform: rotate(-1.5deg);
             --glass-bg: rgba(248, 244, 239, 0.85);
             --glass-border: rgba(255, 255, 255, 0.6);
-            --shadow-card: 0 15px 35px -5px rgba(40, 30, 20, 0.15), 0 5px 15px -3px rgba(0, 0, 0, 0.06);
             --focus-glow: 0 0 0 4px #a0826c, 0 0 25px rgba(160, 130, 108, 0.65);
         }
 
-        /* --- 5. シネマティックダーク (夜景やモダンな雰囲気に) --- */
+        /* --- 5. シネマティックダーク (スタイリッシュ・ゴールド枠) --- */
         body[data-theme="dark"] {
-            --bg-gradient: linear-gradient(135deg, #1a181b 0%, #242026 50%, #151216 100%);
+            --bg-gradient: linear-gradient(135deg, #141215 0%, #1f1b22 50%, #100e12 100%);
             --primary-color: #e0a96d;
             --primary-hover: #cca047;
             --text-main: #f0ebe5;
             --text-sub: #a89f91;
-            --card-bg: #2a252d;
-            --card-border: rgba(255, 255, 255, 0.1);
+            --card-bg: #221d26;
+            --card-border: 1px solid rgba(224, 169, 109, 0.3);
+            --card-radius: 12px;
+            --card-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+            --img-radius: 8px;
+            --title-font: 'Shippori Mincho', serif;
             --title-gradient: linear-gradient(45deg, #ffffff, #e0a96d);
-            --note-bg: #36303a;
-            --note-border: #e0a96d;
-            --note-text: #f0ebe5;
-            --glass-bg: rgba(40, 35, 45, 0.8);
-            --glass-border: rgba(255, 255, 255, 0.12);
-            --shadow-card: 0 15px 35px -5px rgba(0, 0, 0, 0.5), 0 5px 15px -3px rgba(0, 0, 0, 0.3);
-            --focus-glow: 0 0 0 4px #e0a96d, 0 0 25px rgba(224, 169, 109, 0.65);
+            --note-bg: #2c2632;
+            --note-border: 1px solid #e0a96d;
+            --note-radius: 6px;
+            --note-transform: rotate(0deg);
+            --glass-bg: rgba(30, 25, 35, 0.85);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --focus-glow: 0 0 0 4px #e0a96d, 0 0 30px rgba(224, 169, 109, 0.8);
         }
 
         /* --- ページ遷移アニメーション --- */
@@ -122,7 +156,7 @@
             background: var(--bg-gradient);
             min-height: 100vh;
             color: var(--text-main);
-            font-family: 'Quicksand', 'M PLUS Rounded 1c', -apple-system, sans-serif;
+            font-family: var(--title-font);
             margin: 0;
             padding: 30px 40px;
             overflow-y: hidden;
@@ -162,7 +196,7 @@
             transition: background 0.4s ease;
         }
 
-        /* --- テーマ切り替えパレット (左上固定) --- */
+        /* --- テーマ切り替えパレット (選択状態の視覚化) --- */
         .theme-bar {
             position: fixed;
             top: 25px;
@@ -170,12 +204,12 @@
             background: var(--glass-bg);
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
-            padding: 10px 14px;
-            border-radius: 20px;
+            padding: 8px 16px;
+            border-radius: 24px;
             display: flex;
             align-items: center;
-            gap: 10px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            gap: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
             border: 1px solid var(--glass-border);
             z-index: 100;
         }
@@ -187,13 +221,22 @@
         }
 
         .theme-dot {
-            width: 24px;
-            height: 24px;
+            width: 26px;
+            height: 26px;
             border-radius: 50%;
             border: 2px solid #ffffff;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.25s cubic-bezier(0.25, 1, 0.5, 1);
             box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+            position: relative;
+        }
+
+        /* アクティブ（選択中）のスタイル強調 */
+        .theme-dot.active {
+            transform: scale(1.25);
+            box-shadow: 0 0 0 3px var(--primary-color), 0 4px 12px rgba(0,0,0,0.25);
+            border-color: #ffffff;
+            z-index: 2;
         }
 
         .theme-dot[data-theme="default"] { background: #f7a072; }
@@ -202,6 +245,7 @@
         .theme-dot[data-theme="vintage"] { background: #a0826c; }
         .theme-dot[data-theme="dark"] { background: #2a252d; border-color: #e0a96d; }
 
+        /* --- アルバムカード領域（テーマ変数適用） --- */
         .album-container {
             display: flex; flex-direction: row; align-items: flex-start; overflow-x: auto;
             white-space: nowrap; padding: 40px 20px 60px 20px; height: 75vh; scroll-behavior: smooth;
@@ -212,10 +256,17 @@
         .album-container::-webkit-scrollbar-thumb { background: var(--primary-color); border-radius: 10px; opacity: 0.5; }
 
         .photo-card {
-            display: inline-flex; flex-direction: column; background: var(--card-bg); padding: 10px;
-            margin: 0 25px; border-radius: 16px; box-shadow: var(--shadow-card);
-            border: 1px solid var(--card-border);
-            transition: all 0.35s cubic-bezier(0.25, 1, 0.5, 1); flex-shrink: 0; width: 280px; position: relative;
+            display: inline-flex; flex-direction: column; 
+            background: var(--card-bg); 
+            padding: 12px;
+            margin: 0 25px; 
+            border-radius: var(--card-radius); 
+            box-shadow: var(--card-shadow);
+            border: var(--card-border);
+            transition: all 0.35s cubic-bezier(0.25, 1, 0.5, 1); 
+            flex-shrink: 0; 
+            width: 280px; 
+            position: relative;
             cursor: pointer;
         }
 
@@ -228,16 +279,24 @@
         }
 
         .photo-card:hover .delete-btn { opacity: 1; transform: scale(1); }
-        .photo-card img { width: 100%; height: auto; max-height: 380px; object-fit: contain; border-radius: 10px; display: block; }
-
-        .sticky-note {
-            background: var(--note-bg); margin-top: 15px; padding: 12px 14px 10px 14px;
-            border-radius: 4px 4px 12px 4px; box-shadow: 2px 4px 12px rgba(0,0,0,0.06); position: relative;
-            transform: rotate(-1deg); border-left: 3px solid var(--note-border);
-            transition: background 0.4s ease, border-color 0.4s ease;
+        .photo-card img { 
+            width: 100%; height: auto; max-height: 380px; object-fit: contain; 
+            border-radius: var(--img-radius); display: block; 
         }
 
-        .photo-comment { color: var(--note-text); font-size: 13px; font-weight: 500; line-height: 1.5; white-space: normal; word-wrap: break-word; text-align: left; }
+        .sticky-note {
+            background: var(--note-bg); 
+            margin-top: 15px; 
+            padding: 12px 14px 10px 14px;
+            border-radius: var(--note-radius); 
+            box-shadow: 2px 4px 12px rgba(0,0,0,0.06); 
+            position: relative;
+            transform: var(--note-transform); 
+            border-left: var(--note-border);
+            transition: all 0.4s ease;
+        }
+
+        .photo-comment { color: var(--text-main); font-size: 13px; font-weight: 500; line-height: 1.5; white-space: normal; word-wrap: break-word; text-align: left; }
         .photo-date { font-size: 10px; font-weight: 700; color: var(--text-sub); text-align: right; margin-top: 8px; }
 
         .qr-container {
@@ -260,7 +319,7 @@
         .modal-overlay {
             position: fixed;
             top: 0; left: 0; width: 100vw; height: 100vh;
-            background: rgba(20, 15, 12, 0.85);
+            background: rgba(15, 12, 10, 0.85);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
             display: flex;
@@ -330,7 +389,7 @@
     <!-- テーマ切り替えバー（画面左上） -->
     <div class="theme-bar" id="themeBar">
         <span class="theme-label">テーマ</span>
-        <div class="theme-dot focusable" tabindex="0" data-theme="default" title="暖色クラシック"></div>
+        <div class="theme-dot focusable active" tabindex="0" data-theme="default" title="暖色クラシック"></div>
         <div class="theme-dot focusable" tabindex="0" data-theme="pastel" title="パステルスイート"></div>
         <div class="theme-dot focusable" tabindex="0" data-theme="ocean" title="シーサイドブルー"></div>
         <div class="theme-dot focusable" tabindex="0" data-theme="vintage" title="ノスタルジック"></div>
@@ -387,9 +446,18 @@
             window.location.href = "index.html";
         }
 
-        // --- テーマ変更処理 ＆ Firestore更新 ---
+        // --- テーマ変更 ＆ アクティブ表示切り替え ＆ Firestore保存 ---
         async function applyTheme(themeName, saveToDb = true) {
             document.body.setAttribute('data-theme', themeName);
+
+            // テーマボタンのアクティブ（選択中）状態の表示更新
+            document.querySelectorAll('.theme-dot').forEach(dot => {
+                if (dot.getAttribute('data-theme') === themeName) {
+                    dot.classList.add('active');
+                } else {
+                    dot.classList.remove('active');
+                }
+            });
 
             if (saveToDb && albumId) {
                 try {
@@ -401,7 +469,7 @@
             }
         }
 
-        // テーマ切り替えボタンのクリック/エンターイベント
+        // テーマ切り替えボタンのクリックイベント
         document.querySelectorAll('.theme-dot').forEach(dot => {
             dot.addEventListener('click', () => {
                 const selectedTheme = dot.getAttribute('data-theme');
@@ -458,7 +526,6 @@
                 return;
             }
 
-            // Bキーで一覧へ戻る
             if (e.key === 'b' || e.key === 'B') {
                 window.location.href = "index.html";
                 return;
@@ -492,7 +559,6 @@
             } else if (e.key === 'ArrowDown') {
                 e.preventDefault();
                 if (active.classList.contains('theme-dot')) {
-                    // テーマバーから写真エリアへフォーカス移動
                     const firstPhoto = document.querySelector('.photo-card.focusable');
                     if (firstPhoto) firstPhoto.focus();
                 } else if (active.classList.contains('photo-card')) {
@@ -504,7 +570,6 @@
                 if (active.classList.contains('delete-btn')) {
                     active.closest('.photo-card').focus();
                 } else if (active.classList.contains('photo-card')) {
-                    // 写真カードからテーマバーへ移動
                     const firstThemeDot = document.querySelector('.theme-dot.focusable');
                     if (firstThemeDot) firstThemeDot.focus();
                 }
@@ -525,7 +590,7 @@
             }
         });
 
-        // アルバムタイトル & 設定済みテーマの取得
+        // アルバム情報取得
         async function fetchAlbumInfo() {
             try {
                 const albumRef = doc(db, "albums", albumId);
@@ -536,7 +601,6 @@
                     document.getElementById('albumTitle').innerText = title;
                     document.title = `${title} | Memory Album`;
 
-                    // 保存されているテーマを適用（なければdefault）
                     if (data.theme) {
                         applyTheme(data.theme, false);
                     }
