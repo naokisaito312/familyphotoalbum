@@ -68,11 +68,6 @@
             margin: 0 auto;
             padding: 20px;
         }
-        .album-grid.has-empty-state {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
         .album-card {
             background: rgba(255, 255, 255, 0.85);
             backdrop-filter: blur(10px);
@@ -94,8 +89,7 @@
             border: 2px dashed #e2cfc4;
             background: rgba(255, 255, 255, 0.5);
             justify-content: center;
-            width: 320px;
-            height: 280px;
+            min-height: 280px;
         }
 
         .create-album-icon {
@@ -238,50 +232,13 @@
         onSnapshot(collection(db, "albums"), async (snapshot) => {
             albumGrid.innerHTML = '';
 
-            // --- アルバムが1つもない場合 ---
-            if (snapshot.empty) {
-                albumGrid.classList.add('has-empty-state'); // 中央寄せ用のクラスを追加
-
-                const createCard = document.createElement('div');
-                createCard.className = 'album-card create-album-card focusable';
-                createCard.tabIndex = 0;
-                createCard.innerHTML = `
-                    <div class="create-album-icon">＋</div>
-                    <div class="create-album-text">新しいアルバムを作成する</div>
-                `;
-
-                // クリックで作成ページへ遷移
-                createCard.addEventListener('click', () => {
-                    try {
-                        // Firestoreの "albums" コレクションに新しいアルバムを自動作成
-                        const newAlbumRef = await addDoc(collection(db, "albums"), {
-                            name: "新しいアルバム",
-                            theme: "default",
-                            createdAt: serverTimestamp()
-                        });
-
-                        // 発行されたアルバムIDをURLパラメータに持たせて遷移
-                        window.location.href = `albumcreate.html?albumId=${newAlbumRef.id}`;
-                    } catch (error) {
-                        console.error("アルバムの作成に失敗しました:", error);
-                        alert("アルバムの作成に失敗しました。");
-                    }
-                });
-
-                albumGrid.appendChild(createCard);
-                createCard.focus();
-                return;
-            }
-
-            // アルバムが存在する場合は中央寄せ用クラスを外す
-            albumGrid.classList.remove('has-empty-state');
-
+            // 1. まず既存のアルバムカードを生成して追加
             for (const docSnap of snapshot.docs) {
                 const albumData = docSnap.data();
                 const albumId = docSnap.id;
                 const albumTitle = albumData.name || albumData.title || "無題のアルバム";
 
-                // 各アルバムから写真を取得（FirestoreでのorderByは外し、JS側でソート）
+                // 各アルバムから写真を取得
                 const photosQuery = query(
                     collection(db, "shared_photos"),
                     where("albumId", "==", albumId)
@@ -302,18 +259,15 @@
                 card.className = 'album-card focusable';
                 card.tabIndex = 0;
 
-                // サムネイル部分（テーブルに写真が散らばっているデザイン）
                 let stackHtml = '<div class="photo-stack-wrapper">';
                 if (photoList.length > 0) {
-                    const mainPhotoUrl = photoList[0]; // 最新写真をメイン（中央）に
-                    const bgPhotos = photoList.slice(1); // それ以外を背景へ
+                    const mainPhotoUrl = photoList[0];
+                    const bgPhotos = photoList.slice(1);
 
-                    // 背景の写真たち（敷き詰める写真）
                     bgPhotos.forEach((url, idx) => {
                         stackHtml += `<img src="${url}" class="photo-stack-item scatter-${idx}" alt="sub memory">`;
                     });
 
-                    // メイン写真（中央・最前面）
                     stackHtml += `<img src="${mainPhotoUrl}" class="photo-stack-item main-photo" alt="main memory">`;
                 } else {
                     stackHtml += '<div class="no-photo-placeholder">写真がありません</div>';
@@ -333,6 +287,32 @@
 
                 albumGrid.appendChild(card);
             }
+
+            // 2. アルバムの数に関わらず、常に「新しいアルバムを作成する」カードを最後尾に追加
+            const createCard = document.createElement('div');
+            createCard.className = 'album-card create-album-card focusable';
+            createCard.tabIndex = 0;
+            createCard.innerHTML = `
+                <div class="create-album-icon">＋</div>
+                <div class="create-album-text">新しいアルバムを作成する</div>
+            `;
+
+            // クリックでFirestoreに新規アルバムを作成してから遷移
+            createCard.addEventListener('click', async () => {
+                try {
+                    const newAlbumRef = await addDoc(collection(db, "albums"), {
+                        name: "新しいアルバム",
+                        theme: "default",
+                        createdAt: serverTimestamp()
+                    });
+                    window.location.href = `albumcreate.html?albumId=${newAlbumRef.id}`;
+                } catch (error) {
+                    console.error("アルバムの作成に失敗しました:", error);
+                    alert("アルバムの作成に失敗しました。");
+                }
+            });
+
+            albumGrid.appendChild(createCard);
 
             // 初期フォーカス設定
             const firstCard = document.querySelector('.album-card.focusable');
