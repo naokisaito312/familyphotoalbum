@@ -5,13 +5,13 @@
     <title>Our Memory Album</title>
     <style>
         body {
-            background-color: #2c1d11; /* 古い木製テーブルのような暗い茶色 */
+            background-color: #2c1d11;
             background-image: radial-gradient(rgba(0,0,0,0.3) 20%, transparent 80%);
             color: #f5ebe0;
             font-family: 'Georgia', serif;
             margin: 0;
             padding: 40px;
-            overflow-y: hidden; /* 縦スクロールを防ぐ */
+            overflow-y: hidden;
         }
         h1 {
             text-align: center;
@@ -20,44 +20,38 @@
             margin-bottom: 30px;
             color: #e6ccb2;
         }
-        /* 横スクロールするアルバムコンテナ */
         .album-container {
             display: flex;
             flex-direction: row;
             align-items: center;
-            overflow-x: auto; /* 横スクロールを有効に */
+            overflow-x: auto;
             white-space: nowrap;
             padding: 20px;
             height: 70vh;
             scroll-behavior: smooth;
         }
-        /* チェキ風の写真フレーム */
         .photo-card {
             display: inline-block;
-            background: #fdfbf7; /* 少し黄ばんだ白 */
+            background: #fdfbf7;
             padding: 15px 15px 30px 15px;
             margin: 0 25px;
             box-shadow: 5px 10px 20px rgba(0,0,0,0.5);
-            transform: rotate(-2deg); /* 少し傾けてエモさを演出 */
+            transform: rotate(-2deg);
             transition: transform 0.3s ease;
             flex-shrink: 0;
             width: 250px;
-            position: relative; /* 削除ボタンの配置基準 */
+            position: relative;
         }
-        /* 交互に傾きを変える */
-        .photo-card:nth-child(even) {
-            transform: rotate(3deg);
-        }
+        .photo-card:nth-child(even) { transform: rotate(3deg); }
         .photo-card:hover {
             transform: scale(1.05) rotate(0deg);
             z-index: 10;
         }
-        /* 削除ボタンのデザイン */
         .delete-btn {
             position: absolute;
             top: 5px;
             right: 5px;
-            background: rgba(139, 90, 43, 0.8); /* レトロな茶色半透明 */
+            background: rgba(139, 90, 43, 0.8);
             color: white;
             border: none;
             border-radius: 50%;
@@ -70,26 +64,21 @@
             justify-content: center;
             box-shadow: 0 2px 5px rgba(0,0,0,0.3);
             transition: background 0.2s;
-            opacity: 0; /* 普段は非表示 */
-            z-index: 2; /* ★この行を追加して、写真より手前に表示させます */
+            opacity: 0;
+            z-index: 2;
         }
-        /* カードにホバーした時だけ削除ボタンを表示 */
-        .photo-card:hover .delete-btn {
-            opacity: 1;
-        }
-        .delete-btn:hover {
-            background: #d9534f; /* ホバー時は赤色に */
-        }
+        .photo-card:hover .delete-btn { opacity: 1; }
+        .delete-btn:hover { background: #d9534f; }
         .photo-card img {
             width: 250px;
             height: 250px;
             object-fit: cover;
-            filter: sepia(0.3) contrast(0.9) brightness(0.95); /* セピア・レトロ加工 */
+            filter: sepia(0.3) contrast(0.9) brightness(0.95);
             border: 1px solid #ddd;
         }
         .photo-comment {
             margin-top: 15px;
-            font-family: 'Courier New', Courier, monospace; /* 手書き風・���イプライター風 */
+            font-family: 'Courier New', Courier, monospace;
             color: #4a3b32;
             font-size: 14px;
             white-space: normal;
@@ -102,18 +91,17 @@
             text-align: right;
             margin-top: 5px;
         }
-        /* QRコードエリアのデザイン（画面右上に固定） */
         .qr-container {
             position: fixed;
             top: 20px;
             right: 20px;
-            background: #fdfbf7; /* チェキと同じ少し黄ばんだ白 */
+            background: #fdfbf7;
             padding: 12px;
             box-shadow: 3px 5px 15px rgba(0,0,0,0.5);
             border-radius: 4px;
             text-align: center;
-            z-index: 100; /* 常に最前面に表示 */
-            transform: rotate(1deg); /* 少し傾けてエモさを演出 */
+            z-index: 100;
+            transform: rotate(1deg);
             border: 1px solid #ddd;
             width: 120px;
         }
@@ -135,23 +123,18 @@
     </style>
 </head>
 <body>
-    <!-- 追加：QRコード表示エリア -->
     <div class="qr-container" id="qrContainer">
         <img id="qrImage" src="" alt="QR Code">
         <div class="qr-text">スマホでスキャンして<br>写真を送る</div>
     </div>
     
     <h1>Our Memory Album</h1>
-    <div class="album-container" id="albumContainer">
-        <!-- 写真カードがここに動的に追加されます -->
-    </div>
+    <div class="album-container" id="albumContainer"></div>
 
-    <!-- Firebase SDK の読み込み -->
     <script type="module">
-                import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, query, where, onSnapshot, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // TODO: あなたのFirebaseプロジェクトの構成情報を貼り付けてください
         const firebaseConfig = {
           apiKey: "AIzaSyAt3p_mTcyr7XH0xSWcPI9VCU1mzzr4IEk",
           authDomain: "family-album-studio.firebaseapp.com",
@@ -165,7 +148,6 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // URLから albumId を取得
         const urlParams = new URLSearchParams(window.location.search);
         const albumId = urlParams.get('albumId');
 
@@ -174,22 +156,20 @@
             window.location.href = "index.html";
         }
 
-        // --- QRコード自動生成処理 ---
-        const currentUrl = window.location.href;
-        const shareUrl = currentUrl.replace('albumcreate.html', 'photoshare.html');
+        // --- QRコード自動生成処理（より確実にphotoshare.htmlを指すように変更） ---
+        const baseUrl = window.location.origin + window.location.pathname.replace(/albumcreate\.html$/, '');
+        const shareUrl = `${baseUrl}photoshare.html?albumId=${albumId}`;
         const qrImage = document.getElementById('qrImage');
         qrImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(shareUrl)}`;
         // ----------------------------
 
         const albumContainer = document.getElementById('albumContainer');
 
-        // このアルバムに属する写真のみを取得
         const q = query(collection(db, "shared_photos"), where("albumId", "==", albumId));
         
         onSnapshot(q, (snapshot) => {
             albumContainer.innerHTML = '';
             
-            // データを配列に入れて、作成日時順（昇順）にソート
             const photos = [];
             snapshot.forEach((doc) => {
                 photos.push({ id: doc.id, ...doc.data() });
@@ -214,16 +194,12 @@
                 albumContainer.appendChild(card);
             });
 
-            // 削除処理（Firestoreのデータ削除の��・確認なし）
             const deleteButtons = document.querySelectorAll('.delete-btn');
             deleteButtons.forEach(button => {
                 button.addEventListener('click', async (e) => {
                     const id = e.currentTarget.getAttribute('data-id');
-                    
                     try {
-                        // Firestoreからデータのみを削除（これで画面から即座に消えます）
                         await deleteDoc(doc(db, "shared_photos", id));
-                        console.log("Firestoreのデータ削除 成功");
                     } catch (firestoreError) {
                         console.error("Firestoreの削除エラー:", firestoreError);
                     }
