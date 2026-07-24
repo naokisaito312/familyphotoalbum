@@ -72,6 +72,14 @@
             width: 100%;
         }
 
+        /* アルバムが1つもない（作成カードのみの）場合は中央に配置 */
+        .album-grid.has-empty-state {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex: 1;
+        }
+
         .album-card {
             background: rgba(255, 255, 255, 0.85);
             backdrop-filter: blur(10px);
@@ -86,13 +94,18 @@
             align-items: center;
         }
 
-        /* 新規作成用カード（左上配置） */
+        /* 新規作成用カード */
         .create-album-card {
             border: 2px dashed #e2cfc4;
             background: rgba(255, 255, 255, 0.5);
             justify-content: center;
             min-height: 280px;
             width: 100%;
+        }
+
+        /* 空の状態のときは幅を固定して美しく中央配置する */
+        .album-grid.has-empty-state .create-album-card {
+            width: 320px;
         }
 
         .create-album-icon {
@@ -370,10 +383,16 @@
         onSnapshot(collection(db, "albums"), async (snapshot) => {
             if (isModalOpen) return;
             
-            // 一度コンテナ内を空にする
             albumGrid.innerHTML = '';
 
-            // 1. 【最優先】「新しいアルバムを作成する」カードを真っ先に作成して追加する
+            // アルバムが1つもない（snapshot.empty）場合は中央配置用のクラスを付与
+            if (snapshot.empty) {
+                albumGrid.classList.add('has-empty-state');
+            } else {
+                albumGrid.classList.remove('has-empty-state');
+            }
+
+            // 1. 「新しいアルバムを作成する」カードを先頭（左上）に常に追加
             const createCard = document.createElement('div');
             createCard.className = 'album-card create-album-card focusable';
             createCard.tabIndex = 0;
@@ -384,7 +403,7 @@
             createCard.addEventListener('click', openCreateModal);
             albumGrid.appendChild(createCard);
 
-            // 2. その後、既存のアルバムカードを順番に追加していく
+            // 2. 既存のアルバムカードを後ろに追加
             for (const docSnap of snapshot.docs) {
                 const albumData = docSnap.data();
                 const albumId = docSnap.id;
