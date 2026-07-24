@@ -509,6 +509,8 @@
         const urlParams = new URLSearchParams(window.location.search);
         const albumId = urlParams.get('albumId');
 
+        let justClosedModal = false; // モーダルを閉じた直後か判定するフラグ
+        
         if (!albumId) {
             alert("アルバムIDが見つかりません。一覧に戻ります。");
             window.location.href = "index.html";
@@ -609,13 +611,20 @@
             isDeleteModalOpen = false;
             pendingDeletePhotoId = null;
 
-            // Enterキーを離した後のkeyupイベントが終わってからフォーカスを戻す
-            setTimeout(() => {
+            // Enterキーが放された後（または少し遅れて）フォーカスを戻す
+            // isEnterPressed が false になるのを待ってフォーカスを戻す
+            const restoreFocus = () => {
+                if (isEnterPressed) {
+                    setTimeout(restoreFocus, 50);
+                    return;
+                }
                 if (lastFocusedElement) {
                     lastFocusedElement.classList.remove('holding');
                     lastFocusedElement.focus();
                 }
-            }, 100); // 100ms遅延させてkeyupの誤発火を防ぐ
+            };
+
+            setTimeout(restoreFocus, 100);
         }
 
         cancelDeleteBtn.addEventListener('click', closeDeleteModal);
@@ -650,8 +659,8 @@
                     }
                 } else if (e.key === 'Enter') {
                     e.preventDefault();
-                    // キーの連打（リピート）で削除ボタン等が誤押下されるのを防ぐ
                     if (!e.repeat) {
+                        justClosedModal = true; // ← このEnterでモーダルが閉じるためフラグを立てる
                         document.activeElement.click();
                     }
                 } else if (e.key === 'Escape' || e.key === 'b' || e.key === 'B') {
@@ -768,19 +777,20 @@
                 // 見た目の長押しスタイル解除
                 document.querySelectorAll('.photo-card.holding').forEach(el => el.classList.remove('holding'));
 
-                // 短押し時のみ拡大モーダルを開く
-                if (!isHoldTriggered && !isDeleteModalOpen && !isModalOpen) {
-                    const active = document.activeElement; //
-                    if (active && active.classList.contains('photo-card')) { //
-                        const imgUrl = active.getAttribute('data-img'); //
-                        const comment = active.getAttribute('data-comment'); //
-                        const dateStr = active.getAttribute('data-date'); //
-                        openModal(imgUrl, comment, dateStr); //
+                // 【修正ポイント】 justClosedModal フラグのチェックを追加
+                if (!isHoldTriggered && !isDeleteModalOpen && !isModalOpen && !justClosedModal) {
+                    const active = document.activeElement;
+                    if (active && active.classList.contains('photo-card')) {
+                        const imgUrl = active.getAttribute('data-img');
+                        const comment = active.getAttribute('data-comment');
+                        const dateStr = active.getAttribute('data-date');
+                        openModal(imgUrl, comment, dateStr);
                     }
                 }
 
-                isEnterPressed = false; //
-                isHoldTriggered = false; //
+                isEnterPressed = false;
+                isHoldTriggered = false;
+                justClosedModal = false; // keyupが完了したらフラグを戻す
             }
         });
 
