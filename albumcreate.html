@@ -10,16 +10,60 @@
             color: #f5ebe0;
             font-family: 'Georgia', serif;
             margin: 0;
-            padding: 40px;
+            padding: 20px 40px 40px 40px;
             overflow-y: hidden;
         }
+
+        /* --- ヘッダーエリアのスタイル（パターン2） --- */
+        .album-header {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+
+        .back-link {
+            position: absolute;
+            left: 0;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: #e6ccb2;
+            background: rgba(139, 90, 43, 0.4);
+            border: 1px solid #8b5a2b;
+            padding: 8px 16px;
+            border-radius: 20px;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            transition: all 0.2s ease;
+        }
+
+        .back-link:hover {
+            background: #8b5a2b;
+            color: #ffffff;
+            transform: translateY(-1px);
+        }
+
+        .back-link .arrow {
+            transition: transform 0.2s ease;
+        }
+
+        .back-link:hover .arrow {
+            transform: translateX(-3px);
+        }
+
         h1 {
             text-align: center;
             font-size: 2.5em;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.6);
-            margin-bottom: 30px;
+            margin: 0;
             color: #e6ccb2;
         }
+        /* ------------------------------------------- */
+
         .album-container {
             display: flex;
             flex-direction: row;
@@ -128,7 +172,14 @@
         <div class="qr-text">スマホでスキャンして<br>写真を送る</div>
     </div>
     
-    <h1>Our Memory Album</h1>
+    <!-- ヘッダーエリア（パターン2を反映） -->
+    <header class="album-header">
+        <a href="index.html" class="back-link">
+            <span class="arrow">←</span> 一覧に戻る
+        </a>
+        <h1>Our Memory Album</h1>
+    </header>
+
     <div class="album-container" id="albumContainer"></div>
 
     <script type="module">
@@ -156,7 +207,7 @@
             window.location.href = "index.html";
         }
 
-        // --- QRコード自動生成処理（より確実にphotoshare.htmlを指すように変更） ---
+        // --- QRコード自動生成処理 ---
         const baseUrl = window.location.origin + window.location.pathname.replace(/albumcreate\.html$/, '');
         const shareUrl = `${baseUrl}photoshare.html?albumId=${albumId}`;
         const qrImage = document.getElementById('qrImage');
