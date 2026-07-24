@@ -216,7 +216,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { 
-            getFirestore, collection, onSnapshot, query, where, getDocs, limit, orderBy 
+            getFirestore, collection, onSnapshot, query, where, getDocs, addDoc, serverTimestamp 
         } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -252,7 +252,20 @@
 
                 // クリックで作成ページへ遷移
                 createCard.addEventListener('click', () => {
-                    window.location.href = 'albumcreate.html';
+                    try {
+                        // Firestoreにデフォルトの空アルバムを新規作成する
+                        const newAlbumRef = await addDoc(collection(db, "albums"), {
+                            name: "新しいアルバム",
+                            theme: "default",
+                            createdAt: serverTimestamp()
+                        });
+                        
+                        // 発行された新しいアルバムIDを持って albumcreate.html へ遷移
+                        window.location.href = `albumcreate.html?albumId=${newAlbumRef.id}`;
+                    } catch (error) {
+                        console.error("アルバムの作成に失敗しました:", error);
+                        alert("アルバムの作成に失敗しました。");
+                    }
                 });
 
                 albumGrid.appendChild(createCard);
