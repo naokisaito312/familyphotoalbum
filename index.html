@@ -22,7 +22,7 @@
             --shadow-card: 0 12px 30px -5px rgba(60, 40, 30, 0.08), 0 4px 12px -2px rgba(0, 0, 0, 0.04);
             --shadow-card-hover: 0 20px 40px -5px rgba(60, 40, 30, 0.18), 0 8px 16px -2px rgba(0, 0, 0, 0.06);
             --shadow-soft: 0 10px 30px rgba(180, 140, 120, 0.12);
-            --focus-glow: 0 0 0 4px #f7a072, 0 0 20px rgba(247, 160, 114, 0.6);
+            --focus-glow: 0 0 0 4px #f7a072, 0 0 25px rgba(247, 160, 114, 0.65);
         }
 
         /* --- ページ遷移アニメーション --- */
@@ -46,15 +46,14 @@
             align-items: center;
         }
 
-        /* --- TV GUI風 フォーカス用スタイル（キーボード/フォーカス選択時） --- */
+        /* --- TV GUI風 フォーカス用スタイル --- */
         :focus { outline: none; }
 
-        .create-input:focus,
         .focusable:focus,
-        .focusable.tv-focused {
+        .modal-focusable:focus {
             box-shadow: var(--focus-glow) !important;
-            transform: scale(1.04) translateY(-4px) !important;
-            z-index: 100;
+            transform: scale(1.05) translateY(-4px) !important;
+            z-index: 100 !important;
             border-color: var(--primary-color) !important;
         }
 
@@ -66,37 +65,47 @@
         }
         .subtitle { color: var(--text-sub); font-size: 14px; font-weight: 500; margin: 0; }
 
-        .create-form-container {
-            background: var(--glass-bg);
-            backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-            border: 1px solid var(--glass-border);
-            padding: 24px; border-radius: 24px; box-shadow: var(--shadow-soft);
-            width: 100%; max-width: 500px; margin-bottom: 45px; display: flex; gap: 12px;
-        }
-
-        .create-input {
-            flex: 1; padding: 12px 18px; border: 1px solid rgba(140, 125, 117, 0.2);
-            border-radius: 16px; font-size: 15px; font-family: inherit; color: var(--text-main);
-            background: rgba(255, 255, 255, 0.9); transition: all 0.25s ease;
-        }
-
-        .create-btn {
-            background: var(--primary-color); color: #ffffff; border: none; padding: 12px 24px;
-            border-radius: 16px; font-size: 15px; font-weight: 700; font-family: inherit;
-            cursor: pointer; box-shadow: 0 4px 12px rgba(247, 160, 114, 0.35); transition: all 0.25s ease;
-            white-space: nowrap;
-        }
-
+        /* --- アルバム一覧 ＆ 新規作成カードのグリッド --- */
         .albums-grid {
             display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
             gap: 25px; width: 100%; max-width: 1000px;
         }
 
+        /* 新しいアルバム作成カード (ボタン) */
+        .create-album-card {
+            background: rgba(255, 255, 255, 0.6);
+            border: 2px dashed rgba(247, 160, 114, 0.6);
+            border-radius: 20px;
+            padding: 20px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 140px;
+            transition: all 0.25s cubic-bezier(0.25, 1, 0.5, 1);
+            color: var(--primary-hover);
+        }
+
+        .create-album-card .plus-icon {
+            font-size: 32px;
+            font-weight: bold;
+            line-height: 1;
+        }
+
+        .create-album-card .create-text {
+            font-size: 15px;
+            font-weight: 700;
+        }
+
+        /* 既存アルバムカード */
         .album-card {
             background: #ffffff; border-radius: 20px; padding: 20px; text-decoration: none;
             color: var(--text-main); box-shadow: var(--shadow-card);
             border: 1px solid rgba(255, 255, 255, 0.9); transition: all 0.25s cubic-bezier(0.25, 1, 0.5, 1);
             display: flex; flex-direction: column; justify-content: space-between; min-height: 140px;
+            cursor: pointer;
         }
 
         .album-card-header { display: flex; align-items: center; gap: 12px; }
@@ -107,7 +116,61 @@
         }
         .album-name { font-size: 17px; font-weight: 700; line-height: 1.3; margin: 0; color: #2b2523; word-break: break-word; }
         .album-date { font-size: 11px; font-weight: 700; color: var(--text-sub); text-align: right; margin-top: 15px; }
-        .empty-state { grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--text-sub); font-size: 15px; }
+
+        /* --- ポップアップ（作成モーダル） --- */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(20, 15, 12, 0.7);
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none; transition: opacity 0.3s ease; z-index: 1000;
+        }
+
+        .modal-overlay.active { opacity: 1; pointer-events: auto; }
+
+        .modal-card {
+            background: #ffffff;
+            border-radius: 24px;
+            padding: 32px 30px 28px 30px;
+            width: 90%; max-width: 440px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.25);
+            transform: scale(0.9); transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+            text-align: center;
+        }
+
+        .modal-overlay.active .modal-card { transform: scale(1); }
+
+        .modal-title {
+            font-size: 20px; font-weight: 700; color: var(--text-main); margin: 0 0 20px 0;
+        }
+
+        .modal-input {
+            width: 100%; padding: 14px 18px; border: 2px solid rgba(140, 125, 117, 0.2);
+            border-radius: 16px; font-size: 16px; font-family: inherit; color: var(--text-main);
+            background: #fdfbf7; margin-bottom: 24px; transition: all 0.2s ease;
+        }
+
+        .modal-actions {
+            display: flex; gap: 12px; justify-content: flex-end;
+        }
+
+        .modal-btn {
+            padding: 12px 24px; border-radius: 14px; font-size: 15px; font-weight: 700;
+            font-family: inherit; border: none; cursor: pointer; transition: all 0.2s ease;
+        }
+
+        .modal-btn-cancel {
+            background: #f0ebe6; color: var(--text-sub);
+        }
+
+        .modal-btn-primary {
+            background: var(--primary-color); color: #ffffff;
+            box-shadow: 0 4px 12px rgba(247, 160, 114, 0.35);
+        }
+
+        .modal-hint {
+            margin-top: 18px; font-size: 12px; color: var(--text-sub); font-weight: 500;
+        }
     </style>
 </head>
 <body>
@@ -117,12 +180,26 @@
         <p class="subtitle">大切な思い出を共有・保存するファミリーアルバム</p>
     </header>
 
-    <div class="create-form-container">
-        <input type="text" id="albumNameInput" class="create-input focusable" placeholder="新しいアルバム名を入力..." maxlength="30" tabindex="0">
-        <button id="createBtn" class="create-btn focusable" tabindex="0">作成する</button>
+    <!-- グリッド（1番目に作成ボタンカード配置） -->
+    <div class="albums-grid" id="albumsGrid">
+        <div class="create-album-card focusable" id="openCreateModalBtn" tabindex="0">
+            <span class="plus-icon">＋</span>
+            <span class="create-text">新しいアルバムを作成</span>
+        </div>
     </div>
 
-    <div class="albums-grid" id="albumsGrid"></div>
+    <!-- ポップアップモーダル -->
+    <div class="modal-overlay" id="createModalOverlay">
+        <div class="modal-card">
+            <h2 class="modal-title">アルバムを作成</h2>
+            <input type="text" id="albumNameInput" class="modal-input modal-focusable" placeholder="アルバム名を入力..." maxlength="30" tabindex="0">
+            <div class="modal-actions">
+                <button id="cancelModalBtn" class="modal-btn modal-btn-cancel modal-focusable" tabindex="0">キャンセル</button>
+                <button id="confirmCreateBtn" class="modal-btn modal-btn-primary modal-focusable" tabindex="0">作成する</button>
+            </div>
+            <div class="modal-hint">[ B ] キーでキャンセル</div>
+        </div>
+    </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -141,83 +218,129 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        const albumNameInput = document.getElementById('albumNameInput');
-        const createBtn = document.getElementById('createBtn');
         const albumsGrid = document.getElementById('albumsGrid');
+        const openCreateModalBtn = document.getElementById('openCreateModalBtn');
+        const createModalOverlay = document.getElementById('createModalOverlay');
+        const albumNameInput = document.getElementById('albumNameInput');
+        const confirmCreateBtn = document.getElementById('confirmCreateBtn');
+        const cancelModalBtn = document.getElementById('cancelModalBtn');
 
-        // デフォルトフォーカス設定
+        let isModalOpen = false;
+
+        // 初期フォーカス（新規作成カードに当てる）
         window.addEventListener('DOMContentLoaded', () => {
-            albumNameInput.focus();
+            openCreateModalBtn.focus();
         });
 
-        // --- TV GUI キーボードナビゲーションロジック ---
+        // モーダルを開く
+        function openModal() {
+            isModalOpen = true;
+            createModalOverlay.classList.add('active');
+            albumNameInput.value = '';
+            setTimeout(() => albumNameInput.focus(), 100);
+        }
+
+        // モーダルを閉じる
+        function closeModal() {
+            isModalOpen = false;
+            createModalOverlay.classList.remove('active');
+            openCreateModalBtn.focus();
+        }
+
+        openCreateModalBtn.addEventListener('click', openModal);
+        cancelModalBtn.addEventListener('click', closeModal);
+
+        // --- TV GUI キーボードナビゲーション ---
         function getFocusables() {
+            if (isModalOpen) {
+                return Array.from(document.querySelectorAll('.modal-focusable'));
+            }
             return Array.from(document.querySelectorAll('.focusable'));
         }
 
         document.addEventListener('keydown', (e) => {
-            const active = document.activeElement;
+            // モーダル表示中のキー操作
+            if (isModalOpen) {
+                if (e.key === 'b' || e.key === 'B' || e.key === 'Escape') {
+                    e.preventDefault();
+                    closeModal();
+                    return;
+                }
+
+                const focusables = getFocusables();
+                let currentIndex = focusables.indexOf(document.activeElement);
+
+                if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+                    if (document.activeElement !== albumNameInput) {
+                        e.preventDefault();
+                        const next = focusables[currentIndex + 1] || focusables[0];
+                        next.focus();
+                    }
+                } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                    if (document.activeElement !== albumNameInput) {
+                        e.preventDefault();
+                        const prev = focusables[currentIndex - 1] || focusables[focusables.length - 1];
+                        prev.focus();
+                    }
+                } else if (e.key === 'Enter') {
+                    if (document.activeElement === albumNameInput) {
+                        e.preventDefault();
+                        confirmCreateBtn.click();
+                    } else if (document.activeElement) {
+                        document.activeElement.click();
+                    }
+                }
+                return;
+            }
+
+            // 通常画面（モーダル外）のキー操作
+            if (e.key === 'b' || e.key === 'B') {
+                window.history.back();
+                return;
+            }
+
             const focusables = getFocusables();
             if (focusables.length === 0) return;
 
+            const active = document.activeElement;
             let currentIndex = focusables.indexOf(active);
+
             if (currentIndex === -1) {
                 focusables[0].focus();
                 return;
             }
 
-            // Bキー（'b' または 'B'）で画面移動（前の画面 / 戻る）
-            if (e.key === 'b' || e.key === 'B') {
-                if (active !== albumNameInput || albumNameInput.value === '') {
-                    window.history.back();
-                    return;
-                }
-            }
-
-            // 入力欄で文字入力中の横矢印キーはテキスト編集を優先
-            const isEditingInput = active === albumNameInput && (e.key === 'ArrowLeft' || e.key === 'ArrowRight');
-
-            if (e.key === 'ArrowRight' && !isEditingInput) {
+            if (e.key === 'ArrowRight') {
                 e.preventDefault();
                 const next = focusables[currentIndex + 1] || focusables[0];
                 next.focus();
-            } else if (e.key === 'ArrowLeft' && !isEditingInput) {
+            } else if (e.key === 'ArrowLeft') {
                 e.preventDefault();
                 const prev = focusables[currentIndex - 1] || focusables[focusables.length - 1];
                 prev.focus();
             } else if (e.key === 'ArrowDown') {
                 e.preventDefault();
-                // 下キーでグリッド内の要素または次の要素へ移動
                 const activeRect = active.getBoundingClientRect();
-                let bestMatch = null;
-                let minDistance = Infinity;
+                let bestMatch = null, minDistance = Infinity;
 
                 focusables.forEach(elem => {
                     const rect = elem.getBoundingClientRect();
                     if (rect.top > activeRect.top + 10) {
                         const dist = Math.hypot(rect.left - activeRect.left, rect.top - activeRect.top);
-                        if (dist < minDistance) {
-                            minDistance = dist;
-                            bestMatch = elem;
-                        }
+                        if (dist < minDistance) { minDistance = dist; bestMatch = elem; }
                     }
                 });
                 if (bestMatch) bestMatch.focus();
             } else if (e.key === 'ArrowUp') {
                 e.preventDefault();
-                // 上キーで前の要素へ移動
                 const activeRect = active.getBoundingClientRect();
-                let bestMatch = null;
-                let minDistance = Infinity;
+                let bestMatch = null, minDistance = Infinity;
 
                 focusables.forEach(elem => {
                     const rect = elem.getBoundingClientRect();
                     if (rect.top < activeRect.top - 10) {
                         const dist = Math.hypot(rect.left - activeRect.left, rect.top - activeRect.top);
-                        if (dist < minDistance) {
-                            minDistance = dist;
-                            bestMatch = elem;
-                        }
+                        if (dist < minDistance) { minDistance = dist; bestMatch = elem; }
                     }
                 });
                 if (bestMatch) bestMatch.focus();
@@ -228,40 +351,38 @@
             }
         });
 
-        // アルバム新規作成処理
-        createBtn.addEventListener('click', async () => {
+        // アルバム新規作成実行処理
+        confirmCreateBtn.addEventListener('click', async () => {
             const name = albumNameInput.value.trim();
             if (!name) {
                 alert('アルバム名を入力してください');
+                albumNameInput.focus();
                 return;
             }
 
-            createBtn.disabled = true;
+            confirmCreateBtn.disabled = true;
             try {
                 const docRef = await addDoc(collection(db, "albums"), {
                     name: name,
                     createdAt: serverTimestamp()
                 });
-                albumNameInput.value = '';
+                closeModal();
                 window.location.href = `albumcreate.html?albumId=${docRef.id}`;
             } catch (error) {
                 console.error("アルバム作成エラー:", error);
                 alert("作成に失敗しました。");
             } finally {
-                createBtn.disabled = false;
+                confirmCreateBtn.disabled = false;
             }
         });
 
-        // リアルタイム取得
+        // アルバム一覧のリアルタイム取得
         const q = query(collection(db, "albums"), orderBy("createdAt", "desc"));
         
         onSnapshot(q, (snapshot) => {
-            albumsGrid.innerHTML = '';
-
-            if (snapshot.empty) {
-                albumsGrid.innerHTML = '<div class="empty-state">アルバムがまだありません。<br>上のフォームから最初のアルバムを作成してみましょう！</div>';
-                return;
-            }
+            // 新規作成カード以外を一旦削除
+            const cards = albumsGrid.querySelectorAll('.album-card');
+            cards.forEach(card => card.remove());
 
             snapshot.forEach((docSnap) => {
                 const data = docSnap.data();
