@@ -148,58 +148,67 @@
 
     <!-- Firebase SDK の読み込み -->
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, query, orderBy, onSnapshot, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+                import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, query, where, onSnapshot, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getStorage, ref, deleteObject } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
-        // TODO: あなたのFirebaseプロジェクトの構成情報をここに貼り付けてください
+        // TODO: あなたのFirebaseプロジェクトの構成情報を貼り付けてください
         const firebaseConfig = {
-          apiKey: "AIzaSyAt3p_mTcyr7XH0xSWcPI9VCU1mzzr4IEk",
-          authDomain: "family-album-studio.firebaseapp.com",
-          projectId: "family-album-studio",
-          storageBucket: "family-album-studio.firebasestorage.app",
-          messagingSenderId: "10247247724",
-          appId: "1:10247247724:web:749f7f1c5f30397de2c549",
-          measurementId: "G-TXM3QH522D"
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
         };
 
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const storage = getStorage(app);
+
+        // URLから albumId を取得
+        const urlParams = new URLSearchParams(window.location.search);
+        const albumId = urlParams.get('albumId');
+
+        if (!albumId) {
+            alert("アルバムIDが見つかりません。一覧に戻ります。");
+            window.location.href = "index.html";
+        }
+
         // --- QRコード自動生成処理 ---
-        // 現在のPC画面のURLを取得
         const currentUrl = window.location.href;
-        // 「albumcreate.html」の部分を「photoshare.html」に置き換える
+        // スマホ用URLに albumId を引き継ぐ
         const shareUrl = currentUrl.replace('albumcreate.html', 'photoshare.html');
-        
-        // 無料のQRコード生成APIを利用して、画像をセット
         const qrImage = document.getElementById('qrImage');
         qrImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(shareUrl)}`;
         // ----------------------------
-        
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
 
         const albumContainer = document.getElementById('albumContainer');
 
-        // データのリアルタイム監視（作成日時順にソート）
-        const q = query(collection(db, "shared_photos"), orderBy("createdAt", "asc"));
+        // このアルバムに属する写真のみを取得
+        const q = query(collection(db, "shared_photos"), where("albumId", "==", albumId));
         
         onSnapshot(q, (snapshot) => {
-            albumContainer.innerHTML = ''; // 画面をクリアして再描画
+            albumContainer.innerHTML = '';
             
-            snapshot.forEach((documentSnapshot) => {
-                const data = documentSnapshot.data();
-                const docId = documentSnapshot.id; // ドキュメントIDを取得
-                
-                // 日付のフォーマット
+            // データを配列に入れて、作成日時順（昇順）にソート
+            const photos = [];
+            snapshot.forEach((doc) => {
+                photos.push({ id: doc.id, ...doc.data() });
+            });
+            photos.sort((a, b) => (a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0));
+
+            photos.forEach((data) => {
                 let dateStr = '';
                 if (data.createdAt) {
                     const date = data.createdAt.toDate();
                     dateStr = `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()} ${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`;
                 }
 
-                // カード要素の作成
                 const card = document.createElement('div');
                 card.className = 'photo-card';
                 card.innerHTML = `
-                    <button class="delete-btn" data-id="${docId}" data-url="${data.imageUrl}">×</button>
+                    <button class="delete-btn" data-id="${data.id}" data-url="${data.imageUrl}">×</button>
                     <img src="${data.imageUrl}" alt="Memory">
                     <div class="photo-comment">${data.comment || ''}</div>
                     <div class="photo-date">${dateStr}</div>
@@ -207,33 +216,28 @@
                 albumContainer.appendChild(card);
             });
 
-            // 削除ボタンにイベントリスナーを設定
+            // 削除処理（サイレント削除）
             const deleteButtons = document.querySelectorAll('.delete-btn');
             deleteButtons.forEach(button => {
                 button.addEventListener('click', async (e) => {
                     const id = e.currentTarget.getAttribute('data-id');
                     const imageUrl = e.currentTarget.getAttribute('data-url');
                     
-                    // 1. まずCloud Storageから画像ファイルを削除（失敗しても次に進む）
                     try {
                         const imageRef = ref(storage, imageUrl);
                         await deleteObject(imageRef);
-                        console.log("Storageの画像削除 成功");
                     } catch (storageError) {
-                        console.warn("Storageの画像削除に失敗しました（スキップします）:", storageError);
+                        console.warn("Storageの画像削除失敗:", storageError);
                     }
 
-                    // 2. Firestoreからデータを削除（完了アラートは表示しません）
                     try {
                         await deleteDoc(doc(db, "shared_photos", id));
-                        console.log("Firestoreのデータ削除 成功");
                     } catch (firestoreError) {
                         console.error("Firestoreの削除エラー:", firestoreError);
                     }
                 });
             });
 
-            // 新しい写真が追加されたら、自動で一番右にスクロール
             albumContainer.scrollLeft = albumContainer.scrollWidth;
         });
     </script>
