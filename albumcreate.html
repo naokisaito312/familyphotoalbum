@@ -901,11 +901,11 @@
 
                 // --- 【追加】手貼りアルバム風のランダム値を設定 ---
                 // ① -3.5度 〜 +3.5度 のランダムな回転
-                const randomRotate = (Math.sin(index * 999) * 5).toFixed(1); 
+                const randomRotate = (Math.sin(index * 999) * 10).toFixed(1); 
                 // ② -25px 〜 +25px のランダムな上下ズレ
-                const randomOffsetY = (Math.cos(index * 888) * 30).toFixed(1);
+                const randomOffsetY = (Math.cos(index * 888) * 35).toFixed(1);
                 // ③ 【追加】幅を 245px 〜 280px の範囲でランダム化（基本サイズ260px前後）
-                const randomWidth = (260 + Math.sin(index * 777) * 20).toFixed(0);
+                const randomWidth = (260 + Math.sin(index * 777) * 30).toFixed(0);
                 
                 card.style.setProperty('--rotate', `${randomRotate}deg`);
                 card.style.setProperty('--offset-y', `${randomOffsetY}px`);
