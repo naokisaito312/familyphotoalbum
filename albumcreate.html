@@ -181,10 +181,10 @@
 
         /* 長押し中の演出スタイル */
         .photo-card.holding {
-            transform: scale(0.95) !important;
+            transform: scale(0.96) !important;
             border: 3px solid #e74c3c !important;
             box-shadow: 0 0 20px rgba(231, 76, 60, 0.6) !important;
-            transition: transform 0.1s ease, border 0.1s ease;
+            transition: all 0.2s cubic-bezier(0.25, 1, 0.5, 1) !important; /* ふんわり変化 */
         }
 
         .album-header {
@@ -586,7 +586,9 @@
         let pendingDeletePhotoId = null;
 
         let holdTimer = null;
+        let holdingVisualTimer = null; // ← 赤枠表示用のタイマーを追加
         const HOLD_DURATION = 800; // 800ms長押しで発動
+        const VISUAL_DELAY = 200;  // ← 200ms押され続けたら赤枠（holding）を表示
         let isHoldTriggered = false;
 
         function openDeleteModal(photoId) {
@@ -682,20 +684,24 @@
 
             // --- 長押し判定処理 (Enter) ---
             if (e.key === 'Enter') {
-                e.preventDefault(); // デフォルト動作をブロック
-
+                e.preventDefault();
+    
                 if (active && active.classList.contains('photo-card')) {
-                    // 最初にEnterが押された瞬間のみタイマーをセット
                     if (!e.repeat && !isEnterPressed) {
                         isEnterPressed = true;
                         isHoldTriggered = false;
-                        active.classList.add('holding');
-
+    
+                        // ① 200ms押され続けたら赤枠をつける（短押しの時は発動する前にクリアされる）
+                        holdingVisualTimer = setTimeout(() => {
+                            active.classList.add('holding');
+                        }, VISUAL_DELAY);
+    
+                        // ② 800ms押され続けたら削除ダイアログを開く
                         holdTimer = setTimeout(() => {
-                            isHoldTriggered = true; // 長押し成功フラグ
+                            isHoldTriggered = true;
                             active.classList.remove('holding');
                             const photoId = active.getAttribute('data-id');
-                            openDeleteModal(photoId); // 削除ダイアログを開く
+                            openDeleteModal(photoId);
                         }, HOLD_DURATION);
                     }
                 } else if (!e.repeat) {
@@ -749,7 +755,11 @@
 
         document.addEventListener('keyup', (e) => {
             if (e.key === 'Enter') {
-                // タイマーのクリア
+                // 赤枠用タイマーと長押し用タイマーの両方をクリア
+                if (holdingVisualTimer) {
+                    clearTimeout(holdingVisualTimer);
+                    holdingVisualTimer = null;
+                }
                 if (holdTimer) {
                     clearTimeout(holdTimer);
                     holdTimer = null;
@@ -758,22 +768,19 @@
                 // 見た目の長押しスタイル解除
                 document.querySelectorAll('.photo-card.holding').forEach(el => el.classList.remove('holding'));
 
-                // 【修正ポイント】
-                // モーダル閉鎖直後の誤動作を防ぐため、フォーカス中の要素が写真カードであり、
-                // かつ「長押しではなく」「どのモーダルも開いていない」場合のみ拡大モーダルを開く
-                const active = document.activeElement;
+                // 短押し時のみ拡大モーダルを開く
                 if (!isHoldTriggered && !isDeleteModalOpen && !isModalOpen) {
-                    if (active && active.classList.contains('photo-card')) {
-                        const imgUrl = active.getAttribute('data-img');
-                        const comment = active.getAttribute('data-comment');
-                        const dateStr = active.getAttribute('data-date');
-                        openModal(imgUrl, comment, dateStr);
+                    const active = document.activeElement; //
+                    if (active && active.classList.contains('photo-card')) { //
+                        const imgUrl = active.getAttribute('data-img'); //
+                        const comment = active.getAttribute('data-comment'); //
+                        const dateStr = active.getAttribute('data-date'); //
+                        openModal(imgUrl, comment, dateStr); //
                     }
                 }
 
-                // フラグのリセット
-                isEnterPressed = false;
-                isHoldTriggered = false;
+                isEnterPressed = false; //
+                isHoldTriggered = false; //
             }
         });
 
