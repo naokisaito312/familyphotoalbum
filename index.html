@@ -27,6 +27,8 @@
             font-family: 'Quicksand', 'M PLUS Rounded 1c', -apple-system, sans-serif;
             margin: 0;
             padding: 40px;
+            display: flex;
+            flex-direction: column;
         }
 
         /* --- フォーカス強調表示（TV GUI対応） --- */
@@ -67,7 +69,17 @@
             max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
+            width: 100%;
         }
+        
+        /* アルバムがない（作成カードのみの）場合は中央に配置 */
+        .album-grid.has-empty-state {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex: 1;
+        }
+
         .album-card {
             background: rgba(255, 255, 255, 0.85);
             backdrop-filter: blur(10px);
@@ -90,6 +102,7 @@
             background: rgba(255, 255, 255, 0.5);
             justify-content: center;
             min-height: 280px;
+            width: 320px;
         }
 
         .create-album-icon {
@@ -232,7 +245,14 @@
         onSnapshot(collection(db, "albums"), async (snapshot) => {
             albumGrid.innerHTML = '';
 
-            // 1. まず既存のアルバムカードを生成して追加
+            // アルバムが1つもない場合は中央寄せ用クラスを付与
+            if (snapshot.empty) {
+                albumGrid.classList.add('has-empty-state');
+            } else {
+                albumGrid.classList.remove('has-empty-state');
+            }
+
+            // 1. 既存のアルバムカードを生成して追加
             for (const docSnap of snapshot.docs) {
                 const albumData = docSnap.data();
                 const albumId = docSnap.id;
@@ -288,7 +308,7 @@
                 albumGrid.appendChild(card);
             }
 
-            // 2. アルバムの数に関わらず、常に「新しいアルバムを作成する」カードを最後尾に追加
+            // 2. 「新しいアルバムを作成する」カードを最後尾に追加
             const createCard = document.createElement('div');
             createCard.className = 'album-card create-album-card focusable';
             createCard.tabIndex = 0;
