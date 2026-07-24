@@ -2,7 +2,6 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <!-- 1. user-scalable=no, maximum-scale=1.0 を追加して自動ズームを抑制 -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Photo Share | Memory Album</title>
     <!-- Webフォント -->
@@ -24,7 +23,6 @@
 
         * {
             box-sizing: border-box;
-            /* タップ時のダブルタップズームやハイライトの防止 */
             touch-action: manipulation;
         }
 
@@ -67,6 +65,40 @@
             color: var(--text-sub);
             margin-bottom: 20px;
             font-weight: 500;
+        }
+
+        /* アルバム選択セレクトボックスのスタイル */
+        .album-select-wrapper {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .album-select-wrapper label {
+            display: block;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-sub);
+            margin-bottom: 6px;
+            margin-left: 4px;
+        }
+
+        .album-select-wrapper select {
+            width: 100%;
+            padding: 12px 14px;
+            border-radius: 14px;
+            border: 1px solid rgba(140, 125, 117, 0.25);
+            background: #ffffff;
+            font-family: inherit;
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text-main);
+            outline: none;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+            transition: border-color 0.2s ease;
+        }
+
+        .album-select-wrapper select:focus {
+            border-color: var(--primary-color);
         }
 
         /* ファイル選択ボタン */
@@ -121,7 +153,6 @@
             background: #faf7f4;
         }
 
-        /* 2. iOSの自動ズーム防止のため font-size を 16px に設定 */
         .photo-item textarea {
             width: 100%;
             height: 70px;
@@ -130,7 +161,7 @@
             border: 1px solid rgba(140, 125, 117, 0.2);
             background: #fdfbf7;
             font-family: inherit;
-            font-size: 16px; /* iOS Safariフォーカス時の自動ズームトリガー回避 */
+            font-size: 16px;
             color: var(--text-main);
             resize: none;
             box-sizing: border-box;
@@ -182,6 +213,14 @@
         <h2>写真をシェア</h2>
         <div class="subtitle">テレビのアルバムへ思い出を送ります</div>
 
+        <!-- 送り先アルバムの選択ドロップダウン -->
+        <div class="album-select-wrapper">
+            <label for="albumSelect">📁 送り先のアルバム</label>
+            <select id="albumSelect">
+                <option value="" disabled selected>アルバムを読み込み中...</option>
+            </select>
+        </div>
+
         <label for="fileInput" class="file-select-btn">
             <span>📷 写真を選ぶ (複数可)</span>
         </label>
@@ -196,7 +235,7 @@
     <!-- Firebase SDK -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
           apiKey: "AIzaSyAt3p_mTcyr7XH0xSWcPI9VCU1mzzr4IEk",
@@ -212,8 +251,9 @@
         const db = getFirestore(app);
 
         const urlParams = new URLSearchParams(window.location.search);
-        const albumId = urlParams.get('albumId');
+        const defaultAlbumId = urlParams.get('albumId');
 
+        const albumSelect = document.getElementById('albumSelect');
         const fileInput = document.getElementById('fileInput');
         const photoList = document.getElementById('photoList');
         const uploadBtn = document.getElementById('uploadBtn');
@@ -221,9 +261,53 @@
 
         let selectedFilesData = [];
 
-        if (!albumId) {
-            alert("有効なアルバムURLではありません。");
+        // アルバム一覧を取得してドロップダウンにセットする関数
+        async function loadAlbums() {
+            try {
+                const querySnapshot = await getDocs(collection(db, "albums"));
+                albumSelect.innerHTML = ''; // 読み込み中オプションをクリア
+
+                if (querySnapshot.empty) {
+                    const opt = document.createElement('option');
+                    opt.value = '';
+                    opt.textContent = 'アルバムが見つかりません';
+                    albumSelect.appendChild(opt);
+                    return;
+                }
+
+                let foundDefault = false;
+
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    const option = document.createElement('option');
+                    option.value = doc.id;
+                    option.textContent = data.title || "無題のアルバム";
+
+                    // QRコードのalbumIdと一致したら初期選択
+                    if (doc.id === defaultAlbumId) {
+                        option.selected = true;
+                        foundDefault = true;
+                    }
+
+                    albumSelect.appendChild(option);
+                });
+
+                // URLにalbumIdが無い場合や一致するアルバムがなかった場合のフォールバック
+                if (!foundDefault && defaultAlbumId) {
+                    const customOpt = document.createElement('option');
+                    customOpt.value = defaultAlbumId;
+                    customOpt.textContent = `現在のアルバム (${defaultAlbumId.substring(0, 6)}...)`;
+                    customOpt.selected = true;
+                    albumSelect.insertBefore(customOpt, albumSelect.firstChild);
+                }
+            } catch (err) {
+                console.error("アルバム一覧の取得に失敗:", err);
+                albumSelect.innerHTML = '<option value="">アルバム一覧の取得失敗</option>';
+            }
         }
+
+        // 初期化実行
+        loadAlbums();
 
         fileInput.addEventListener('change', (e) => {
             photoList.innerHTML = '';
@@ -288,17 +372,17 @@
 
         uploadBtn.addEventListener('click', async () => {
             errorMsg.innerText = '';
+            const targetAlbumId = albumSelect.value;
 
             if (selectedFilesData.length === 0) {
                 alert('写真を選択してください');
                 return;
             }
-            if (!albumId) {
-                alert('アルバムIDがありません。送信できません。');
+            if (!targetAlbumId) {
+                alert('送信先のアルバムを選択してください。');
                 return;
             }
 
-            // 3. 送信開始時にフォーカス（キーボード）を解除して拡大状態をリセット
             if (document.activeElement) {
                 document.activeElement.blur();
             }
@@ -315,8 +399,9 @@
                     const base64Image = await convertToBase64(item.file);
                     const comment = item.textarea.value.trim();
 
+                    // ドロップダウンで選択されている targetAlbumId で保存
                     await addDoc(collection(db, "shared_photos"), {
-                        albumId: albumId,
+                        albumId: targetAlbumId,
                         imageUrl: base64Image,
                         comment: comment,
                         createdAt: serverTimestamp()
@@ -328,7 +413,6 @@
                 photoList.innerHTML = '';
                 selectedFilesData = [];
 
-                // 完了後に画面最上部へスムーズにスクロール
                 window.scrollTo({ top: 0, behavior: 'smooth' });
 
             } catch (error) {
