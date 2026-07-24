@@ -150,7 +150,6 @@
     <script type="module">
                 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, query, where, onSnapshot, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-        import { getStorage, ref, deleteObject } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
         // TODO: あなたのFirebaseプロジェクトの構成情報を貼り付けてください
         const firebaseConfig = {
@@ -165,7 +164,6 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-        const storage = getStorage(app);
 
         // URLから albumId を取得
         const urlParams = new URLSearchParams(window.location.search);
@@ -178,7 +176,6 @@
 
         // --- QRコード自動生成処理 ---
         const currentUrl = window.location.href;
-        // スマホ用URLに albumId を引き継ぐ
         const shareUrl = currentUrl.replace('albumcreate.html', 'photoshare.html');
         const qrImage = document.getElementById('qrImage');
         qrImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(shareUrl)}`;
@@ -209,7 +206,7 @@
                 const card = document.createElement('div');
                 card.className = 'photo-card';
                 card.innerHTML = `
-                    <button class="delete-btn" data-id="${data.id}" data-url="${data.imageUrl}">×</button>
+                    <button class="delete-btn" data-id="${data.id}">×</button>
                     <img src="${data.imageUrl}" alt="Memory">
                     <div class="photo-comment">${data.comment || ''}</div>
                     <div class="photo-date">${dateStr}</div>
@@ -217,22 +214,16 @@
                 albumContainer.appendChild(card);
             });
 
-            // 削除処理（サイレント削除）
+            // 削除処理（Firestoreのデータ削除の��・確認なし）
             const deleteButtons = document.querySelectorAll('.delete-btn');
             deleteButtons.forEach(button => {
                 button.addEventListener('click', async (e) => {
                     const id = e.currentTarget.getAttribute('data-id');
-                    const imageUrl = e.currentTarget.getAttribute('data-url');
                     
                     try {
-                        const imageRef = ref(storage, imageUrl);
-                        await deleteObject(imageRef);
-                    } catch (storageError) {
-                        console.warn("Storageの画像削除失敗:", storageError);
-                    }
-
-                    try {
+                        // Firestoreからデータのみを削除（これで画面から即座に消えます）
                         await deleteDoc(doc(db, "shared_photos", id));
+                        console.log("Firestoreのデータ削除 成功");
                     } catch (firestoreError) {
                         console.error("Firestoreの削除エラー:", firestoreError);
                     }
