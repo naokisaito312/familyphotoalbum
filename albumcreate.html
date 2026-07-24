@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>Our Memory Album</title>
+    <style>
+        body {
+            background-color: #2c1d11;
+            background-image: radial-gradient(rgba(0,0,0,0.3) 20%, transparent 80%);
+            color: #f5ebe0;
+            font-family: 'Georgia', serif;
+            margin: 0;
+            padding: 40px;
+            overflow-y: hidden;
+        }
+        h1 {
+            text-align: center;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.6);
+            margin-bottom: 30px;
+            color: #e6ccb2;
+        }
+        .album-container {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            overflow-x: auto;
+            white-space: nowrap;
+            padding: 20px;
+            height: 70vh;
+            scroll-behavior: smooth;
+        }
+        .photo-card {
+            display: inline-block;
+            background: #fdfbf7;
+            padding: 15px 15px 30px 15px;
+            margin: 0 25px;
+            box-shadow: 5px 10px 20px rgba(0,0,0,0.5);
+            transform: rotate(-2deg);
+            transition: transform 0.3s ease;
+            flex-shrink: 0;
+            width: 250px;
+        }
+        .photo-card:nth-child(even) {
+            transform: rotate(3deg);
+        }
+        .photo-card:hover {
+            transform: scale(1.05) rotate(0deg);
+            z-index: 10;
+        }
+        .photo-card img {
+            width: 250px;
+            height: 250px;
+            object-fit: cover;
+            filter: sepia(0.3) contrast(0.9) brightness(0.95);
+            border: 1px solid #ddd;
+        }
+        .photo-comment {
+            margin-top: 15px;
+            font-family: 'Courier New', Courier, monospace;
+            color: #4a3b32;
+            font-size: 14px;
+            white-space: normal;
+            word-wrap: break-word;
+            text-align: center;
+        }
+        .photo-date {
+            font-size: 11px;
+            color: #8c7a6b;
+            text-align: right;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Our Memory Album</h1>
+    <div class="album-container" id="albumContainer">
+        <!-- 写真カードがここに動的に追加されます -->
+    </div>
+
+    <!-- Firebase SDK の読み込み -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        // TODO: あなたのFirebaseプロジェクトの構成情報をここに貼り付けてください
+        const firebaseConfig = {
+	  apiKey: "AIzaSyAt3p_mTcyr7XH0xSWcPI9VCU1mzzr4IEk",
+	  authDomain: "family-album-studio.firebaseapp.com",
+	  projectId: "family-album-studio",
+	  storageBucket: "family-album-studio.firebasestorage.app",
+	  messagingSenderId: "10247247724",
+	  appId: "1:10247247724:web:749f7f1c5f30397de2c549",
+	  measurementId: "G-TXM3QH522D"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const albumContainer = document.getElementById('albumContainer');
+
+        // データのリアルタイム監視（作成日時順にソート）
+        const q = query(collection(db, "shared_photos"), orderBy("createdAt", "asc"));
+        
+        onSnapshot(q, (snapshot) => {
+            albumContainer.innerHTML = '';
+            
+            snapshot.forEach((doc) => {
+                const data = doc.data();
+                
+                let dateStr = '';
+                if (data.createdAt) {
+                    const date = data.createdAt.toDate();
+                    dateStr = `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()} ${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`;
+                }
+
+                const card = document.createElement('div');
+                card.className = 'photo-card';
+                card.innerHTML = `
+                    <img src="${data.imageUrl}" alt="Memory">
+                    <div class="photo-comment">${data.comment || ''}</div>
+                    <div class="photo-date">${dateStr}</div>
+                `;
+                albumContainer.appendChild(card);
+            });
+
+            albumContainer.scrollLeft = albumContainer.scrollWidth;
+        });
+    </script>
+</body>
+</html>

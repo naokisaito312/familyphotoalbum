@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Photo Share</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background: #f5f5f5; text-align: center; }
+        .container { max-width: 400px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        input[type="file"], textarea { width: 100%; margin-bottom: 15px; box-sizing: border-box; }
+        textarea { height: 80px; padding: 10px; border-radius: 5px; border: 1px solid #ccc; }
+        button { width: 100%; padding: 12px; background: #8b5a2b; color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; }
+        button:disabled { background: #ccc; }
+        #preview { max-width: 100%; margin-bottom: 15px; display: none; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>写真をシェアする</h2>
+        <input type="file" id="fileInput" accept="image/*">
+        <img id="preview" alt="プレビュー">
+        <textarea id="commentInput" placeholder="思い出のコメントを入力してください..."></textarea>
+        <button id="uploadBtn">アルバムに送る</button>
+    </div>
+
+    <!-- Firebase SDK の読み込み -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        // TODO: あなたのFirebaseプロジェクトの構成情報をここに貼り付けてください
+        const firebaseConfig = {
+	  apiKey: "AIzaSyAt3p_mTcyr7XH0xSWcPI9VCU1mzzr4IEk",
+	  authDomain: "family-album-studio.firebaseapp.com",
+	  projectId: "family-album-studio",
+	  storageBucket: "family-album-studio.firebasestorage.app",
+	  messagingSenderId: "10247247724",
+	  appId: "1:10247247724:web:749f7f1c5f30397de2c549",
+	  measurementId: "G-TXM3QH522D"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const fileInput = document.getElementById('fileInput');
+        const preview = document.getElementById('preview');
+        const commentInput = document.getElementById('commentInput');
+        const uploadBtn = document.getElementById('uploadBtn');
+        let compressedBase64 = ""; // 圧縮後の画像データを保持する変数
+
+        // 画像選択時に圧縮してプレビュー表示
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const img = new Image();
+                img.onload = () => {
+                    // 画像の圧縮処理（最大幅800pxにリサイズ）
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 800;
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > MAX_WIDTH) {
+                        height *= MAX_WIDTH / width;
+                        width = MAX_WIDTH;
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    // 画質を0.7（70%）に落としてBase64テキストに変換
+                    compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+                    
+                    // プレビュー表示
+                    preview.src = compressedBase64;
+                    preview.style.display = 'block';
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+
+        // アップロード処理
+        uploadBtn.addEventListener('click', async () => {
+            if (!compressedBase64) {
+                alert('写真を選択してください');
+                return;
+            }
+
+            uploadBtn.disabled = true;
+            uploadBtn.innerText = '送信中...';
+
+            try {
+                // Firestoreに直接画像データとコメントを保存
+                await addDoc(collection(db, "shared_photos"), {
+                    imageUrl: compressedBase64, // テキスト化した画像データ
+                    comment: commentInput.value,
+                    createdAt: serverTimestamp()
+                });
+
+                alert('送信が完了しました！');
+                fileInput.value = '';
+                preview.style.display = 'none';
+                commentInput.value = '';
+                compressedBase64 = "";
+            } catch (error) {
+                console.error("Error saving to Firestore: ", error);
+                alert('送信に失敗しました。');
+            } finally {
+                uploadBtn.disabled = false;
+                uploadBtn.innerText = 'アルバムに送る';
+            }
+        });
+    </script>
+</body>
+</html>
