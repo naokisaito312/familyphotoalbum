@@ -166,9 +166,11 @@
         /* --- TV GUI風 フォーカス強調表示 --- */
         :focus { outline: none; }
 
+        /* TV GUI フォーカス時の強調（ランダムな傾きを一旦リセットして大きく見せる） */
         .focusable:focus {
             box-shadow: var(--focus-glow) !important;
-            transform: translateY(-10px) scale(1.05) !important;
+            /* フォーカスが当たった時はまっすぐにして手前に拡大表示 */
+            transform: translateY(-10px) rotate(0deg) scale(1.08) !important;
             z-index: 100 !important;
             border-color: var(--primary-color) !important;
         }
@@ -181,10 +183,10 @@
 
         /* 長押し中の演出スタイル */
         .photo-card.holding {
-            transform: scale(0.96) !important;
+            transform: scale(0.96) rotate(0deg) !important;
             border: 3px solid #e74c3c !important;
             box-shadow: 0 0 20px rgba(231, 76, 60, 0.6) !important;
-            transition: all 0.2s cubic-bezier(0.25, 1, 0.5, 1) !important; /* ふんわり変化 */
+            transition: all 0.2s cubic-bezier(0.25, 1, 0.5, 1) !important;
         }
 
         .album-header {
@@ -277,18 +279,23 @@
         }
 
         .photo-card {
-            display: inline-flex; flex-direction: column; 
+            display: inline-flex; 
+            flex-direction: column; 
             background: var(--card-bg); 
             padding: 12px;
-            margin: 0 25px; 
+            margin: 0 15px; /* マージンを少し狭めて重ね感を微調整 */
             border-radius: var(--card-radius); 
             box-shadow: var(--card-shadow);
             border: var(--card-border);
-            transition: all 0.35s cubic-bezier(0.25, 1, 0.5, 1); 
+            transition: transform 0.35s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.35s ease; 
             flex-shrink: 0; 
-            width: 280px; 
+            width: 260px; 
             position: relative;
             cursor: pointer;
+
+            /* --- ランダム配置用の変数を適用 --- */
+            /* デフォルトは0deg / 0px。JSで動的に個別の値を設定します */
+            transform: translateY(var(--offset-y, 0px)) rotate(var(--rotate, 0deg));
         }
 
         .delete-btn {
@@ -887,10 +894,19 @@
                 const card = document.createElement('div');
                 card.className = 'photo-card focusable';
                 card.tabIndex = 0;
-                card.setAttribute('data-id', data.id); // 削除用にIDを設定
+                card.setAttribute('data-id', data.id);
                 card.setAttribute('data-img', data.imageUrl || '');
                 card.setAttribute('data-comment', data.comment || '');
                 card.setAttribute('data-date', dateStr);
+
+                // --- 【追加】手貼りアルバム風のランダム値を設定 ---
+                // ① -3.5度 〜 +3.5度 のランダムな回転
+                const randomRotate = (Math.sin(index * 999) * 3.5).toFixed(1); 
+                // ② -25px 〜 +25px のランダムな上下ズレ
+                const randomOffsetY = (Math.cos(index * 888) * 25).toFixed(1);
+
+                card.style.setProperty('--rotate', `${randomRotate}deg`);
+                card.style.setProperty('--offset-y', `${randomOffsetY}px`);
 
                 card.innerHTML = `
                     <button class="delete-btn" data-id="${data.id}" title="削除" tabindex="-1">×</button>
