@@ -3,10 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- ページ間アニメーションを有効化 -->
     <meta name="view-transition" content="same-origin">
     <title>Memory Album</title>
-    <!-- Webフォント（Quicksand / M PLUS Rounded 1c） -->
+    <!-- Webフォント -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;500;700&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
@@ -23,42 +22,17 @@
             --shadow-card: 0 15px 35px -5px rgba(60, 40, 30, 0.12), 0 5px 15px -3px rgba(0, 0, 0, 0.05);
             --shadow-card-hover: 0 25px 45px -5px rgba(60, 40, 30, 0.22), 0 10px 20px -3px rgba(0, 0, 0, 0.08);
             --shadow-note: 2px 4px 12px rgba(0, 0, 0, 0.08);
+            --focus-glow: 0 0 0 4px #f7a072, 0 0 25px rgba(247, 160, 114, 0.65);
         }
 
-        /* --- ページ遷移アニメーション（フェード＆ズーム） --- */
-        ::view-transition-old(root) {
-            animation: fade-zoom-out 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-        }
+        /* --- ページ遷移アニメーション --- */
+        ::view-transition-old(root) { animation: fade-zoom-out 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+        ::view-transition-new(root) { animation: fade-zoom-in 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
 
-        ::view-transition-new(root) {
-            animation: fade-zoom-in 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-        }
+        @keyframes fade-zoom-out { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(0.96); } }
+        @keyframes fade-zoom-in { from { opacity: 0; transform: scale(1.04); } to { opacity: 1; transform: scale(1); } }
 
-        @keyframes fade-zoom-out {
-            from {
-                opacity: 1;
-                transform: scale(1);
-            }
-            to {
-                opacity: 0;
-                transform: scale(0.96);
-            }
-        }
-
-        @keyframes fade-zoom-in {
-            from {
-                opacity: 0;
-                transform: scale(1.04);
-            }
-            to {
-                opacity: 1;
-                transform: scale(1);
-            }
-        }
-
-        * {
-            box-sizing: border-box;
-        }
+        * { box-sizing: border-box; }
 
         body {
             background: linear-gradient(135deg, #fefaf6 0%, #f7ede2 50%, #f5e6d8 100%);
@@ -71,7 +45,22 @@
             position: relative;
         }
 
-        /* --- ヘッダーエリア --- */
+        /* --- TV GUI風 フォーカス強調表示 --- */
+        :focus { outline: none; }
+
+        .focusable:focus {
+            box-shadow: var(--focus-glow) !important;
+            transform: translateY(-10px) scale(1.05) !important;
+            z-index: 100 !important;
+            border-color: var(--primary-color) !important;
+        }
+
+        .delete-btn:focus {
+            opacity: 1 !important;
+            transform: scale(1.2) !important;
+            box-shadow: 0 0 0 3px #e65b5b, 0 0 15px rgba(230, 91, 91, 0.5) !important;
+        }
+
         .album-header {
             position: relative;
             display: flex;
@@ -82,233 +71,63 @@
         }
 
         .back-link {
-            position: absolute;
-            left: 0;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            color: var(--text-main);
-            background: var(--glass-bg);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid var(--glass-border);
-            padding: 10px 20px;
-            border-radius: 30px;
-            text-decoration: none;
-            font-size: 14px;
-            font-weight: 700;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.04);
-            transition: all 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
-        }
-
-        .back-link:hover {
-            background: #ffffff;
-            color: var(--primary-hover);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(247, 160, 114, 0.25);
-        }
-
-        .back-link .arrow {
-            font-size: 16px;
-            transition: transform 0.2s ease;
-        }
-
-        .back-link:hover .arrow {
-            transform: translateX(-4px);
+            position: absolute; left: 0; display: inline-flex; align-items: center; gap: 8px;
+            color: var(--text-main); background: var(--glass-bg);
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border); padding: 10px 20px; border-radius: 30px;
+            text-decoration: none; font-size: 14px; font-weight: 700;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.04); transition: all 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
         }
 
         h1 {
-            text-align: center;
-            font-size: 2.2em;
-            font-weight: 700;
-            letter-spacing: -0.02em;
-            margin: 0;
+            text-align: center; font-size: 2.2em; font-weight: 700; letter-spacing: -0.02em; margin: 0;
             background: linear-gradient(45deg, #4a3e3d, #8f6b58);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
         }
 
-        /* --- アルバム横スクロールコンテナ --- */
         .album-container {
-            display: flex;
-            flex-direction: row;
-            align-items: flex-start;
-            overflow-x: auto;
-            white-space: nowrap;
-            padding: 40px 20px 60px 20px;
-            height: 75vh;
-            scroll-behavior: smooth;
+            display: flex; flex-direction: row; align-items: flex-start; overflow-x: auto;
+            white-space: nowrap; padding: 40px 20px 60px 20px; height: 75vh; scroll-behavior: smooth;
         }
 
-        .album-container::-webkit-scrollbar {
-            height: 8px;
-        }
-        .album-container::-webkit-scrollbar-track {
-            background: rgba(0, 0, 0, 0.03);
-            border-radius: 10px;
-        }
-        .album-container::-webkit-scrollbar-thumb {
-            background: rgba(247, 160, 114, 0.4);
-            border-radius: 10px;
-        }
-        .album-container::-webkit-scrollbar-thumb:hover {
-            background: rgba(247, 160, 114, 0.7);
-        }
+        .album-container::-webkit-scrollbar { height: 8px; }
+        .album-container::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.03); border-radius: 10px; }
+        .album-container::-webkit-scrollbar-thumb { background: rgba(247, 160, 114, 0.4); border-radius: 10px; }
 
-        /* --- 写真カード --- */
         .photo-card {
-            display: inline-flex;
-            flex-direction: column;
-            background: #ffffff;
-            padding: 10px;
-            margin: 0 25px;
-            border-radius: 16px;
-            box-shadow: var(--shadow-card);
-            transition: all 0.35s cubic-bezier(0.25, 1, 0.5, 1);
-            flex-shrink: 0;
-            width: 280px;
-            position: relative;
-        }
-
-        .photo-card:hover {
-            transform: translateY(-12px);
-            box-shadow: var(--shadow-card-hover);
-            z-index: 10;
+            display: inline-flex; flex-direction: column; background: #ffffff; padding: 10px;
+            margin: 0 25px; border-radius: 16px; box-shadow: var(--shadow-card);
+            transition: all 0.35s cubic-bezier(0.25, 1, 0.5, 1); flex-shrink: 0; width: 280px; position: relative;
         }
 
         .delete-btn {
-            position: absolute;
-            top: -10px;
-            right: -10px;
-            background: #ffffff;
-            color: #e65b5b;
-            border: 1px solid rgba(0,0,0,0.05);
-            border-radius: 50%;
-            width: 32px;
-            height: 32px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-            transition: all 0.2s ease;
-            opacity: 0;
-            transform: scale(0.8);
-            z-index: 20;
+            position: absolute; top: -10px; right: -10px; background: #ffffff; color: #e65b5b;
+            border: 1px solid rgba(0,0,0,0.05); border-radius: 50%; width: 32px; height: 32px;
+            font-size: 16px; font-weight: bold; cursor: pointer; display: flex; align-items: center;
+            justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.15); transition: all 0.2s ease;
+            opacity: 0; transform: scale(0.8); z-index: 20;
         }
 
-        .photo-card:hover .delete-btn {
-            opacity: 1;
-            transform: scale(1);
-        }
+        .photo-card:hover .delete-btn { opacity: 1; transform: scale(1); }
+        .photo-card img { width: 100%; height: auto; max-height: 380px; object-fit: contain; border-radius: 10px; display: block; }
 
-        .delete-btn:hover {
-            background: #e65b5b;
-            color: #ffffff;
-            transform: scale(1.1);
-        }
-
-        .photo-card img {
-            width: 100%;
-            height: auto;
-            max-height: 380px;
-            object-fit: contain;
-            border-radius: 10px;
-            display: block;
-        }
-
-        /* --- 付箋風コメント欄 --- */
         .sticky-note {
-            background: #fffdf0;
-            margin-top: 15px;
-            padding: 12px 14px 10px 14px;
-            border-radius: 4px 4px 12px 4px;
-            box-shadow: var(--shadow-note);
-            position: relative;
-            transform: rotate(-1deg);
-            transition: transform 0.2s ease;
-            border-left: 3px solid #f2e394;
+            background: #fffdf0; margin-top: 15px; padding: 12px 14px 10px 14px;
+            border-radius: 4px 4px 12px 4px; box-shadow: var(--shadow-note); position: relative;
+            transform: rotate(-1deg); border-left: 3px solid #f2e394;
         }
 
-        .sticky-note::before {
-            content: '';
-            position: absolute;
-            top: -10px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 50px;
-            height: 15px;
-            background: rgba(247, 160, 114, 0.45);
-            border-radius: 2px;
-            backdrop-filter: blur(2px);
-        }
+        .photo-comment { color: #4a403a; font-size: 13px; font-weight: 500; line-height: 1.5; white-space: normal; word-wrap: break-word; text-align: left; }
+        .photo-date { font-size: 10px; font-weight: 700; color: #9e8e85; text-align: right; margin-top: 8px; }
 
-        .photo-card:nth-child(even) .sticky-note {
-            transform: rotate(1.5deg);
-            background: #fbf5fc;
-            border-left-color: #e5cef2;
-        }
-
-        .photo-comment {
-            color: #4a403a;
-            font-size: 13px;
-            font-weight: 500;
-            line-height: 1.5;
-            white-space: normal;
-            word-wrap: break-word;
-            text-align: left;
-        }
-
-        .photo-date {
-            font-size: 10px;
-            font-weight: 700;
-            color: #9e8e85;
-            text-align: right;
-            margin-top: 8px;
-        }
-
-        /* --- QRコードフローティングパネル --- */
         .qr-container {
-            position: fixed;
-            top: 25px;
-            right: 30px;
-            background: var(--glass-bg);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            padding: 16px;
-            box-shadow: 0 10px 30px rgba(180, 140, 120, 0.15);
-            border-radius: 20px;
-            text-align: center;
-            z-index: 100;
-            border: 1px solid var(--glass-border);
-            width: 135px;
-            transition: transform 0.3s ease;
+            position: fixed; top: 25px; right: 30px; background: var(--glass-bg);
+            backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); padding: 16px;
+            box-shadow: 0 10px 30px rgba(180, 140, 120, 0.15); border-radius: 20px; text-align: center;
+            z-index: 100; border: 1px solid var(--glass-border); width: 135px;
         }
-
-        .qr-container:hover {
-            transform: scale(1.03);
-        }
-
-        .qr-container img {
-            width: 103px;
-            height: 103px;
-            display: block;
-            margin: 0 auto;
-            border-radius: 10px;
-            background: #ffffff;
-            padding: 5px;
-        }
-
-        .qr-text {
-            font-size: 11px;
-            color: var(--text-main);
-            margin-top: 10px;
-            white-space: normal;
-            font-weight: 700;
-            line-height: 1.3;
-        }
+        .qr-container img { width: 103px; height: 103px; display: block; margin: 0 auto; border-radius: 10px; background: #ffffff; padding: 5px; }
+        .qr-text { font-size: 11px; color: var(--text-main); margin-top: 10px; white-space: normal; font-weight: 700; line-height: 1.3; }
     </style>
 </head>
 <body>
@@ -318,7 +137,7 @@
     </div>
     
     <header class="album-header">
-        <a href="index.html" class="back-link">
+        <a href="index.html" class="back-link focusable" id="backBtn" tabindex="0">
             <span class="arrow">←</span> アルバム一覧
         </a>
         <h1 id="albumTitle">アルバム</h1>
@@ -351,19 +170,76 @@
             window.location.href = "index.html";
         }
 
-        // --- ★ アルバム名（タイトル）の取得処理 ---
+        // デフォルトフォーカス初期化
+        window.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('backBtn').focus();
+        });
+
+        // --- TV GUI キーボードナビゲーションロジック ---
+        function getFocusables() {
+            return Array.from(document.querySelectorAll('.focusable'));
+        }
+
+        document.addEventListener('keydown', (e) => {
+            const active = document.activeElement;
+            const focusables = getFocusables();
+            if (focusables.length === 0) return;
+
+            let currentIndex = focusables.indexOf(active);
+
+            // Bキー（'b' または 'B'）で一覧画面に戻る
+            if (e.key === 'b' || e.key === 'B') {
+                window.location.href = "index.html";
+                return;
+            }
+
+            if (currentIndex === -1) {
+                focusables[0].focus();
+                return;
+            }
+
+            if (e.key === 'ArrowRight') {
+                e.preventDefault();
+                const next = focusables[currentIndex + 1] || focusables[0];
+                next.focus();
+                next.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+            } else if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                const prev = focusables[currentIndex - 1] || focusables[focusables.length - 1];
+                prev.focus();
+                prev.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+            } else if (e.key === 'ArrowDown') {
+                // カード選択時に下キーで削除ボタンへフォーカス移動
+                if (active.classList.contains('photo-card')) {
+                    const deleteBtn = active.querySelector('.delete-btn');
+                    if (deleteBtn) {
+                        e.preventDefault();
+                        deleteBtn.focus();
+                    }
+                }
+            } else if (e.key === 'ArrowUp') {
+                // 削除ボタンから上キーで親カードへフォーカス戻し
+                if (active.classList.contains('delete-btn')) {
+                    e.preventDefault();
+                    active.closest('.photo-card').focus();
+                }
+            } else if (e.key === 'Enter') {
+                if (active && active.click) {
+                    active.click();
+                }
+            }
+        });
+
+        // アルバムタイトル取得
         async function fetchAlbumTitle() {
             try {
                 const albumRef = doc(db, "albums", albumId);
                 const albumSnap = await getDoc(albumRef);
-                
                 if (albumSnap.exists()) {
                     const data = albumSnap.data();
                     const title = data.name || data.title || "無題のアルバム";
                     document.getElementById('albumTitle').innerText = title;
                     document.title = `${title} | Memory Album`;
-                } else {
-                    document.getElementById('albumTitle').innerText = "アルバム";
                 }
             } catch (error) {
                 console.error("アルバム名の取得エラー:", error);
@@ -371,23 +247,19 @@
         }
         fetchAlbumTitle();
 
-        // --- QRコード自動生成処理 ---
+        // QRコード生成
         const baseUrl = window.location.origin + window.location.pathname.replace(/albumcreate\.html$/, '');
         const shareUrl = `${baseUrl}photoshare.html?albumId=${albumId}`;
-        const qrImage = document.getElementById('qrImage');
-        qrImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(shareUrl)}`;
+        document.getElementById('qrImage').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(shareUrl)}`;
 
         const albumContainer = document.getElementById('albumContainer');
-
         const q = query(collection(db, "shared_photos"), where("albumId", "==", albumId));
         
         onSnapshot(q, (snapshot) => {
             albumContainer.innerHTML = '';
             
             const photos = [];
-            snapshot.forEach((doc) => {
-                photos.push({ id: doc.id, ...doc.data() });
-            });
+            snapshot.forEach((doc) => { photos.push({ id: doc.id, ...doc.data() }); });
             photos.sort((a, b) => (a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0));
 
             photos.forEach((data) => {
@@ -398,9 +270,10 @@
                 }
 
                 const card = document.createElement('div');
-                card.className = 'photo-card';
+                card.className = 'photo-card focusable';
+                card.tabIndex = 0; // キーボード選択可能化
                 card.innerHTML = `
-                    <button class="delete-btn" data-id="${data.id}" title="削除">×</button>
+                    <button class="delete-btn" data-id="${data.id}" title="削除" tabindex="0">×</button>
                     <img src="${data.imageUrl}" alt="Memory">
                     ${data.comment ? `
                         <div class="sticky-note">
@@ -425,8 +298,6 @@
                     }
                 });
             });
-
-            albumContainer.scrollLeft = albumContainer.scrollWidth;
         });
     </script>
 </body>
