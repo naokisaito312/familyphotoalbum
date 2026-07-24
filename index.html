@@ -84,6 +84,37 @@
         }
 
         /* ==========================================================================
+           新規作成用カードの表示スタイル
+           ========================================================================== */
+        .create-album-card {
+            border: 2px dashed #e2cfc4;
+            background: rgba(255, 255, 255, 0.5);
+            justify-content: center;
+            min-height: 280px;
+        }
+
+        .create-album-icon {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: #f7a072;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            box-shadow: 0 8px 20px rgba(247, 160, 114, 0.35);
+        }
+
+        .create-album-text {
+            font-size: 1.15em;
+            font-weight: 700;
+            color: #4a3e3d;
+        }
+
+        /* ==========================================================================
            散らばる写真サムネイル（テーブルの上にバラまかれた写真）
            ========================================================================== */
         .photo-stack-wrapper {
@@ -202,8 +233,25 @@
         onSnapshot(collection(db, "albums"), async (snapshot) => {
             albumGrid.innerHTML = '';
 
+            // --- 【追加】アルバムが一つもない時の処理 ---
             if (snapshot.empty) {
-                albumGrid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: #8c7d75;">アルバムが見つかりません。</div>';
+                const createCard = document.createElement('div');
+                createCard.className = 'album-card create-album-card focusable';
+                createCard.tabIndex = 0;
+                createCard.innerHTML = `
+                    <div class="create-album-icon">＋</div>
+                    <div class="create-album-text">新しいアルバムを作成する</div>
+                `;
+
+                // クリックで作成ページへ遷移
+                createCard.addEventListener('click', () => {
+                    window.location.href = 'albumcreate.html';
+                });
+
+                albumGrid.appendChild(createCard);
+
+                // フォーカスをあわせる
+                createCard.focus();
                 return;
             }
 
