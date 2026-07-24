@@ -629,6 +629,9 @@
             return Array.from(document.querySelectorAll('.focusable'));
         }
 
+        // 長押し状態・キー押しっぱなしを管理するフラグ
+        let isEnterPressed = false; 
+
         document.addEventListener('keydown', (e) => {
             // 1. 削除モーダル展開中
             if (isDeleteModalOpen) {
@@ -639,9 +642,12 @@
                     } else {
                         cancelDeleteBtn.focus();
                     }
-                } else if (e.key === 'Enter' && !e.repeat) {
+                } else if (e.key === 'Enter') {
                     e.preventDefault();
-                    document.activeElement.click();
+                    // キーの連打（リピート）で削除ボタン等が誤押下されるのを防ぐ
+                    if (!e.repeat) {
+                        document.activeElement.click();
+                    }
                 } else if (e.key === 'Escape' || e.key === 'b' || e.key === 'B') {
                     e.preventDefault();
                     closeDeleteModal();
@@ -672,18 +678,20 @@
 
             // --- 長押し判定処理 (Enter) ---
             if (e.key === 'Enter') {
-                e.preventDefault(); // Enterキーの標準動作・連打をガード
+                e.preventDefault(); // デフォルト動作をブロック
 
                 if (active && active.classList.contains('photo-card')) {
-                    if (!e.repeat) {
+                    // 最初にEnterが押された瞬間のみタイマーをセット
+                    if (!e.repeat && !isEnterPressed) {
+                        isEnterPressed = true;
                         isHoldTriggered = false;
                         active.classList.add('holding');
 
                         holdTimer = setTimeout(() => {
-                            isHoldTriggered = true;
+                            isHoldTriggered = true; // 長押し成功フラグ
                             active.classList.remove('holding');
                             const photoId = active.getAttribute('data-id');
-                            openDeleteModal(photoId);
+                            openDeleteModal(photoId); // 削除ダイアログを開く
                         }, HOLD_DURATION);
                     }
                 } else if (!e.repeat) {
@@ -693,7 +701,7 @@
                         active.click();
                     }
                 }
-                return; // Enterキー押下時は以降の矢印判定を行わずに終了
+                return;
             }
 
             if (currentIndex === -1) {
@@ -737,16 +745,16 @@
 
         document.addEventListener('keyup', (e) => {
             if (e.key === 'Enter') {
-                // タイマー解除
+                // タイマーのクリア
                 if (holdTimer) {
                     clearTimeout(holdTimer);
                     holdTimer = null;
                 }
 
-                // 保持用クラスの除去
+                // 見た目の長押しスタイル解除
                 document.querySelectorAll('.photo-card.holding').forEach(el => el.classList.remove('holding'));
 
-                // 短押し（長押し発動前・モーダル未開放時）の場合のみ拡大画面を表示
+                // 「長押しされておらず」「どのモーダルも開いていない」短押し時のみ拡大モーダルを開く
                 if (!isHoldTriggered && !isDeleteModalOpen && !isModalOpen) {
                     const active = document.activeElement;
                     if (active && active.classList.contains('photo-card')) {
@@ -757,7 +765,8 @@
                     }
                 }
 
-                // キーを離した時点で長押しフラグを初期化
+                // 指を離したのでフラグをリセット
+                isEnterPressed = false;
                 isHoldTriggered = false;
             }
         });
