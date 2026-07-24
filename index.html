@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>My Albums</title>
+    <style>
+        body {
+            background-color: #2c1d11;
+            background-image: radial-gradient(rgba(0,0,0,0.3) 20%, transparent 80%);
+            color: #f5ebe0;
+            font-family: 'Georgia', serif;
+            text-align: center;
+            padding: 50px 20px;
+        }
+        h1 { color: #e6ccb2; font-size: 2.5em; margin-bottom: 40px; }
+        .btn-create {
+            background: #8b5a2b;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            transition: background 0.2s;
+        }
+        .btn-create:hover { background: #a06d3b; }
+        .album-list {
+            max-width: 600px;
+            margin: 40px auto 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .album-item {
+            background: #fdfbf7;
+            color: #4a3b32;
+            padding: 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            box-shadow: 3px 5px 15px rgba(0,0,0,0.3);
+            transform: rotate(-1deg);
+            transition: transform 0.2s;
+            font-weight: bold;
+        }
+        .album-item:nth-child(even) { transform: rotate(1deg); }
+        .album-item:hover { transform: scale(1.05) rotate(0deg); }
+    </style>
+</head>
+<body>
+    <h1>My Albums</h1>
+    <button class="btn-create" id="createBtn">新しいアルバムを作成</button>
+    
+    <div class="album-list" id="albumList">
+        <!-- アルバム一覧がここに表示されます -->
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        // TODO: あなたのFirebaseプロジェクトの構成情報を貼り付けてください
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const createBtn = document.getElementById('createBtn');
+        const albumList = document.getElementById('albumList');
+
+        // アルバム新規作成
+        createBtn.addEventListener('click', async () => {
+            const albumName = prompt('アルバムの名前を入力してください：', `アルバム ${new Date().toLocaleDateString()}`);
+            if (!albumName) return;
+
+            try {
+                const docRef = await addDoc(collection(db, "albums"), {
+                    name: albumName,
+                    createdAt: serverTimestamp()
+                });
+                // 作成したアルバムのPC画面へ遷移
+                window.location.href = `albumcreate.html?albumId=${docRef.id}`;
+            } catch (e) {
+                console.error("Error creating album: ", e);
+            }
+        });
+
+        // アルバム一覧のリアルタイム取得
+        const q = query(collection(db, "albums"), orderBy("createdAt", "desc"));
+        onSnapshot(q, (snapshot) => {
+            albumList.innerHTML = '';
+            snapshot.forEach((doc) => {
+                const data = doc.data();
+                const item = document.createElement('a');
+                item.className = 'album-item';
+                item.href = `albumcreate.html?albumId=${doc.id}`;
+                item.innerText = data.name;
+                albumList.appendChild(item);
+            });
+        });
+    </script>
+</body>
+</html>
