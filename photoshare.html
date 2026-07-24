@@ -11,15 +11,36 @@
         textarea { height: 80px; padding: 10px; border-radius: 5px; border: 1px solid #ccc; }
         button { width: 100%; padding: 12px; background: #8b5a2b; color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; }
         button:disabled { background: #ccc; }
-        #preview { max-width: 100%; margin-bottom: 15px; display: none; border-radius: 5px; }
+        
+        /* 複数プレビュー用のスタイル */
+        .preview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 10px;
+            margin-bottom: 15px;
+            max-height: 240px;
+            overflow-y: auto;
+        }
+        .preview-grid img {
+            width: 100%;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+        }
+
         #errorMsg { color: #d9534f; font-size: 13px; margin-top: 10px; word-break: break-all; }
     </style>
 </head>
 <body>
     <div class="container">
         <h2>写真をシェアする</h2>
-        <input type="file" id="fileInput" accept="image/*">
-        <img id="preview" alt="プレビュー">
+        <!-- multiple 属性を追加 -->
+        <input type="file" id="fileInput" accept="image/*" multiple>
+        
+        <!-- 複数プレビュー用コンテナ -->
+        <div id="previewGrid" class="preview-grid"></div>
+
         <textarea id="commentInput" placeholder="思い出のコメントを入力してください..."></textarea>
         <button id="uploadBtn">アルバムに送る</button>
         <div id="errorMsg"></div>
@@ -48,7 +69,7 @@
         const albumId = urlParams.get('albumId');
 
         const fileInput = document.getElementById('fileInput');
-        const preview = document.getElementById('preview');
+        const previewGrid = document.getElementById('previewGrid');
         const commentInput = document.getElementById('commentInput');
         const uploadBtn = document.getElementById('uploadBtn');
         const errorMsg = document.getElementById('errorMsg');
@@ -57,20 +78,23 @@
             alert("有効なアルバムURLではありません。");
         }
 
-        // プレビュー表示
+        // 複数プレビュー表示処理
         fileInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file) {
+            previewGrid.innerHTML = '';
+            const files = Array.from(e.target.files);
+
+            files.forEach(file => {
                 const reader = new FileReader();
-                reader.onload = (e) => {
-                    preview.src = e.target.result;
-                    preview.style.display = 'block';
+                reader.onload = (event) => {
+                    const img = document.createElement('img');
+                    img.src = event.target.result;
+                    previewGrid.appendChild(img);
                 };
                 reader.readAsDataURL(file);
-            }
+            });
         });
 
-        // 画像をBase64文字列に変換・圧縮する関数 (Firestoreの容量制限1MB対策)
+        // 画像をBase64文字列に変換・圧縮する関数
         function convertToBase64(file, maxWidth = 800, quality = 0.7) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -93,7 +117,6 @@
                         const ctx = canvas.getContext('2d');
                         ctx.drawImage(img, 0, 0, width, height);
 
-                        // Base64データURLとして出力
                         const dataUrl = canvas.toDataURL('image/jpeg', quality);
                         resolve(dataUrl);
                     };
@@ -103,11 +126,12 @@
             });
         }
 
+        // 一括アップロード処理
         uploadBtn.addEventListener('click', async () => {
             errorMsg.innerText = '';
-            const file = fileInput.files[0];
+            const files = Array.from(fileInput.files);
 
-            if (!file) {
+            if (files.length === 0) {
                 alert('写真を選択してください');
                 return;
             }
@@ -117,25 +141,29 @@
             }
 
             uploadBtn.disabled = true;
-            uploadBtn.innerText = '画像を準備中...';
 
             try {
-                // 画像をBase64テキストデータに変換
-                const base64Image = await convertToBase64(file);
+                const total = files.length;
+                
+                for (let i = 0; i < total; i++) {
+                    const file = files[i];
+                    uploadBtn.innerText = `送信中... (${i + 1}/${total})`;
 
-                uploadBtn.innerText = '送信中...';
+                    // 画像圧縮＆Base64変換
+                    const base64Image = await convertToBase64(file);
 
-                // Storageを使わず、Firestoreに画像データ(imageUrl)としてそのまま保存
-                await addDoc(collection(db, "shared_photos"), {
-                    albumId: albumId,
-                    imageUrl: base64Image, // Base64データ文字列が入ります
-                    comment: commentInput.value,
-                    createdAt: serverTimestamp()
-                });
+                    // Firestoreへ保存
+                    await addDoc(collection(db, "shared_photos"), {
+                        albumId: albumId,
+                        imageUrl: base64Image,
+                        comment: commentInput.value,
+                        createdAt: serverTimestamp()
+                    });
+                }
 
-                alert('送信が完了しました！');
+                alert(`${total}枚の送信が完了しました！`);
                 fileInput.value = '';
-                preview.style.display = 'none';
+                previewGrid.innerHTML = '';
                 commentInput.value = '';
             } catch (error) {
                 console.error("Error uploading: ", error);
