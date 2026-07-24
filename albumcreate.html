@@ -606,10 +606,14 @@
             deleteModalOverlay.classList.remove('active');
             isDeleteModalOpen = false;
             pendingDeletePhotoId = null;
-            if (lastFocusedElement) {
-                lastFocusedElement.classList.remove('holding');
-                lastFocusedElement.focus();
-            }
+
+            // Enterキーを離した後のkeyupイベントが終わってからフォーカスを戻す
+            setTimeout(() => {
+                if (lastFocusedElement) {
+                    lastFocusedElement.classList.remove('holding');
+                    lastFocusedElement.focus();
+                }
+            }, 100); // 100ms遅延させてkeyupの誤発火を防ぐ
         }
 
         cancelDeleteBtn.addEventListener('click', closeDeleteModal);
@@ -754,9 +758,11 @@
                 // 見た目の長押しスタイル解除
                 document.querySelectorAll('.photo-card.holding').forEach(el => el.classList.remove('holding'));
 
-                // 「長押しされておらず」「どのモーダルも開いていない」短押し時のみ拡大モーダルを開く
+                // 【修正ポイント】
+                // モーダル閉鎖直後の誤動作を防ぐため、フォーカス中の要素が写真カードであり、
+                // かつ「長押しではなく」「どのモーダルも開いていない」場合のみ拡大モーダルを開く
+                const active = document.activeElement;
                 if (!isHoldTriggered && !isDeleteModalOpen && !isModalOpen) {
-                    const active = document.activeElement;
                     if (active && active.classList.contains('photo-card')) {
                         const imgUrl = active.getAttribute('data-img');
                         const comment = active.getAttribute('data-comment');
@@ -765,7 +771,7 @@
                     }
                 }
 
-                // 指を離したのでフラグをリセット
+                // フラグのリセット
                 isEnterPressed = false;
                 isHoldTriggered = false;
             }
