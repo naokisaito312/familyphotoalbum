@@ -102,9 +102,45 @@
             text-align: right;
             margin-top: 5px;
         }
+        /* QRコードエリアのデザイン（画面右上に固定） */
+        .qr-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #fdfbf7; /* チェキと同じ少し黄ばんだ白 */
+            padding: 12px;
+            box-shadow: 3px 5px 15px rgba(0,0,0,0.5);
+            border-radius: 4px;
+            text-align: center;
+            z-index: 100; /* 常に最前面に表示 */
+            transform: rotate(1deg); /* 少し傾けてエモさを演出 */
+            border: 1px solid #ddd;
+            width: 120px;
+        }
+        .qr-container img {
+            width: 120px;
+            height: 120px;
+            display: block;
+            margin: 0 auto;
+        }
+        .qr-text {
+            font-size: 10px;
+            color: #4a3b32;
+            margin-top: 8px;
+            font-family: sans-serif;
+            white-space: normal;
+            font-weight: bold;
+            line-height: 1.2;
+        }
     </style>
 </head>
 <body>
+    <!-- 追加：QRコード表示エリア -->
+    <div class="qr-container" id="qrContainer">
+        <img id="qrImage" src="" alt="QR Code">
+        <div class="qr-text">スマホでスキャンして<br>写真を送る</div>
+    </div>
+    
     <h1>Our Memory Album</h1>
     <div class="album-container" id="albumContainer">
         <!-- 写真カードがここに動的に追加されます -->
@@ -127,6 +163,17 @@
           measurementId: "G-TXM3QH522D"
         };
 
+        // --- QRコード自動生成処理 ---
+        // 現在のPC画面のURLを取得
+        const currentUrl = window.location.href;
+        // 「albumcreate.html」の部分を「photoshare.html」に置き換える
+        const shareUrl = currentUrl.replace('albumcreate.html', 'photoshare.html');
+        
+        // 無料のQRコード生成APIを利用して、画像をセット
+        const qrImage = document.getElementById('qrImage');
+        qrImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(shareUrl)}`;
+        // ----------------------------
+        
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const storage = getStorage(app);
