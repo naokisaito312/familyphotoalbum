@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Our Memory Album</title>
+    <title>Memory Album</title>
     <!-- Webフォント（Quicksand / M PLUS Rounded 1c） -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -18,7 +18,6 @@
             --glass-bg: rgba(255, 255, 255, 0.75);
             --glass-border: rgba(255, 255, 255, 0.85);
             
-            /* 落ちる立体的な影の定義 */
             --shadow-card: 0 15px 35px -5px rgba(60, 40, 30, 0.12), 0 5px 15px -3px rgba(0, 0, 0, 0.05);
             --shadow-card-hover: 0 25px 45px -5px rgba(60, 40, 30, 0.22), 0 10px 20px -3px rgba(0, 0, 0, 0.08);
             --shadow-note: 2px 4px 12px rgba(0, 0, 0, 0.08);
@@ -29,7 +28,6 @@
         }
 
         body {
-            /* 温かみのあるサンドベージュ〜アプリコットの現代的グラデーション */
             background: linear-gradient(135deg, #fefaf6 0%, #f7ede2 50%, #f5e6d8 100%);
             min-height: 100vh;
             color: var(--text-main);
@@ -101,7 +99,7 @@
         .album-container {
             display: flex;
             flex-direction: row;
-            align-items: flex-start; /* 上揃えにして縦長・横長のカードを自然に並べる */
+            align-items: flex-start;
             overflow-x: auto;
             white-space: nowrap;
             padding: 40px 20px 60px 20px;
@@ -109,7 +107,6 @@
             scroll-behavior: smooth;
         }
 
-        /* スクロールバーのカスタマイズ */
         .album-container::-webkit-scrollbar {
             height: 8px;
         }
@@ -125,7 +122,7 @@
             background: rgba(247, 160, 114, 0.7);
         }
 
-        /* --- 写真カード（アスペクト比維持 ＆ 立体的な影） --- */
+        /* --- 写真カード --- */
         .photo-card {
             display: inline-flex;
             flex-direction: column;
@@ -133,21 +130,19 @@
             padding: 10px;
             margin: 0 25px;
             border-radius: 16px;
-            box-shadow: var(--shadow-card); /* 自然に落ちる影 */
+            box-shadow: var(--shadow-card);
             transition: all 0.35s cubic-bezier(0.25, 1, 0.5, 1);
             flex-shrink: 0;
-            width: 280px; /* カード幅は固定 */
+            width: 280px;
             position: relative;
         }
 
-        /* 浮遊感のあるホバーエフェクト */
         .photo-card:hover {
             transform: translateY(-12px);
             box-shadow: var(--shadow-card-hover);
             z-index: 10;
         }
 
-        /* 削除ボタン */
         .delete-btn {
             position: absolute;
             top: -10px;
@@ -182,30 +177,28 @@
             transform: scale(1.1);
         }
 
-        /* 写真本体：元の解像度・アスペクト比を保って表示 */
         .photo-card img {
             width: 100%;
-            height: auto; /* ★ アスペクト比を完全維持 */
-            max-height: 380px; /* 縦長画像が大きくなりすぎない保護上限 */
+            height: auto;
+            max-height: 380px;
             object-fit: contain;
             border-radius: 10px;
             display: block;
         }
 
-        /* --- オシャレな付箋（Sticky Note）風コメント欄 --- */
+        /* --- 付箋風コメント欄 --- */
         .sticky-note {
-            background: #fffdf0; /* やさしいパステルイエローの付箋色 */
+            background: #fffdf0;
             margin-top: 15px;
             padding: 12px 14px 10px 14px;
-            border-radius: 4px 4px 12px 4px; /* 右下だけ少し折れた風デザイン */
+            border-radius: 4px 4px 12px 4px;
             box-shadow: var(--shadow-note);
             position: relative;
-            transform: rotate(-1deg); /* 付箋らしいわずかな傾き */
+            transform: rotate(-1deg);
             transition: transform 0.2s ease;
-            border-left: 3px solid #f2e394; /* 付箋のアクセントライン */
+            border-left: 3px solid #f2e394;
         }
 
-        /* マスキングテープ風の飾り */
         .sticky-note::before {
             content: '';
             position: absolute;
@@ -214,15 +207,14 @@
             transform: translateX(-50%);
             width: 50px;
             height: 15px;
-            background: rgba(247, 160, 114, 0.45); /* 半透明なテープ */
+            background: rgba(247, 160, 114, 0.45);
             border-radius: 2px;
             backdrop-filter: blur(2px);
         }
 
-        /* 偶数番目の付箋は逆に少し傾ける */
         .photo-card:nth-child(even) .sticky-note {
             transform: rotate(1.5deg);
-            background: #fbf5fc; /* 淡いパステルピンク/ラベンダー付箋 */
+            background: #fbf5fc;
             border-left-color: #e5cef2;
         }
 
@@ -244,7 +236,7 @@
             margin-top: 8px;
         }
 
-        /* --- QRコードフローティングパネル（ガラスモフィズム） --- */
+        /* --- QRコードフローティングパネル --- */
         .qr-container {
             position: fixed;
             top: 25px;
@@ -287,25 +279,24 @@
     </style>
 </head>
 <body>
-    <!-- QRコードエリア -->
     <div class="qr-container" id="qrContainer">
         <img id="qrImage" src="" alt="QR Code">
         <div class="qr-text">スマホで送る</div>
     </div>
     
-    <!-- ヘッダーエリア -->
     <header class="album-header">
         <a href="index.html" class="back-link">
             <span class="arrow">←</span> アルバム一覧
         </a>
-        <h1>Our Memory Album</h1>
+        <!-- アルバム名を表示するh1（初期値は読み込み中） -->
+        <h1 id="albumTitle">アルバム</h1>
     </header>
 
     <div class="album-container" id="albumContainer"></div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, query, where, onSnapshot, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, query, where, onSnapshot, doc, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
           apiKey: "AIzaSyAt3p_mTcyr7XH0xSWcPI9VCU1mzzr4IEk",
@@ -327,6 +318,27 @@
             alert("アルバムIDが見つかりません。一覧に戻ります。");
             window.location.href = "index.html";
         }
+
+        // --- ★ アルバム名（タイトル）の取得処理 ---
+        async function fetchAlbumTitle() {
+            try {
+                const albumRef = doc(db, "albums", albumId);
+                const albumSnap = await getDoc(albumRef);
+                
+                if (albumSnap.exists()) {
+                    const data = albumSnap.data();
+                    const title = data.name || data.title || "無題のアルバム";
+                    document.getElementById('albumTitle').innerText = title;
+                    document.title = `${title} | Memory Album`;
+                } else {
+                    document.getElementById('albumTitle').innerText = "アルバム";
+                }
+            } catch (error) {
+                console.error("アルバム名の取得エラー:", error);
+            }
+        }
+        fetchAlbumTitle();
+        // ----------------------------------------
 
         // --- QRコード自動生成処理 ---
         const baseUrl = window.location.origin + window.location.pathname.replace(/albumcreate\.html$/, '');
