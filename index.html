@@ -34,9 +34,9 @@
         /* --- フォーカス強調表示（TV GUI対応） --- */
         :focus { outline: none; }
 
-        .focusable:focus {
+        .focusable:focus, .modal-focusable:focus {
             box-shadow: 0 0 0 4px #f7a072, 0 0 25px rgba(247, 160, 114, 0.65) !important;
-            transform: translateY(-8px) scale(1.03) !important;
+            transform: translateY(-4px) scale(1.02) !important;
             z-index: 100 !important;
             border-color: #f7a072 !important;
         }
@@ -72,7 +72,6 @@
             width: 100%;
         }
         
-        /* アルバムがない（作成カードのみの）場合は中央に配置 */
         .album-grid.has-empty-state {
             display: flex;
             justify-content: center;
@@ -94,9 +93,7 @@
             align-items: center;
         }
 
-        /* ==========================================================================
-           新規作成用カードの表示スタイル
-           ========================================================================== */
+        /* 新規作成用カード */
         .create-album-card {
             border: 2px dashed #e2cfc4;
             background: rgba(255, 255, 255, 0.5);
@@ -126,9 +123,7 @@
             color: #4a3e3d;
         }
 
-        /* ==========================================================================
-           散らばる写真サムネイル（テーブルの上にバラまかれた写真）
-           ========================================================================== */
+        /* 写真サムネイルスタック */
         .photo-stack-wrapper {
             width: 100%;
             height: 200px;
@@ -147,42 +142,28 @@
             object-fit: cover;
             border-radius: 8px;
             background: #ffffff;
-            padding: 6px 6px 18px 6px; /* ポラロイド風の下余白 */
+            padding: 6px 6px 18px 6px;
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15), 0 2px 6px rgba(0, 0, 0, 0.1);
             transition: all 0.3s ease;
             border: 1px solid rgba(0,0,0,0.05);
         }
 
-        /* 重なり順と配置（背景の写真たち） */
         .photo-stack-item.scatter-0 { transform: translate(-45px, -15px) rotate(-14deg) scale(0.88); z-index: 1; opacity: 0.85; }
         .photo-stack-item.scatter-1 { transform: translate(45px, -10px) rotate(12deg) scale(0.9); z-index: 2; opacity: 0.9; }
         .photo-stack-item.scatter-2 { transform: translate(-30px, 15px) rotate(-6deg) scale(0.92); z-index: 3; }
         .photo-stack-item.scatter-3 { transform: translate(35px, 20px) rotate(8deg) scale(0.92); z-index: 4; }
-        
-        /* メイン写真（中央・最前面） */
         .photo-stack-item.main-photo {
             transform: translate(0, 0) rotate(-2deg) scale(1.05);
             z-index: 10;
             box-shadow: 0 12px 25px rgba(0, 0, 0, 0.22), 0 4px 10px rgba(0, 0, 0, 0.12);
         }
 
-        /* ホバー時・D-padフォーカス時に写真が少し広がる演出 */
-        .album-card:hover .photo-stack-item.scatter-0,
-        .album-card:focus .photo-stack-item.scatter-0 { transform: translate(-60px, -22px) rotate(-18deg) scale(0.88); }
-        
-        .album-card:hover .photo-stack-item.scatter-1,
-        .album-card:focus .photo-stack-item.scatter-1 { transform: translate(60px, -15px) rotate(16deg) scale(0.9); }
-        
-        .album-card:hover .photo-stack-item.scatter-2,
-        .album-card:focus .photo-stack-item.scatter-2 { transform: translate(-40px, 22px) rotate(-8deg) scale(0.92); }
-        
-        .album-card:hover .photo-stack-item.scatter-3,
-        .album-card:focus .photo-stack-item.scatter-3 { transform: translate(45px, 25px) rotate(10deg) scale(0.92); }
-        
-        .album-card:hover .photo-stack-item.main-photo,
-        .album-card:focus .photo-stack-item.main-photo { transform: translate(0, -5px) rotate(0deg) scale(1.1); }
+        .album-card:hover .photo-stack-item.scatter-0, .album-card:focus .photo-stack-item.scatter-0 { transform: translate(-60px, -22px) rotate(-18deg) scale(0.88); }
+        .album-card:hover .photo-stack-item.scatter-1, .album-card:focus .photo-stack-item.scatter-1 { transform: translate(60px, -15px) rotate(16deg) scale(0.9); }
+        .album-card:hover .photo-stack-item.scatter-2, .album-card:focus .photo-stack-item.scatter-2 { transform: translate(-40px, 22px) rotate(-8deg) scale(0.92); }
+        .album-card:hover .photo-stack-item.scatter-3, .album-card:focus .photo-stack-item.scatter-3 { transform: translate(45px, 25px) rotate(10deg) scale(0.92); }
+        .album-card:hover .photo-stack-item.main-photo, .album-card:focus .photo-stack-item.main-photo { transform: translate(0, -5px) rotate(0deg) scale(1.1); }
 
-        /* 写真なし（プレースホルダー） */
         .no-photo-placeholder {
             width: 100%;
             height: 100%;
@@ -209,6 +190,96 @@
             color: #8c7d75;
             font-weight: 500;
         }
+
+        /* --- モーダルポップアップ --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(61, 53, 49, 0.4);
+            backdrop-filter: blur(5px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .modal-content {
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 24px;
+            width: 90%;
+            max-width: 420px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            text-align: center;
+            transform: scale(0.95);
+            transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+        .modal-overlay.active .modal-content {
+            transform: scale(1);
+        }
+        .modal-title {
+            font-size: 1.3em;
+            font-weight: 700;
+            color: #3d3531;
+            margin-bottom: 20px;
+        }
+        .modal-input {
+            width: 100%;
+            padding: 12px 16px;
+            font-size: 1em;
+            font-family: inherit;
+            border: 2px solid #e2cfc4;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            color: #3d3531;
+            background: #fefaf6;
+            transition: border-color 0.2s;
+        }
+        .modal-input:focus {
+            border-color: #f7a072;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(247, 160, 114, 0.2);
+        }
+        .modal-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+        .modal-btn {
+            flex: 1;
+            padding: 12px;
+            font-size: 1em;
+            font-weight: 700;
+            font-family: inherit;
+            border-radius: 12px;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+        }
+        .modal-btn.cancel {
+            background: #f1eae2;
+            color: #8c7d75;
+        }
+        .modal-btn.cancel:hover {
+            background: #e5ded5;
+        }
+        .modal-btn.submit {
+            background: #f7a072;
+            color: #ffffff;
+            box-shadow: 0 4px 12px rgba(247, 160, 114, 0.3);
+        }
+        .modal-btn.submit:hover {
+            background: #e89163;
+        }
     </style>
 </head>
 <body>
@@ -219,6 +290,18 @@
     </header>
 
     <div class="album-grid" id="albumGrid"></div>
+
+    <!-- アルバム名入力モーダル -->
+    <div class="modal-overlay" id="createModal">
+        <div class="modal-content">
+            <div class="modal-title">新しいアルバムを作成</div>
+            <input type="text" id="albumNameInput" class="modal-input modal-focusable" placeholder="アルバム名を入力してください" value="家族の思い出">
+            <div class="modal-buttons">
+                <button type="button" class="modal-btn cancel modal-focusable" id="cancelModalBtn">キャンセル</button>
+                <button type="button" class="modal-btn submit modal-focusable" id="submitModalBtn">作成する</button>
+            </div>
+        </div>
+    </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -240,12 +323,65 @@
         const db = getFirestore(app);
 
         const albumGrid = document.getElementById('albumGrid');
+        const createModal = document.getElementById('createModal');
+        const albumNameInput = document.getElementById('albumNameInput');
+        const cancelModalBtn = document.getElementById('cancelModalBtn');
+        const submitModalBtn = document.getElementById('submitModalBtn');
+
+        let isModalOpen = false;
+
+        // モーダルを開く関数
+        function openCreateModal() {
+            isModalOpen = true;
+            createModal.classList.add('active');
+            albumNameInput.value = "家族の思い出";
+            setTimeout(() => {
+                albumNameInput.focus();
+                albumNameInput.select();
+            }, 100);
+        }
+
+        // モーダルを閉じる関数
+        function closeCreateModal() {
+            isModalOpen = false;
+            createModal.classList.remove('active');
+            // フォーカスを新規作成カードに戻す
+            const createCard = document.querySelector('.create-album-card');
+            if (createCard) createCard.focus();
+        }
+
+        cancelModalBtn.addEventListener('click', closeCreateModal);
+
+        // 作成実行処理
+        async function handleCreateAlbum() {
+            const albumName = albumNameInput.value.trim() || "無題のアルバム";
+            try {
+                const newAlbumRef = await addDoc(collection(db, "albums"), {
+                    name: albumName,
+                    theme: "default",
+                    createdAt: serverTimestamp()
+                });
+                window.location.href = `albumcreate.html?albumId=${newAlbumRef.id}`;
+            } catch (error) {
+                console.error("アルバムの作成に失敗しました:", error);
+                alert("アルバムの作成に失敗しました。");
+            }
+        }
+
+        submitModalBtn.addEventListener('click', handleCreateAlbum);
+        
+        albumNameInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                handleCreateAlbum();
+            }
+        });
 
         // アルバム一覧のリアルタイム取得
         onSnapshot(collection(db, "albums"), async (snapshot) => {
+            if (isModalOpen) return; // モーダル操作中の再描画を防ぐ
             albumGrid.innerHTML = '';
 
-            // アルバムが1つもない場合は中央寄せ用クラスを付与
             if (snapshot.empty) {
                 albumGrid.classList.add('has-empty-state');
             } else {
@@ -258,7 +394,6 @@
                 const albumId = docSnap.id;
                 const albumTitle = albumData.name || albumData.title || "無題のアルバム";
 
-                // 各アルバムから写真を取得
                 const photosQuery = query(
                     collection(db, "shared_photos"),
                     where("albumId", "==", albumId)
@@ -268,13 +403,9 @@
                 const photoDocs = [];
                 photoSnaps.forEach(p => photoDocs.push(p.data()));
                 
-                // 日付（createdAt）で降順（新しい順）に並び替え
                 photoDocs.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
-                
-                // 最新の写真を最大5枚取得
                 const photoList = photoDocs.slice(0, 5).map(p => p.imageUrl);
 
-                // カード要素作成
                 const card = document.createElement('div');
                 card.className = 'album-card focusable';
                 card.tabIndex = 0;
@@ -300,7 +431,6 @@
                     <div class="album-count">${photoSnaps.size > 0 ? `${photoSnaps.size} 枚の写真` : '0 枚'}</div>
                 `;
 
-                // クリックで該当アルバムへ遷移
                 card.addEventListener('click', () => {
                     window.location.href = `albumcreate.html?albumId=${albumId}`;
                 });
@@ -317,30 +447,36 @@
                 <div class="create-album-text">新しいアルバムを作成する</div>
             `;
 
-            // クリックでFirestoreに新規アルバムを作成してから遷移
-            createCard.addEventListener('click', async () => {
-                try {
-                    const newAlbumRef = await addDoc(collection(db, "albums"), {
-                        name: "新しいアルバム",
-                        theme: "default",
-                        createdAt: serverTimestamp()
-                    });
-                    window.location.href = `albumcreate.html?albumId=${newAlbumRef.id}`;
-                } catch (error) {
-                    console.error("アルバムの作成に失敗しました:", error);
-                    alert("アルバムの作成に失敗しました。");
-                }
-            });
+            // クリック時にモーダルを表示する
+            createCard.addEventListener('click', openCreateModal);
 
             albumGrid.appendChild(createCard);
 
-            // 初期フォーカス設定
             const firstCard = document.querySelector('.album-card.focusable');
-            if (firstCard) firstCard.focus();
+            if (firstCard && !isModalOpen) firstCard.focus();
         });
 
         // TVリモコン・キーボード操作対応
         document.addEventListener('keydown', (e) => {
+            if (isModalOpen) {
+                // モーダルが開いているときのフォーカス移動・キャンセル制御
+                const modalFocusables = Array.from(document.querySelectorAll('.modal-focusable'));
+                const active = document.activeElement;
+                let index = modalFocusables.indexOf(active);
+
+                if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    (modalFocusables[index + 1] || modalFocusables[0]).focus();
+                } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    (modalFocusables[index - 1] || modalFocusables[modalFocusables.length - 1]).focus();
+                } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    closeCreateModal();
+                }
+                return;
+            }
+
             const focusables = Array.from(document.querySelectorAll('.focusable'));
             if (focusables.length === 0) return;
 
