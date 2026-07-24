@@ -884,7 +884,7 @@
             snapshot.forEach((doc) => { photos.push({ id: doc.id, ...doc.data() }); });
             photos.sort((a, b) => (a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0));
 
-            photos.forEach((data) => {
+            photos.forEach((data, index) => {
                 let dateStr = '';
                 if (data.createdAt) {
                     const date = data.createdAt.toDate();
