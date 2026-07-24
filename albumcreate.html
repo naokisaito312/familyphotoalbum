@@ -257,9 +257,23 @@
             white-space: nowrap; padding: 40px 20px 60px 20px; height: 75vh; scroll-behavior: smooth;
         }
 
-        .album-container::-webkit-scrollbar { height: 8px; }
-        .album-container::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.03); border-radius: 10px; }
-        .album-container::-webkit-scrollbar-thumb { background: var(--primary-color); border-radius: 10px; opacity: 0.5; }
+        /* スクロールバー全体の高さ（8px → 4pxへ細く） */
+        .album-container::-webkit-scrollbar { 
+            height: 4px; 
+        }
+        /* スクロールバーの背景（トラック）を透明化 */
+        .album-container::-webkit-scrollbar-track { 
+            background: transparent; 
+        }
+        /* つまみ（バー）を半透明にして目立たなくする */
+        .album-container::-webkit-scrollbar-thumb { 
+            background: rgba(0, 0, 0, 0.15); 
+            border-radius: 10px; 
+        }
+        /* ホバーした時だけ少し濃く見せる */
+        .album-container::-webkit-scrollbar-thumb:hover { 
+            background: rgba(0, 0, 0, 0.3); 
+        }
 
         .photo-card {
             display: inline-flex; flex-direction: column; 
