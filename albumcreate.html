@@ -639,7 +639,7 @@
                     } else {
                         cancelDeleteBtn.focus();
                     }
-                } else if (e.key === 'Enter') {
+                } else if (e.key === 'Enter' && !e.repeat) {
                     e.preventDefault();
                     document.activeElement.click();
                 } else if (e.key === 'Escape' || e.key === 'b' || e.key === 'B') {
@@ -671,17 +671,29 @@
             let currentIndex = focusables.indexOf(active);
 
             // --- 長押し判定処理 (Enter) ---
-            if (e.key === 'Enter' && !e.repeat && active && active.classList.contains('photo-card')) {
-                e.preventDefault();
-                isHoldTriggered = false;
-                active.classList.add('holding');
+            if (e.key === 'Enter') {
+                e.preventDefault(); // Enterキーの標準動作・連打をガード
 
-                holdTimer = setTimeout(() => {
-                    isHoldTriggered = true;
-                    const photoId = active.getAttribute('data-id');
-                    openDeleteModal(photoId);
-                }, HOLD_DURATION);
-                return;
+                if (active && active.classList.contains('photo-card')) {
+                    if (!e.repeat) {
+                        isHoldTriggered = false;
+                        active.classList.add('holding');
+
+                        holdTimer = setTimeout(() => {
+                            isHoldTriggered = true;
+                            active.classList.remove('holding');
+                            const photoId = active.getAttribute('data-id');
+                            openDeleteModal(photoId);
+                        }, HOLD_DURATION);
+                    }
+                } else if (!e.repeat) {
+                    if (active.classList.contains('theme-dot')) {
+                        active.click();
+                    } else if (active.classList.contains('delete-btn')) {
+                        active.click();
+                    }
+                }
+                return; // Enterキー押下時は以降の矢印判定を行わずに終了
             }
 
             if (currentIndex === -1) {
@@ -720,14 +732,6 @@
                     const firstThemeDot = document.querySelector('.theme-dot.focusable');
                     if (firstThemeDot) firstThemeDot.focus();
                 }
-            } else if (e.key === 'Enter') {
-                if (active.classList.contains('theme-dot')) {
-                    e.preventDefault();
-                    active.click();
-                } else if (active.classList.contains('delete-btn')) {
-                    e.preventDefault();
-                    active.click();
-                }
             }
         });
 
@@ -739,13 +743,12 @@
                     holdTimer = null;
                 }
 
-                const active = document.activeElement;
-                if (active && active.classList.contains('photo-card')) {
-                    active.classList.remove('holding');
-                }
+                // 保持用クラスの除去
+                document.querySelectorAll('.photo-card.holding').forEach(el => el.classList.remove('holding'));
 
-                // 短押しの場合は拡大モーダル表示
+                // 短押し（長押し発動前・モーダル未開放時）の場合のみ拡大画面を表示
                 if (!isHoldTriggered && !isDeleteModalOpen && !isModalOpen) {
+                    const active = document.activeElement;
                     if (active && active.classList.contains('photo-card')) {
                         const imgUrl = active.getAttribute('data-img');
                         const comment = active.getAttribute('data-comment');
@@ -753,6 +756,9 @@
                         openModal(imgUrl, comment, dateStr);
                     }
                 }
+
+                // キーを離した時点で長押しフラグを初期化
+                isHoldTriggered = false;
             }
         });
 
