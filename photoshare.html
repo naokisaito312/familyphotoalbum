@@ -12,7 +12,6 @@
         button { width: 100%; padding: 12px; background: #8b5a2b; color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; }
         button:disabled { background: #ccc; }
         #preview { max-width: 100%; margin-bottom: 15px; display: none; border-radius: 5px; }
-        /* エラー表示用のスタイルを追加 */
         #errorMsg { color: #d9534f; font-size: 13px; margin-top: 10px; word-break: break-all; }
     </style>
 </head>
@@ -26,9 +25,9 @@
         <div id="errorMsg"></div>
     </div>
 
+    <!-- Firebase SDK (Firestoreのみ使用) -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
         import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -42,9 +41,9 @@
         };
 
         const app = initializeApp(firebaseConfig);
-        const storage = getStorage(app);
         const db = getFirestore(app);
 
+        // URLから albumId を取得
         const urlParams = new URLSearchParams(window.location.search);
         const albumId = urlParams.get('albumId');
 
@@ -58,9 +57,22 @@
             alert("有効なアルバムURLではありません。");
         }
 
-        // 画像圧縮処理関数（スマホ写真の超軽量化）
-        function compressImage(file, maxWidth = 1200) {
-            return new Promise((resolve) => {
+        // プレビュー表示
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // 画像をBase64文字列に変換・圧縮する関数 (Firestoreの容量制限1MB対策)
+        function convertToBase64(file, maxWidth = 800, quality = 0.7) {
+            return new Promise((resolve, reject) => {
                 const reader = new FileReader();
                 reader.readAsDataURL(file);
                 reader.onload = (e) => {
@@ -81,25 +93,15 @@
                         const ctx = canvas.getContext('2d');
                         ctx.drawImage(img, 0, 0, width, height);
 
-                        canvas.toBlob((blob) => {
-                            resolve(blob);
-                        }, 'image/jpeg', 0.8);
+                        // Base64データURLとして出力
+                        const dataUrl = canvas.toDataURL('image/jpeg', quality);
+                        resolve(dataUrl);
                     };
+                    img.onerror = (err) => reject(err);
                 };
+                reader.onerror = (err) => reject(err);
             });
         }
-
-        fileInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    preview.src = e.target.result;
-                    preview.style.display = 'block';
-                };
-                reader.readAsDataURL(file);
-            }
-        });
 
         uploadBtn.addEventListener('click', async () => {
             errorMsg.innerText = '';
@@ -115,21 +117,18 @@
             }
 
             uploadBtn.disabled = true;
-            uploadBtn.innerText = '写真を最適化中...';
+            uploadBtn.innerText = '画像を準備中...';
 
             try {
-                // 画像をリサイズ・軽量化して高速アップロード可能なBlob形式に変換
-                const compressedBlob = await compressImage(file);
+                // 画像をBase64テキストデータに変換
+                const base64Image = await convertToBase64(file);
 
                 uploadBtn.innerText = '送信中...';
 
-                const storageRef = ref(storage, 'photos/' + Date.now() + '.jpg');
-                const snapshot = await uploadBytes(storageRef, compressedBlob);
-                const downloadURL = await getDownloadURL(snapshot.ref);
-
+                // Storageを使わず、Firestoreに画像データ(imageUrl)としてそのまま保存
                 await addDoc(collection(db, "shared_photos"), {
                     albumId: albumId,
-                    imageUrl: downloadURL,
+                    imageUrl: base64Image, // Base64データ文字列が入ります
                     comment: commentInput.value,
                     createdAt: serverTimestamp()
                 });
@@ -140,9 +139,8 @@
                 commentInput.value = '';
             } catch (error) {
                 console.error("Error uploading: ", error);
-                // スマホ画面上に詳細エラーを表示
                 errorMsg.innerText = 'エラー詳細: ' + (error.message || error);
-                alert('送信に失敗しました。画面下部のエラー内容をご確認ください。');
+                alert('送信に失敗しました。');
             } finally {
                 uploadBtn.disabled = false;
                 uploadBtn.innerText = 'アルバムに送る';
