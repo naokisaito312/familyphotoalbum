@@ -88,6 +88,7 @@
             display: inline-flex; flex-direction: column; background: #ffffff; padding: 10px;
             margin: 0 25px; border-radius: 16px; box-shadow: var(--shadow-card);
             transition: all 0.35s cubic-bezier(0.25, 1, 0.5, 1); flex-shrink: 0; width: 280px; position: relative;
+            cursor: pointer;
         }
 
         .delete-btn {
@@ -119,12 +120,89 @@
         .qr-container img { width: 103px; height: 103px; display: block; margin: 0 auto; border-radius: 10px; background: #ffffff; padding: 5px; }
         .qr-text { font-size: 11px; color: var(--text-main); margin-top: 10px; white-space: normal; font-weight: 700; line-height: 1.3; }
 
-        /* 空の状態の表示 */
         .empty-album {
             color: var(--text-sub);
             font-size: 16px;
             margin: auto;
             text-align: center;
+        }
+
+        /* --- モーダル (全画面拡大表示) --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(20, 15, 12, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            z-index: 1000;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-content {
+            position: relative;
+            max-width: 90vw;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transform: scale(0.9);
+            transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: scale(1);
+        }
+
+        .modal-content img {
+            max-width: 85vw;
+            max-height: 75vh;
+            object-fit: contain;
+            border-radius: 16px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+
+        .modal-caption {
+            background: rgba(255, 255, 255, 0.95);
+            color: var(--text-main);
+            padding: 16px 24px;
+            border-radius: 16px;
+            margin-top: 20px;
+            max-width: 600px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            white-space: normal;
+        }
+
+        .modal-comment {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 6px;
+            color: #2b2523;
+        }
+
+        .modal-date {
+            font-size: 12px;
+            color: var(--text-sub);
+            font-weight: 500;
+        }
+
+        .modal-hint {
+            position: absolute;
+            bottom: 25px;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 0.05em;
         }
     </style>
 </head>
@@ -139,6 +217,18 @@
     </header>
 
     <div class="album-container" id="albumContainer"></div>
+
+    <!-- 全画面拡大用モーダル -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal-content">
+            <img id="modalImg" src="" alt="Enlarged Memory">
+            <div class="modal-caption" id="modalCaption">
+                <div class="modal-comment" id="modalComment"></div>
+                <div class="modal-date" id="modalDate"></div>
+            </div>
+        </div>
+        <div class="modal-hint">[ B ] キーで閉じる</div>
+    </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -165,23 +255,67 @@
             window.location.href = "index.html";
         }
 
-        // --- TV GUI キーボードナビゲーションロジック ---
+        // --- 全画面拡大モーダル制御機能 ---
+        const modalOverlay = document.getElementById('modalOverlay');
+        const modalImg = document.getElementById('modalImg');
+        const modalComment = document.getElementById('modalComment');
+        const modalDate = document.getElementById('modalDate');
+        const modalCaption = document.getElementById('modalCaption');
+        let isModalOpen = false;
+        let lastFocusedElement = null;
+
+        function openModal(imgUrl, comment, dateStr) {
+            lastFocusedElement = document.activeElement;
+            modalImg.src = imgUrl;
+
+            if (comment || dateStr) {
+                modalCaption.style.display = 'block';
+                modalComment.innerText = comment || '';
+                modalDate.innerText = dateStr || '';
+            } else {
+                modalCaption.style.display = 'none';
+            }
+
+            modalOverlay.classList.add('active');
+            isModalOpen = true;
+        }
+
+        function closeModal() {
+            modalOverlay.classList.remove('active');
+            isModalOpen = false;
+            if (lastFocusedElement) {
+                lastFocusedElement.focus();
+            }
+        }
+
+        // クリック時も閉じられるように設定
+        modalOverlay.addEventListener('click', closeModal);
+
+        // --- TV GUI キーボードナビゲーション ---
         function getFocusables() {
             return Array.from(document.querySelectorAll('.focusable'));
         }
 
         document.addEventListener('keydown', (e) => {
-            const active = document.activeElement;
-            const focusables = getFocusables();
+            // モーダルが開いている時の制御
+            if (isModalOpen) {
+                if (e.key === 'b' || e.key === 'B' || e.key === 'Escape') {
+                    e.preventDefault();
+                    closeModal();
+                }
+                return;
+            }
 
-            // Bキー（'b' または 'B'）で一覧画面へ戻る
+            // Bキー（'b' または 'B'）でアルバム一覧に戻る
             if (e.key === 'b' || e.key === 'B') {
                 window.location.href = "index.html";
                 return;
             }
 
+            const focusables = getFocusables();
             if (focusables.length === 0) return;
 
+            const active = document.activeElement;
             let currentIndex = focusables.indexOf(active);
 
             if (currentIndex === -1) {
@@ -200,7 +334,6 @@
                 prev.focus();
                 prev.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
             } else if (e.key === 'ArrowDown') {
-                // カード選択時に下キーで削除ボタンへフォーカス移動
                 if (active.classList.contains('photo-card')) {
                     const deleteBtn = active.querySelector('.delete-btn');
                     if (deleteBtn) {
@@ -209,13 +342,19 @@
                     }
                 }
             } else if (e.key === 'ArrowUp') {
-                // 削除ボタンから上キーで親カードへフォーカス戻し
                 if (active.classList.contains('delete-btn')) {
                     e.preventDefault();
                     active.closest('.photo-card').focus();
                 }
             } else if (e.key === 'Enter') {
-                if (active && active.click) {
+                if (active.classList.contains('photo-card')) {
+                    e.preventDefault();
+                    const imgUrl = active.getAttribute('data-img');
+                    const comment = active.getAttribute('data-comment');
+                    const dateStr = active.getAttribute('data-date');
+                    openModal(imgUrl, comment, dateStr);
+                } else if (active.classList.contains('delete-btn')) {
+                    e.preventDefault();
                     active.click();
                 }
             }
@@ -267,9 +406,13 @@
 
                 const card = document.createElement('div');
                 card.className = 'photo-card focusable';
-                card.tabIndex = 0; // キーボード選択可能化
+                card.tabIndex = 0;
+                card.setAttribute('data-img', data.imageUrl || '');
+                card.setAttribute('data-comment', data.comment || '');
+                card.setAttribute('data-date', dateStr);
+
                 card.innerHTML = `
-                    <button class="delete-btn" data-id="${data.id}" title="削除" tabindex="0">×</button>
+                    <button class="delete-btn" data-id="${data.id}" title="削除" tabindex="-1">×</button>
                     <img src="${data.imageUrl}" alt="Memory">
                     ${data.comment ? `
                         <div class="sticky-note">
@@ -280,13 +423,21 @@
                         <div class="photo-date" style="margin-top: 8px;">${dateStr}</div>
                     `}
                 `;
+
+                // マウスクリック時も全画面拡大
+                card.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('delete-btn')) return;
+                    openModal(data.imageUrl, data.comment, dateStr);
+                });
+
                 albumContainer.appendChild(card);
             });
 
-            // 削除ボタンのリスナー設定
+            // 削除ボタンイベント
             const deleteButtons = document.querySelectorAll('.delete-btn');
             deleteButtons.forEach(button => {
                 button.addEventListener('click', async (e) => {
+                    e.stopPropagation();
                     const id = e.currentTarget.getAttribute('data-id');
                     try {
                         await deleteDoc(doc(db, "shared_photos", id));
@@ -296,10 +447,12 @@
                 });
             });
 
-            // 写真読み込み後に1つ目の写真カードにフォーカス
-            const firstFocusable = document.querySelector('.focusable');
-            if (firstFocusable) {
-                firstFocusable.focus();
+            // フォーカス維持または初期フォーカス設定
+            if (!isModalOpen) {
+                const firstFocusable = document.querySelector('.focusable');
+                if (firstFocusable && !document.activeElement.classList.contains('focusable')) {
+                    firstFocusable.focus();
+                }
             }
         });
     </script>
