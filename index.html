@@ -123,12 +123,21 @@
             box-shadow: 0 12px 25px rgba(0, 0, 0, 0.22), 0 4px 10px rgba(0, 0, 0, 0.12);
         }
 
-        /* ホバー時に写真が少し広がる演出 */
-        .album-card:hover .photo-stack-item.scatter-0 { transform: translate(-60px, -22px) rotate(-18deg) scale(0.88); }
-        .album-card:hover .photo-stack-item.scatter-1 { transform: translate(60px, -15px) rotate(16deg) scale(0.9); }
-        .album-card:hover .photo-stack-item.scatter-2 { transform: translate(-40px, 22px) rotate(-8deg) scale(0.92); }
-        .album-card:hover .photo-stack-item.scatter-3 { transform: translate(45px, 25px) rotate(10deg) scale(0.92); }
-        .album-card:hover .photo-stack-item.main-photo { transform: translate(0, -5px) rotate(0deg) scale(1.1); }
+        /* ホバー時・D-padフォーカス時に写真が少し広がる演出 */
+        .album-card:hover .photo-stack-item.scatter-0,
+        .album-card:focus .photo-stack-item.scatter-0 { transform: translate(-60px, -22px) rotate(-18deg) scale(0.88); }
+        
+        .album-card:hover .photo-stack-item.scatter-1,
+        .album-card:focus .photo-stack-item.scatter-1 { transform: translate(60px, -15px) rotate(16deg) scale(0.9); }
+        
+        .album-card:hover .photo-stack-item.scatter-2,
+        .album-card:focus .photo-stack-item.scatter-2 { transform: translate(-40px, 22px) rotate(-8deg) scale(0.92); }
+        
+        .album-card:hover .photo-stack-item.scatter-3,
+        .album-card:focus .photo-stack-item.scatter-3 { transform: translate(45px, 25px) rotate(10deg) scale(0.92); }
+        
+        .album-card:hover .photo-stack-item.main-photo,
+        .album-card:focus .photo-stack-item.main-photo { transform: translate(0, -5px) rotate(0deg) scale(1.1); }
 
         /* 写真なし（プレースホルダー） */
         .no-photo-placeholder {
