@@ -213,22 +213,35 @@
             const deleteButtons = document.querySelectorAll('.delete-btn');
             deleteButtons.forEach(button => {
                 button.addEventListener('click', async (e) => {
-                    const id = e.target.getAttribute('data-id');
-                    const imageUrl = e.target.getAttribute('data-url');
+                    // e.target を e.currentTarget に変更（より確実にボタン要素を指すようにします）
+                    const id = e.currentTarget.getAttribute('data-id');
+                    const imageUrl = e.currentTarget.getAttribute('data-url');
+                    
+                    // デバッグ用：取得したデータをコンソールに表示
+                    console.log("削除対象 ID:", id);
+                    console.log("削除対象 URL:", imageUrl);
+
+                    if (!id || !imageUrl) {
+                        alert("削除に必要なデータが見つかりません。");
+                        return;
+                    }
                     
                     if (confirm('この写真をアルバムから削除してもよろしいですか？')) {
                         try {
                             // 1. Cloud Storageから画像ファイルを削除
                             const imageRef = ref(storage, imageUrl);
                             await deleteObject(imageRef);
+                            console.log("Storageの画像削除 成功");
 
                             // 2. Firestoreからデータを削除
                             await deleteDoc(doc(db, "shared_photos", id));
+                            console.log("Firestoreのデータ削除 成功");
 
                             alert('削除しました。');
                         } catch (error) {
-                            console.error("Error deleting document: ", error);
-                            alert('削除に失敗しました。');
+                            // エラーの詳細をコンソールに出力
+                            console.error("削除エラーの詳細:", error);
+                            alert('削除に失敗しました。エラー内容はコンソールを確認してください。');
                         }
                     }
                 });
