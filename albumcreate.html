@@ -4,10 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Our Memory Album</title>
-    <!-- Webフォント（Google Fonts: Quicksand / M PLUS Rounded 1c） -->
+    <!-- Webフォント（Quicksand / M PLUS Rounded 1c） -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;500;700&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
     
     <style>
         :root {
@@ -15,11 +15,13 @@
             --primary-hover: #f38345;
             --text-main: #3d3531;
             --text-sub: #8c7d75;
-            --card-bg: #ffffff;
-            --glass-bg: rgba(255, 255, 255, 0.7);
-            --glass-border: rgba(255, 255, 255, 0.8);
-            --shadow-soft: 0 10px 30px rgba(180, 140, 120, 0.15);
-            --shadow-card: 0 12px 24px rgba(60, 40, 30, 0.08);
+            --glass-bg: rgba(255, 255, 255, 0.75);
+            --glass-border: rgba(255, 255, 255, 0.85);
+            
+            /* 落ちる立体的な影の定義 */
+            --shadow-card: 0 15px 35px -5px rgba(60, 40, 30, 0.12), 0 5px 15px -3px rgba(0, 0, 0, 0.05);
+            --shadow-card-hover: 0 25px 45px -5px rgba(60, 40, 30, 0.22), 0 10px 20px -3px rgba(0, 0, 0, 0.08);
+            --shadow-note: 2px 4px 12px rgba(0, 0, 0, 0.08);
         }
 
         * {
@@ -27,7 +29,7 @@
         }
 
         body {
-            /* 温かみのあるサンドベージュ〜ソフトアプリコットの現代的グラデーション */
+            /* 温かみのあるサンドベージュ〜アプリコットの現代的グラデーション */
             background: linear-gradient(135deg, #fefaf6 0%, #f7ede2 50%, #f5e6d8 100%);
             min-height: 100vh;
             color: var(--text-main);
@@ -90,7 +92,6 @@
             font-weight: 700;
             letter-spacing: -0.02em;
             margin: 0;
-            color: #2b2523;
             background: linear-gradient(45deg, #4a3e3d, #8f6b58);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
@@ -100,11 +101,11 @@
         .album-container {
             display: flex;
             flex-direction: row;
-            align-items: center;
+            align-items: flex-start; /* 上揃えにして縦長・横長のカードを自然に並べる */
             overflow-x: auto;
             white-space: nowrap;
-            padding: 30px 20px;
-            height: 72vh;
+            padding: 40px 20px 60px 20px;
+            height: 75vh;
             scroll-behavior: smooth;
         }
 
@@ -124,36 +125,36 @@
             background: rgba(247, 160, 114, 0.7);
         }
 
-        /* --- 写真カード（洗練された洗練カード） --- */
+        /* --- 写真カード（アスペクト比維持 ＆ 立体的な影） --- */
         .photo-card {
             display: inline-flex;
             flex-direction: column;
-            background: var(--card-bg);
-            padding: 14px;
-            margin: 0 20px;
-            border-radius: 20px;
-            box-shadow: var(--shadow-card);
-            border: 1px solid rgba(255, 255, 255, 0.9);
-            transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+            background: #ffffff;
+            padding: 10px;
+            margin: 0 25px;
+            border-radius: 16px;
+            box-shadow: var(--shadow-card); /* 自然に落ちる影 */
+            transition: all 0.35s cubic-bezier(0.25, 1, 0.5, 1);
             flex-shrink: 0;
-            width: 270px;
+            width: 280px; /* カード幅は固定 */
             position: relative;
         }
 
+        /* 浮遊感のあるホバーエフェクト */
         .photo-card:hover {
-            transform: translateY(-8px) scale(1.02);
-            box-shadow: 0 20px 35px rgba(120, 80, 60, 0.15);
+            transform: translateY(-12px);
+            box-shadow: var(--shadow-card-hover);
             z-index: 10;
         }
 
         /* 削除ボタン */
         .delete-btn {
             position: absolute;
-            top: 20px;
-            right: 20px;
-            background: rgba(255, 255, 255, 0.9);
+            top: -10px;
+            right: -10px;
+            background: #ffffff;
             color: #e65b5b;
-            border: none;
+            border: 1px solid rgba(0,0,0,0.05);
             border-radius: 50%;
             width: 32px;
             height: 32px;
@@ -163,11 +164,11 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.12);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
             transition: all 0.2s ease;
             opacity: 0;
             transform: scale(0.8);
-            z-index: 2;
+            z-index: 20;
         }
 
         .photo-card:hover .delete-btn {
@@ -181,34 +182,66 @@
             transform: scale(1.1);
         }
 
+        /* 写真本体：元の解像度・アスペクト比を保って表示 */
         .photo-card img {
             width: 100%;
-            height: 240px;
-            object-fit: cover;
-            border-radius: 14px;
-            /* 古いセピアを排除し、鮮やかで綺麗な発色に */
-            transition: filter 0.3s ease;
+            height: auto; /* ★ アスペクト比を完全維持 */
+            max-height: 380px; /* 縦長画像が大きくなりすぎない保護上限 */
+            object-fit: contain;
+            border-radius: 10px;
+            display: block;
+        }
+
+        /* --- オシャレな付箋（Sticky Note）風コメント欄 --- */
+        .sticky-note {
+            background: #fffdf0; /* やさしいパステルイエローの付箋色 */
+            margin-top: 15px;
+            padding: 12px 14px 10px 14px;
+            border-radius: 4px 4px 12px 4px; /* 右下だけ少し折れた風デザイン */
+            box-shadow: var(--shadow-note);
+            position: relative;
+            transform: rotate(-1deg); /* 付箋らしいわずかな傾き */
+            transition: transform 0.2s ease;
+            border-left: 3px solid #f2e394; /* 付箋のアクセントライン */
+        }
+
+        /* マスキングテープ風の飾り */
+        .sticky-note::before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 50px;
+            height: 15px;
+            background: rgba(247, 160, 114, 0.45); /* 半透明なテープ */
+            border-radius: 2px;
+            backdrop-filter: blur(2px);
+        }
+
+        /* 偶数番目の付箋は逆に少し傾ける */
+        .photo-card:nth-child(even) .sticky-note {
+            transform: rotate(1.5deg);
+            background: #fbf5fc; /* 淡いパステルピンク/ラベンダー付箋 */
+            border-left-color: #e5cef2;
         }
 
         .photo-comment {
-            margin-top: 14px;
-            color: var(--text-main);
-            font-size: 14px;
+            color: #4a403a;
+            font-size: 13px;
             font-weight: 500;
             line-height: 1.5;
             white-space: normal;
             word-wrap: break-word;
-            text-align: center;
-            padding: 0 6px;
+            text-align: left;
         }
 
         .photo-date {
-            font-size: 11px;
+            font-size: 10px;
             font-weight: 700;
-            color: var(--text-sub);
+            color: #9e8e85;
             text-align: right;
-            margin-top: 10px;
-            padding-right: 4px;
+            margin-top: 8px;
         }
 
         /* --- QRコードフローティングパネル（ガラスモフィズム） --- */
@@ -220,7 +253,7 @@
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
             padding: 16px;
-            box-shadow: var(--shadow-soft);
+            box-shadow: 0 10px 30px rgba(180, 140, 120, 0.15);
             border-radius: 20px;
             text-align: center;
             z-index: 100;
@@ -326,8 +359,14 @@
                 card.innerHTML = `
                     <button class="delete-btn" data-id="${data.id}" title="削除">×</button>
                     <img src="${data.imageUrl}" alt="Memory">
-                    <div class="photo-comment">${data.comment || ''}</div>
-                    <div class="photo-date">${dateStr}</div>
+                    ${data.comment ? `
+                        <div class="sticky-note">
+                            <div class="photo-comment">${data.comment}</div>
+                            <div class="photo-date">${dateStr}</div>
+                        </div>
+                    ` : `
+                        <div class="photo-date" style="margin-top: 8px;">${dateStr}</div>
+                    `}
                 `;
                 albumContainer.appendChild(card);
             });
