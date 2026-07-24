@@ -108,27 +108,73 @@
             cursor: pointer;
         }
 
-        /* サムネイル表示エリア */
+        /* サムネイル容器 */
         .album-thumb-container {
             width: 100%;
-            height: 125px;
+            height: 130px;
             border-radius: 14px;
-            overflow: hidden;
             background: linear-gradient(135deg, #fef2eb 0%, #fde2d2 100%);
             display: flex;
             align-items: center;
             justify-content: center;
             margin-bottom: 10px;
+            position: relative;
+            overflow: hidden;
         }
 
-        .album-thumb-img {
+        /* 写真重なりスタック構造 */
+        .photo-stack {
+            position: relative;
             width: 100%;
             height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .stack-img {
+            position: absolute;
+            width: 72%;
+            height: 72%;
             object-fit: cover;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(60, 40, 30, 0.15);
+            border: 2px solid #ffffff;
+            transition: transform 0.25s ease;
+        }
+
+        /* 3枚の配置・回転 */
+        .stack-img:nth-child(1) {
+            transform: translate(-10px, -4px) rotate(-7deg);
+            z-index: 1;
+            opacity: 0.85;
+        }
+        .stack-img:nth-child(2) {
+            transform: translate(10px, -2px) rotate(6deg);
+            z-index: 2;
+            opacity: 0.95;
+        }
+        .stack-img:nth-child(3) {
+            transform: translate(0px, 4px) rotate(-1deg);
+            z-index: 3;
+        }
+
+        /* 枚数に応じた微調整 */
+        .photo-stack.single .stack-img {
+            width: 88%;
+            height: 88%;
+            transform: none !important;
+        }
+
+        .photo-stack.double .stack-img:nth-child(1) {
+            transform: translate(-7px, -2px) rotate(-5deg);
+        }
+        .photo-stack.double .stack-img:nth-child(2) {
+            transform: translate(7px, 2px) rotate(5deg);
         }
 
         .album-no-thumb {
-            font-size: 28px;
+            font-size: 32px;
             color: var(--primary-color);
         }
 
@@ -410,43 +456,42 @@
             }
         });
 
-        // アルバムに属する最新の1枚の写真（サムネイル）を取得する関数
-        async function getAlbumThumbnail(albumId) {
+        // アルバムに属する最新の写真（最大3枚）を取得する関数
+        async function getAlbumThumbnails(albumId) {
             try {
                 const photoQ = query(
                     collection(db, "shared_photos"),
                     where("albumId", "==", albumId),
                     orderBy("createdAt", "desc"),
-                    limit(1)
+                    limit(3)
                 );
                 const snap = await getDocs(photoQ);
                 if (!snap.empty) {
-                    return snap.docs[0].data().imageUrl;
+                    return snap.docs.map(doc => doc.data().imageUrl);
                 }
             } catch (err) {
-                // 複合インデックス未作成の場合のフォールバック (orderByなしで取得)
+                // インデックス未作成時のフォールバック (orderByなし)
                 try {
                     const fallbackQ = query(
                         collection(db, "shared_photos"),
                         where("albumId", "==", albumId),
-                        limit(1)
+                        limit(3)
                     );
                     const fallbackSnap = await getDocs(fallbackQ);
                     if (!fallbackSnap.empty) {
-                        return fallbackSnap.docs[0].data().imageUrl;
+                        return fallbackSnap.docs.map(doc => doc.data().imageUrl);
                     }
                 } catch (e) {
                     console.error("サムネイル取得エラー:", e);
                 }
             }
-            return null;
+            return [];
         }
 
         // アルバム一覧のリアルタイム取得
         const q = query(collection(db, "albums"), orderBy("createdAt", "desc"));
         
         onSnapshot(q, async (snapshot) => {
-            // 新規作成カード以外を一旦削除
             const cards = albumsGrid.querySelectorAll('.album-card');
             cards.forEach(card => card.remove());
 
@@ -460,17 +505,27 @@
                     dateStr = `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}`;
                 }
 
-                // 非同期でサムネイルを取得
-                const thumbnailUrl = await getAlbumThumbnail(albumId);
+                // 複数枚サムネイル画像を取得
+                const imageUrls = await getAlbumThumbnails(albumId);
 
                 const card = document.createElement('a');
                 card.className = 'album-card focusable';
                 card.tabIndex = 0;
                 card.href = `albumcreate.html?albumId=${albumId}`;
 
-                const thumbContent = thumbnailUrl 
-                    ? `<img src="${thumbnailUrl}" class="album-thumb-img" alt="${data.name || 'アルバム'}">`
-                    : `<div class="album-no-thumb">📖</div>`;
+                let thumbContent = '';
+                if (imageUrls.length === 0) {
+                    thumbContent = `<div class="album-no-thumb">📖</div>`;
+                } else {
+                    const stackClass = imageUrls.length === 1 ? 'single' : (imageUrls.length === 2 ? 'double' : 'triple');
+                    
+                    // 最新画像が一番前（Zインデックス上）に来るように順序を調整して描画
+                    const imgsHtml = imageUrls.slice().reverse().map((url) => 
+                        `<img src="${url}" class="stack-img" alt="サムネイル">`
+                    ).join('');
+
+                    thumbContent = `<div class="photo-stack ${stackClass}">${imgsHtml}</div>`;
+                }
 
                 card.innerHTML = `
                     <div class="album-thumb-container">
