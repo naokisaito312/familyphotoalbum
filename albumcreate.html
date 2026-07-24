@@ -59,7 +59,6 @@
             --glass-border: rgba(255, 255, 255, 0.9);
             --focus-glow: 0 0 0 4px #ff9ebb, 0 0 25px rgba(255, 158, 187, 0.65);
         }
-        /* マスキングテープ装飾（パステル時のみ表示） */
         body[data-theme="pastel"] .photo-card::before {
             content: "";
             position: absolute;
@@ -180,6 +179,14 @@
             box-shadow: 0 0 0 3px #e65b5b, 0 0 15px rgba(230, 91, 91, 0.5) !important;
         }
 
+        /* 長押し中の視覚的フィードバック */
+        .photo-card.holding {
+            transform: scale(0.95) !important;
+            border: 3px solid #e74c3c !important;
+            box-shadow: 0 0 20px rgba(231, 76, 60, 0.6) !important;
+            transition: transform 0.1s ease, border 0.1s ease;
+        }
+
         .album-header {
             display: flex;
             align-items: center;
@@ -196,7 +203,7 @@
             transition: background 0.4s ease;
         }
 
-        /* --- テーマ切り替えパレット (選択状態の視覚化) --- */
+        /* --- テーマ切り替えパレット --- */
         .theme-bar {
             position: fixed;
             top: 25px;
@@ -231,7 +238,6 @@
             position: relative;
         }
 
-        /* アクティブ（選択中）のスタイル強調 */
         .theme-dot.active {
             transform: scale(1.25);
             box-shadow: 0 0 0 3px var(--primary-color), 0 4px 12px rgba(0,0,0,0.25);
@@ -245,7 +251,7 @@
         .theme-dot[data-theme="vintage"] { background: #a0826c; }
         .theme-dot[data-theme="dark"] { background: #2a252d; border-color: #e0a96d; }
 
-        /* --- アルバムカード領域（テーマ変数適用） --- */
+        /* --- アルバムカード領域 --- */
         .album-container {
             display: flex; flex-direction: row; align-items: flex-start; overflow-x: auto;
             white-space: nowrap; padding: 40px 20px 60px 20px; height: 75vh; scroll-behavior: smooth;
@@ -315,7 +321,7 @@
             text-align: center;
         }
 
-        /* --- モーダル (全画面拡大表示) --- */
+        /* --- モーダル共通 --- */
         .modal-overlay {
             position: fixed;
             top: 0; left: 0; width: 100vw; height: 100vh;
@@ -383,6 +389,52 @@
             color: #8c7d75;
             font-weight: 500;
         }
+
+        /* --- TV UI 削除確認ポップアップ modal --- */
+        .delete-dialog {
+            background: #ffffff;
+            padding: 30px 40px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            max-width: 420px;
+            width: 90%;
+        }
+
+        .delete-dialog h3 {
+            margin: 0 0 10px 0;
+            color: #3d3531;
+            font-size: 1.4em;
+        }
+
+        .delete-dialog p {
+            margin: 0 0 25px 0;
+            color: #8c7d75;
+            font-size: 0.95em;
+        }
+
+        .delete-dialog-actions {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .modal-btn {
+            padding: 12px 28px;
+            border-radius: 12px;
+            border: 2px solid transparent;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            background: #f0ece9;
+            color: #3d3531;
+            transition: all 0.2s ease;
+        }
+
+        .modal-btn.danger {
+            background: #e74c3c;
+            color: #ffffff;
+        }
     </style>
 </head>
 <body>
@@ -419,6 +471,18 @@
         </div>
     </div>
 
+    <!-- TV UI 削除確認ポップアップモーダル -->
+    <div class="modal-overlay" id="deleteModalOverlay">
+        <div class="delete-dialog">
+            <h3>写真を削除しますか？</h3>
+            <p>この操作は取り消せません。</p>
+            <div class="delete-dialog-actions">
+                <button id="cancelDeleteBtn" class="modal-btn focusable" tabindex="0">キャンセル</button>
+                <button id="confirmDeleteBtn" class="modal-btn danger focusable" tabindex="0">削除する</button>
+            </div>
+        </div>
+    </div>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { 
@@ -450,7 +514,6 @@
         async function applyTheme(themeName, saveToDb = true) {
             document.body.setAttribute('data-theme', themeName);
 
-            // テーマボタンのアクティブ（選択中）状態の表示更新
             document.querySelectorAll('.theme-dot').forEach(dot => {
                 if (dot.getAttribute('data-theme') === themeName) {
                     dot.classList.add('active');
@@ -469,7 +532,6 @@
             }
         }
 
-        // テーマ切り替えボタンのクリックイベント
         document.querySelectorAll('.theme-dot').forEach(dot => {
             dot.addEventListener('click', () => {
                 const selectedTheme = dot.getAttribute('data-theme');
@@ -512,12 +574,73 @@
 
         modalOverlay.addEventListener('click', closeModal);
 
-        // --- TV GUI キーボードナビゲーション ---
+        // --- 削除確認ポップアップ（TV UI / 長押し対応）制御 ---
+        const deleteModalOverlay = document.getElementById('deleteModalOverlay');
+        const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+        const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+        let isDeleteModalOpen = false;
+        let pendingDeletePhotoId = null;
+
+        let holdTimer = null;
+        const HOLD_DURATION = 800; // 長押し完了までの時間(ms)
+        let isHoldTriggered = false;
+
+        function openDeleteModal(photoId) {
+            pendingDeletePhotoId = photoId;
+            lastFocusedElement = document.activeElement;
+            deleteModalOverlay.classList.add('active');
+            isDeleteModalOpen = true;
+            cancelDeleteBtn.focus(); // 誤操作防止のためデフォルトはキャンセル
+        }
+
+        function closeDeleteModal() {
+            deleteModalOverlay.classList.remove('active');
+            isDeleteModalOpen = false;
+            pendingDeletePhotoId = null;
+            if (lastFocusedElement) {
+                lastFocusedElement.classList.remove('holding');
+                lastFocusedElement.focus();
+            }
+        }
+
+        cancelDeleteBtn.addEventListener('click', closeDeleteModal);
+
+        confirmDeleteBtn.addEventListener('click', async () => {
+            if (!pendingDeletePhotoId) return;
+            try {
+                await deleteDoc(doc(db, "shared_photos", pendingDeletePhotoId));
+                closeDeleteModal();
+            } catch (firestoreError) {
+                console.error("Firestoreの削除エラー:", firestoreError);
+            }
+        });
+
+        // --- TV GUI キーボードナビゲーション ＆ 長押し検出 ---
         function getFocusables() {
             return Array.from(document.querySelectorAll('.focusable'));
         }
 
         document.addEventListener('keydown', (e) => {
+            // 削除確認モーダル開いている場合
+            if (isDeleteModalOpen) {
+                if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+                    e.preventDefault();
+                    if (document.activeElement === cancelDeleteBtn) {
+                        confirmDeleteBtn.focus();
+                    } else {
+                        cancelDeleteBtn.focus();
+                    }
+                } else if (e.key === 'Enter') {
+                    e.preventDefault();
+                    document.activeElement.click();
+                } else if (e.key === 'Escape' || e.key === 'b' || e.key === 'B') {
+                    e.preventDefault();
+                    closeDeleteModal();
+                }
+                return;
+            }
+
+            // 画像拡大モーダルが開いている場合
             if (isModalOpen) {
                 if (e.key === 'b' || e.key === 'B' || e.key === 'Escape') {
                     e.preventDefault();
@@ -526,6 +649,7 @@
                 return;
             }
 
+            // 戻るショートカット
             if (e.key === 'b' || e.key === 'B') {
                 window.location.href = "index.html";
                 return;
@@ -536,6 +660,20 @@
 
             const active = document.activeElement;
             let currentIndex = focusables.indexOf(active);
+
+            // 写真カード上での Enter 長押し判定（リピートキーイベント無視）
+            if (e.key === 'Enter' && !e.repeat && active && active.classList.contains('photo-card')) {
+                e.preventDefault();
+                isHoldTriggered = false;
+                active.classList.add('holding');
+
+                holdTimer = setTimeout(() => {
+                    isHoldTriggered = true;
+                    const photoId = active.getAttribute('data-id');
+                    openDeleteModal(photoId);
+                }, HOLD_DURATION);
+                return;
+            }
 
             if (currentIndex === -1) {
                 focusables[0].focus();
@@ -577,15 +715,34 @@
                 if (active.classList.contains('theme-dot')) {
                     e.preventDefault();
                     active.click();
-                } else if (active.classList.contains('photo-card')) {
-                    e.preventDefault();
-                    const imgUrl = active.getAttribute('data-img');
-                    const comment = active.getAttribute('data-comment');
-                    const dateStr = active.getAttribute('data-date');
-                    openModal(imgUrl, comment, dateStr);
                 } else if (active.classList.contains('delete-btn')) {
                     e.preventDefault();
                     active.click();
+                }
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            if (e.key === 'Enter') {
+                // 長押しタイマー解除
+                if (holdTimer) {
+                    clearTimeout(holdTimer);
+                    holdTimer = null;
+                }
+
+                const active = document.activeElement;
+                if (active && active.classList.contains('photo-card')) {
+                    active.classList.remove('holding');
+                }
+
+                // 短押し判定（長押しが成立していなかった場合は拡大モーダル表示）
+                if (!isHoldTriggered && !isDeleteModalOpen && !isModalOpen) {
+                    if (active && active.classList.contains('photo-card')) {
+                        const imgUrl = active.getAttribute('data-img');
+                        const comment = active.getAttribute('data-comment');
+                        const dateStr = active.getAttribute('data-date');
+                        openModal(imgUrl, comment, dateStr);
+                    }
                 }
             }
         });
@@ -641,6 +798,7 @@
                 const card = document.createElement('div');
                 card.className = 'photo-card focusable';
                 card.tabIndex = 0;
+                card.setAttribute('data-id', data.id);
                 card.setAttribute('data-img', data.imageUrl || '');
                 card.setAttribute('data-comment', data.comment || '');
                 card.setAttribute('data-date', dateStr);
@@ -666,22 +824,18 @@
                 albumContainer.appendChild(card);
             });
 
-            // 削除ボタンイベント
+            // 削除ボタン（マウスクリック用）イベント
             const deleteButtons = document.querySelectorAll('.delete-btn');
             deleteButtons.forEach(button => {
-                button.addEventListener('click', async (e) => {
+                button.addEventListener('click', (e) => {
                     e.stopPropagation();
                     const id = e.currentTarget.getAttribute('data-id');
-                    try {
-                        await deleteDoc(doc(db, "shared_photos", id));
-                    } catch (firestoreError) {
-                        console.error("Firestoreの削除エラー:", firestoreError);
-                    }
+                    openDeleteModal(id);
                 });
             });
 
             // フォーカス位置調整
-            if (!isModalOpen) {
+            if (!isModalOpen && !isDeleteModalOpen) {
                 const active = document.activeElement;
                 if (!active || (!active.classList.contains('focusable') && !active.classList.contains('delete-btn'))) {
                     const firstPhoto = document.querySelector('.photo-card.focusable');
