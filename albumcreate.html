@@ -5,13 +5,13 @@
     <title>Our Memory Album</title>
     <style>
         body {
-            background-color: #2c1d11;
+            background-color: #2c1d11; /* 古い木製テーブルのような暗い茶色 */
             background-image: radial-gradient(rgba(0,0,0,0.3) 20%, transparent 80%);
             color: #f5ebe0;
             font-family: 'Georgia', serif;
             margin: 0;
             padding: 40px;
-            overflow-y: hidden;
+            overflow-y: hidden; /* 縦スクロールを防ぐ */
         }
         h1 {
             text-align: center;
@@ -20,27 +20,31 @@
             margin-bottom: 30px;
             color: #e6ccb2;
         }
+        /* 横スクロールするアルバムコンテナ */
         .album-container {
             display: flex;
             flex-direction: row;
             align-items: center;
-            overflow-x: auto;
+            overflow-x: auto; /* 横スクロールを有効に */
             white-space: nowrap;
             padding: 20px;
             height: 70vh;
             scroll-behavior: smooth;
         }
+        /* チェキ風の写真フレーム */
         .photo-card {
             display: inline-block;
-            background: #fdfbf7;
+            background: #fdfbf7; /* 少し黄ばんだ白 */
             padding: 15px 15px 30px 15px;
             margin: 0 25px;
             box-shadow: 5px 10px 20px rgba(0,0,0,0.5);
-            transform: rotate(-2deg);
+            transform: rotate(-2deg); /* 少し傾けてエモさを演出 */
             transition: transform 0.3s ease;
             flex-shrink: 0;
             width: 250px;
+            position: relative; /* 削除ボタンの配置基準 */
         }
+        /* 交互に傾きを変える */
         .photo-card:nth-child(even) {
             transform: rotate(3deg);
         }
@@ -48,16 +52,43 @@
             transform: scale(1.05) rotate(0deg);
             z-index: 10;
         }
+        /* 削除ボタンのデザイン */
+        .delete-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(139, 90, 43, 0.8); /* レトロな茶色半透明 */
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            transition: background 0.2s;
+            opacity: 0; /* 普段は非表示 */
+        }
+        /* カードにホバーした時だけ削除ボタンを表示 */
+        .photo-card:hover .delete-btn {
+            opacity: 1;
+        }
+        .delete-btn:hover {
+            background: #d9534f; /* ホバー時は赤色に */
+        }
         .photo-card img {
             width: 250px;
             height: 250px;
             object-fit: cover;
-            filter: sepia(0.3) contrast(0.9) brightness(0.95);
+            filter: sepia(0.3) contrast(0.9) brightness(0.95); /* セピア・レトロ加工 */
             border: 1px solid #ddd;
         }
         .photo-comment {
             margin-top: 15px;
-            font-family: 'Courier New', Courier, monospace;
+            font-family: 'Courier New', Courier, monospace; /* 手書き風・���イプライター風 */
             color: #4a3b32;
             font-size: 14px;
             white-space: normal;
@@ -81,21 +112,22 @@
     <!-- Firebase SDK の読み込み -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, query, orderBy, onSnapshot, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getStorage, ref, deleteObject } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
         // TODO: あなたのFirebaseプロジェクトの構成情報をここに貼り付けてください
         const firebaseConfig = {
-	  apiKey: "AIzaSyAt3p_mTcyr7XH0xSWcPI9VCU1mzzr4IEk",
-	  authDomain: "family-album-studio.firebaseapp.com",
-	  projectId: "family-album-studio",
-	  storageBucket: "family-album-studio.firebasestorage.app",
-	  messagingSenderId: "10247247724",
-	  appId: "1:10247247724:web:749f7f1c5f30397de2c549",
-	  measurementId: "G-TXM3QH522D"
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
         };
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+        const storage = getStorage(app);
 
         const albumContainer = document.getElementById('albumContainer');
 
@@ -103,20 +135,24 @@
         const q = query(collection(db, "shared_photos"), orderBy("createdAt", "asc"));
         
         onSnapshot(q, (snapshot) => {
-            albumContainer.innerHTML = '';
+            albumContainer.innerHTML = ''; // 画面をクリアして再描画
             
-            snapshot.forEach((doc) => {
-                const data = doc.data();
+            snapshot.forEach((documentSnapshot) => {
+                const data = documentSnapshot.data();
+                const docId = documentSnapshot.id; // ドキュメントIDを取得
                 
+                // 日付のフォーマット
                 let dateStr = '';
                 if (data.createdAt) {
                     const date = data.createdAt.toDate();
                     dateStr = `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()} ${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`;
                 }
 
+                // カード要素の作成
                 const card = document.createElement('div');
                 card.className = 'photo-card';
                 card.innerHTML = `
+                    <button class="delete-btn" data-id="${docId}" data-url="${data.imageUrl}">×</button>
                     <img src="${data.imageUrl}" alt="Memory">
                     <div class="photo-comment">${data.comment || ''}</div>
                     <div class="photo-date">${dateStr}</div>
@@ -124,6 +160,32 @@
                 albumContainer.appendChild(card);
             });
 
+            // 削除ボタンにイベントリスナーを設定
+            const deleteButtons = document.querySelectorAll('.delete-btn');
+            deleteButtons.forEach(button => {
+                button.addEventListener('click', async (e) => {
+                    const id = e.target.getAttribute('data-id');
+                    const imageUrl = e.target.getAttribute('data-url');
+                    
+                    if (confirm('この写真をアルバムから削除してもよろしいですか？')) {
+                        try {
+                            // 1. Cloud Storageから画像ファイルを削除
+                            const imageRef = ref(storage, imageUrl);
+                            await deleteObject(imageRef);
+
+                            // 2. Firestoreからデータを削除
+                            await deleteDoc(doc(db, "shared_photos", id));
+
+                            alert('削除しました。');
+                        } catch (error) {
+                            console.error("Error deleting document: ", error);
+                            alert('削除に失敗しました。');
+                        }
+                    }
+                });
+            });
+
+            // 新しい写真が追加されたら、自動で一番右にスクロール
             albumContainer.scrollLeft = albumContainer.scrollWidth;
         });
     </script>
