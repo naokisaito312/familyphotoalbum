@@ -59,14 +59,15 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // TODO: あなたのFirebaseプロジェクトの構成情報を貼り付けてください
+        // ★ Firebase構成情報を正しく修正
         const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_AUTH_DOMAIN",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_STORAGE_BUCKET",
-            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-            appId: "YOUR_APP_ID"
+          apiKey: "AIzaSyAt3p_mTcyr7XH0xSWcPI9VCU1mzzr4IEk",
+          authDomain: "family-album-studio.firebaseapp.com",
+          projectId: "family-album-studio",
+          storageBucket: "family-album-studio.firebasestorage.app",
+          messagingSenderId: "10247247724",
+          appId: "1:10247247724:web:749f7f1c5f30397de2c549",
+          measurementId: "G-TXM3QH522D"
         };
 
         const app = initializeApp(firebaseConfig);
@@ -89,6 +90,7 @@
                 window.location.href = `albumcreate.html?albumId=${docRef.id}`;
             } catch (e) {
                 console.error("Error creating album: ", e);
+                alert("アルバムの作成に失敗しました。");
             }
         });
 
