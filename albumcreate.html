@@ -212,17 +212,23 @@
             deleteButtons.forEach(button => {
                 button.addEventListener('click', async (e) => {
                     const id = e.currentTarget.getAttribute('data-id');
+                    const imageUrl = e.currentTarget.getAttribute('data-url');
                     
-                    if (confirm('この写真をアルバムから削除してもよろしいですか？')) {
-                        try {
-                            // Firestoreからドキュメントを削除するだけで、保存されている画像データも一緒に消えます
-                            await deleteDoc(doc(db, "shared_photos", id));
-                            console.log("Firestoreのデータ削除 成功");
-                            alert('削除しました。');
-                        } catch (error) {
-                            console.error("削除エラーの詳細:", error);
-                            alert('削除に失敗しました。');
-                        }
+                    // 1. まずCloud Storageから画像ファイルを削除（失敗しても次に進む）
+                    try {
+                        const imageRef = ref(storage, imageUrl);
+                        await deleteObject(imageRef);
+                        console.log("Storageの画像削除 成功");
+                    } catch (storageError) {
+                        console.warn("Storageの画像削除に失敗しました（スキップします）:", storageError);
+                    }
+
+                    // 2. Firestoreからデータを削除（完了アラートは表示しません）
+                    try {
+                        await deleteDoc(doc(db, "shared_photos", id));
+                        console.log("Firestoreのデータ削除 成功");
+                    } catch (firestoreError) {
+                        console.error("Firestoreの削除エラー:", firestoreError);
                     }
                 });
             });
