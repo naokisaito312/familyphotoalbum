@@ -191,6 +191,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            gap: 20px; /* タイトルとQRコードの間の余白 */
             margin-bottom: 20px;
             padding: 10px 20px;
             position: relative;
@@ -320,13 +321,41 @@
         .photo-date { font-size: 10px; font-weight: 700; color: var(--text-sub); text-align: right; margin-top: 8px; }
 
         .qr-container {
-            position: fixed; top: 25px; right: 30px; background: var(--glass-bg);
-            backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); padding: 16px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08); border-radius: 20px; text-align: center;
-            z-index: 100; border: 1px solid var(--glass-border); width: 135px;
+            /* fixed配置を解除してヘッダー内に収める */
+            position: relative; 
+            top: auto;
+            right: auto;
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            padding: 10px 14px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+            border-radius: 16px;
+            text-align: center;
+            z-index: 10;
+            border: 1px solid var(--glass-border);
+            width: auto; /* サイズをコンパクトに調整 */
+            flex-shrink: 0;
         }
-        .qr-container img { width: 103px; height: 103px; display: block; margin: 0 auto; border-radius: 10px; background: #ffffff; padding: 5px; }
-        .qr-text { font-size: 11px; color: var(--text-main); margin-top: 10px; white-space: normal; font-weight: 700; line-height: 1.3; }
+
+        .qr-container img { 
+            width: 70px;  /* タイトル横に収まりやすいよう少し小ぶりに調整 */
+            height: 70px; 
+            display: block; 
+            margin: 0 auto; 
+            border-radius: 8px; 
+            background: #ffffff; 
+            padding: 4px; 
+        }
+
+        .qr-text { 
+            font-size: 10px; 
+            color: var(--text-main); 
+            margin-top: 6px; 
+            white-space: nowrap; 
+            font-weight: 700; 
+            line-height: 1.2; 
+        }
 
         .empty-album {
             color: var(--text-sub);
@@ -466,14 +495,13 @@
         <div class="theme-dot focusable" tabindex="0" data-theme="dark" title="シネマティック"></div>
     </div>
 
-    <!-- スマホ送信用QRコード (画面右上) -->
-    <div class="qr-container" id="qrContainer">
-        <img id="qrImage" src="" alt="QR Code">
-        <div class="qr-text">スマホで送る</div>
-    </div>
-    
     <header class="album-header">
         <h1 id="albumTitle">アルバム</h1>
+        <!-- タイトルの右側に配置 -->
+        <div class="qr-container" id="qrContainer">
+            <img id="qrImage" src="" alt="QR Code">
+            <div class="qr-text">スマホで送る</div>
+        </div>
     </header>
 
     <div class="album-container" id="albumContainer"></div>
