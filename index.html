@@ -203,16 +203,21 @@
                 const albumId = docSnap.id;
                 const albumTitle = albumData.name || albumData.title || "無題のアルバム";
 
-                // 各アルバムから最新の写真を取得（最大5枚）
+                // 各アルバムから最新の写真を取得（orderByを使わず、取得後にJavaScriptで並び替え）
                 const photosQuery = query(
                     collection(db, "shared_photos"),
-                    where("albumId", "==", albumId),
-                    orderBy("createdAt", "desc"),
-                    limit(5)
+                    where("albumId", "==", albumId)
                 );
-
+                
                 const photoSnaps = await getDocs(photosQuery);
-                const photoList = [];
+                const photoDocs = [];
+                photoSnaps.forEach(p => photoDocs.push(p.data()));
+                
+                // 日付（createdAt）で降順（新しい順）に並び替え
+                photoDocs.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+                
+                // 写真URLのリストを取得（最大5枚）
+                const photoList = photoDocs.slice(0, 5).map(p => p.imageUrl);
                 photoSnaps.forEach(p => photoList.push(p.data().imageUrl));
 
                 // カード要素作成
