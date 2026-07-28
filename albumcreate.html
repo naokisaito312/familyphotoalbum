@@ -281,19 +281,18 @@
         .album-container::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.15); border-radius: 10px; }
         .album-container::-webkit-scrollbar-thumb:hover { background: rgba(0, 0, 0, 0.3); }
 
-        /* --- グループコンテナ（横並びでグループ間に余白を確保） --- */
+        /* --- グループコンテナ --- */
         .time-group-column {
             display: inline-flex;
             flex-direction: row;
             align-items: flex-start;
             flex-shrink: 0;
-            margin-right: 100px; /* グループごとの間隔 */
+            margin-right: 100px;
             vertical-align: top;
             position: relative;
             z-index: 2;
         }
 
-        /* グループ先頭のカードを包むラッパー：見出しとカードを縦に配置する */
         .photo-card-wrapper {
             display: inline-flex;
             flex-direction: column;
@@ -306,7 +305,7 @@
             gap: 70px;
         }
 
-        /* --- グループ先頭の写真の上に配置される見出し（編集可能バッジ） --- */
+        /* --- 見出しバッジ --- */
         .group-header-badge {
             display: inline-flex;
             align-items: center;
@@ -376,7 +375,7 @@
         .photo-comment { color: var(--text-main); font-size: 13px; font-weight: 500; line-height: 1.5; white-space: normal; word-wrap: break-word; text-align: left; }
         .photo-date { font-size: 10px; font-weight: 700; color: var(--text-sub); text-align: right; margin-top: 8px; }
 
-        /* --- ヘッダー内のQRコード --- */
+        /* --- QRコード --- */
         .qr-container {
             position: relative; 
             top: auto;
@@ -413,7 +412,6 @@
             line-height: 1.2; 
         }
 
-        /* --- 写真ゼロのときのセンター大画面QRコード用スタイル --- */
         .empty-album-wrapper {
             display: flex;
             flex-direction: column;
@@ -460,13 +458,10 @@
             line-height: 1.6;
         }
 
-        /* --- モーダル共通スタイル --- */
+        /* --- モーダル --- */
         .modal-overlay {
             position: fixed;
-            top: 0; 
-            left: 0; 
-            width: 100vw; 
-            height: 100vh;
+            top: 0; left: 0; width: 100vw; height: 100vh;
             background: rgba(15, 12, 10, 0.85);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
@@ -520,20 +515,9 @@
             white-space: normal;
         }
 
-        .modal-comment {
-            font-size: 16px;
-            font-weight: 700;
-            margin-bottom: 6px;
-            color: #2b2523;
-        }
+        .modal-comment { font-size: 16px; font-weight: 700; margin-bottom: 6px; color: #2b2523; }
+        .modal-date { font-size: 12px; color: #8c7d75; font-weight: 500; }
 
-        .modal-date {
-            font-size: 12px;
-            color: #8c7d75;
-            font-weight: 500;
-        }
-
-        /* --- ダイアログ（削除・見出し編集共通） --- */
         .delete-dialog, .edit-dialog {
             background: #ffffff;
             padding: 30px 40px;
@@ -545,17 +529,8 @@
             white-space: normal;
         }
 
-        .delete-dialog h3, .edit-dialog h3 {
-            margin: 0 0 10px 0;
-            color: #3d3531;
-            font-size: 1.4em;
-        }
-
-        .delete-dialog p, .edit-dialog p {
-            margin: 0 0 20px 0;
-            color: #8c7d75;
-            font-size: 0.95em;
-        }
+        .delete-dialog h3, .edit-dialog h3 { margin: 0 0 10px 0; color: #3d3531; font-size: 1.4em; }
+        .delete-dialog p, .edit-dialog p { margin: 0 0 20px 0; color: #8c7d75; font-size: 0.95em; }
 
         .edit-input {
             width: 100%;
@@ -593,19 +568,11 @@
             transition: all 0.2s ease;
         }
 
-        .modal-btn.primary {
-            background: var(--primary-color);
-            color: #ffffff;
-        }
-
-        .modal-btn.danger {
-            background: #e74c3c;
-            color: #ffffff;
-        }
+        .modal-btn.primary { background: var(--primary-color); color: #ffffff; }
+        .modal-btn.danger { background: #e74c3c; color: #ffffff; }
     </style>
 </head>
 <body>
-    <!-- テーマ切り替えバー（画面左上） -->
     <div class="theme-bar" id="themeBar">
         <span class="theme-label">テーマ</span>
         <div class="theme-dot focusable active" tabindex="0" data-theme="default" title="暖色クラシック"></div>
@@ -620,7 +587,6 @@
             <h1 id="albumTitle">アルバム</h1>
             <div class="album-date-subtitle" id="albumDateSubtitle"></div>
         </div>
-        <!-- タイトルの右側にあるQRコード（写真がある時に表示） -->
         <div class="qr-container" id="qrContainer">
             <img id="qrImage" src="" alt="QR Code">
             <div class="qr-text">スマホで送る</div>
@@ -629,7 +595,6 @@
 
     <div class="album-container" id="albumContainer"></div>
 
-    <!-- 全画面拡大用モーダル -->
     <div class="modal-overlay" id="modalOverlay">
         <div class="modal-content">
             <img id="modalImg" src="" alt="Enlarged Memory">
@@ -640,7 +605,6 @@
         </div>
     </div>
 
-    <!-- TV UI 削除確認ポップアップモーダル -->
     <div class="modal-overlay" id="deleteModalOverlay">
         <div class="delete-dialog">
             <h3>写真を削除しますか？</h3>
@@ -652,7 +616,6 @@
         </div>
     </div>
 
-    <!-- 見出し編集用モーダル -->
     <div class="modal-overlay" id="editModalOverlay">
         <div class="edit-dialog">
             <h3>見出しの編集</h3>
@@ -812,7 +775,7 @@
             }
         });
 
-        // --- 見出し編集モーダル関連変数 ---
+        // --- 見出し編集モーダル ---
         const editModalOverlay = document.getElementById('editModalOverlay');
         const cancelEditBtn = document.getElementById('cancelEditBtn');
         const confirmEditBtn = document.getElementById('confirmEditBtn');
@@ -850,8 +813,19 @@
         confirmEditBtn.addEventListener('click', async () => {
             if (!activeEditingGroupKey) return;
             const newTitle = groupTitleInput.value.trim();
+            
+            // 1. ローカルストレージに即時保存（確実な表示のため）
+            let localHeadings = {};
             try {
-                // アルバムドキュメント内にカスタム見出しを保存（例: customHeadings: { "group_0": "楽しかったランチタイム" }）
+                const saved = localStorage.getItem(`album_headings_${albumId}`);
+                if (saved) localHeadings = JSON.parse(saved);
+            } catch(e) {}
+            localHeadings[activeEditingGroupKey] = newTitle;
+            localStorage.setItem(`album_headings_${albumId}`, JSON.stringify(localHeadings));
+            albumCustomHeadings = localHeadings;
+
+            // 2. Firebase（Firestore）への保存試行
+            try {
                 const albumRef = doc(db, "albums", albumId);
                 const albumSnap = await getDoc(albumRef);
                 let customHeadings = {};
@@ -860,11 +834,14 @@
                 }
                 customHeadings[activeEditingGroupKey] = newTitle;
 
-                await updateDoc(albumRef, { customHeadings });
-                closeEditModal();
+                await setDoc(albumRef, { customHeadings }, { merge: true });
             } catch (err) {
-                console.error("見出しの保存に失敗しました:", err);
+                console.warn("Firestoreへの見出し保存がスキップされました（ローカルには保存済み）:", err);
             }
+
+            closeEditModal();
+            // 画面を再描画して即座に新しい見出しを表示
+            renderAlbumUI();
         });
 
         function getFocusables() {
@@ -1011,7 +988,6 @@
                     const deleteBtn = active.querySelector('.delete-btn');
                     if (deleteBtn) deleteBtn.focus();
                 } else if (active.classList.contains('group-header-badge')) {
-                    // 見出しから下のカードへ移動
                     const card = active.closest('.photo-card-wrapper').querySelector('.photo-card');
                     if (card) card.focus();
                 }
@@ -1020,7 +996,6 @@
                 if (active.classList.contains('delete-btn')) {
                     active.closest('.photo-card-wrapper').querySelector('.photo-card').focus();
                 } else if (active.classList.contains('photo-card')) {
-                    // カードから上の見出しへ移動（見出しがあれば）
                     const badge = active.closest('.photo-card-wrapper').querySelector('.group-header-badge');
                     if (badge) {
                         badge.focus();
@@ -1062,9 +1037,16 @@
         });
 
         let albumCustomHeadings = {};
+        let latestPhotosSnapshot = null;
 
         async function fetchAlbumInfo() {
             try {
+                // まずローカルストレージからカスタム見出しを読み込み
+                try {
+                    const saved = localStorage.getItem(`album_headings_${albumId}`);
+                    if (saved) albumCustomHeadings = JSON.parse(saved);
+                } catch(e) {}
+
                 const albumRef = doc(db, "albums", albumId);
                 const albumSnap = await getDoc(albumRef);
                 if (albumSnap.exists()) {
@@ -1077,7 +1059,8 @@
                         applyTheme(data.theme, false);
                     }
                     if (data.customHeadings) {
-                        albumCustomHeadings = data.customHeadings;
+                        // DB上の見出しをマージ
+                        albumCustomHeadings = { ...albumCustomHeadings, ...data.customHeadings };
                     }
                 }
             } catch (error) {
@@ -1101,9 +1084,9 @@
             return isNaN(d.getTime()) ? new Date() : d;
         }
 
-        onSnapshot(q, async (snapshot) => {
-            // 最新のアルバムカスタム見出しも再取得しておく
-            await fetchAlbumInfo();
+        function renderAlbumUI() {
+            if (!latestPhotosSnapshot) return;
+            const snapshot = latestPhotosSnapshot;
 
             albumContainer.innerHTML = '';
             const qrContainerElement = document.getElementById('qrContainer');
@@ -1156,7 +1139,7 @@
                 document.getElementById('albumDateSubtitle').innerText = dateSubtitle;
             }
 
-            const GAP_THRESHOLD_SECONDS = 2 * 60 * 60; // 2時間以上空いたら別グループ
+            const GAP_THRESHOLD_SECONDS = 2 * 60 * 60;
 
             const groups = [];
             let currentGroup = null;
@@ -1194,7 +1177,6 @@
                     const cardWrapper = document.createElement('div');
                     cardWrapper.className = 'photo-card-wrapper';
 
-                    // グループ先頭の写真の上にのみ、フォーカス＆編集可能な見出しバッジを表示
                     if (index === 0) {
                         const headerBadge = document.createElement('div');
                         headerBadge.className = 'group-header-badge focusable';
@@ -1269,6 +1251,12 @@
                     if (firstPhoto) firstPhoto.focus();
                 }
             }
+        }
+
+        onSnapshot(q, async (snapshot) => {
+            latestPhotosSnapshot = snapshot;
+            await fetchAlbumInfo();
+            renderAlbumUI();
         });
     </script>
 </body>
