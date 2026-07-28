@@ -282,13 +282,13 @@
             flex-direction: row;
             align-items: flex-start;
             flex-shrink: 0;
-            margin-right: 45px; /* グループごとの間隔を広めに設定 */
+            margin-right: 45px; /* グループごとの間隔 */
             vertical-align: top;
             position: relative;
             z-index: 2;
         }
 
-        /* 各写真カードを包むラッパー：見出しとカードを縦に配置する */
+        /* グループ先頭のカードを包むラッパー：見出しとカードを縦に配置する */
         .photo-card-wrapper {
             display: inline-flex;
             flex-direction: column;
@@ -300,21 +300,21 @@
             z-index: 2;
         }
 
-        /* 各写真の上に個別に配置される見出し */
-        .photo-card-header {
+        /* グループ先頭の写真の上にのみ配置される見出し（写真カードとは異なるデザイン） */
+        .group-header-badge {
             display: inline-flex;
             align-items: center;
-            padding: 5px 10px;
-            margin-bottom: 8px;
-            background: var(--glass-bg);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border-radius: 10px;
-            font-weight: bold;
-            font-size: 0.8em;
+            padding: 6px 14px;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(240, 240, 240, 0.8));
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 0.85em;
             color: var(--text-main);
-            border: 1px solid var(--glass-border);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            border: 2px solid var(--primary-color);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
             white-space: nowrap;
             position: relative;
             z-index: 10;
@@ -1033,15 +1033,17 @@
                     const timeRangeStr = `${hour}時頃`;
                     const formattedDateStr = `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
 
-                    // 写真1枚ごとに「見出し + カード」を包むラッパー
+                    // 写真1枚ごとにカードを包むラッパー
                     const cardWrapper = document.createElement('div');
                     cardWrapper.className = 'photo-card-wrapper';
 
-                    // 写真ごとの個別の小さな見出し
-                    const headerDiv = document.createElement('div');
-                    headerDiv.className = 'photo-card-header';
-                    headerDiv.innerHTML = `⏰ <span style="color: var(--primary-color);">${timeRangeStr}</span>`;
-                    cardWrapper.appendChild(headerDiv);
+                    // 【変更】グループ内の先頭の写真カードの上にのみ、独立したデザインの見出しを表示
+                    if (index === 0) {
+                        const headerBadge = document.createElement('div');
+                        headerBadge.className = 'group-header-badge';
+                        headerBadge.innerHTML = `⏱ <span style="margin-left: 4px; color: var(--text-main);">${timeRangeStr}</span>`;
+                        cardWrapper.appendChild(headerBadge);
+                    }
 
                     const card = document.createElement('div');
                     card.className = 'photo-card focusable';
