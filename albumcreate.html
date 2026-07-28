@@ -1047,10 +1047,9 @@
                     if (deleteBtn) deleteBtn.focus();
                 } else if (e.key === 'ArrowUp') {
                     e.preventDefault();
-                    // 写真カードが属するグループ全体（またはセクション）のコンテナを取得
-                    // ※HTMLの構造に合わせて '.photo-group' や '.album-section' などのクラス名に変更してください
-                    const groupContainer = active.closest('.photo-group') || active.closest('section') || active.parentElement;
-                    const badge = groupContainer ? groupContainer.querySelector('.group-header-badge') : null;
+                    // 写真カードが属する時間グループ列（.time-group-column）を取得し、その中にある最初の見出しを探す
+                    const groupColumn = active.closest('.time-group-column');
+                    const badge = groupColumn ? groupColumn.querySelector('.group-header-badge') : null;
                     
                     if (badge) {
                         badge.focus();
