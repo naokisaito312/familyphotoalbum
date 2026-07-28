@@ -300,9 +300,9 @@
             flex-shrink: 0;
             margin: 0 12px;
             vertical-align: top;
-            position: relative;
+            position: relative; /* 子要素のabsoluteの基準にする */
             z-index: 2;
-            gap: 50px;
+            padding-bottom: 50px; /* ゴミ箱アイコンが入る余白を下に確保する */
         }
 
         /* --- 見出しバッジ --- */
@@ -366,9 +366,9 @@
 
         .delete-btn {
             position: absolute;
-            bottom: -45px;
+            bottom: 5px; /* カードの下部からの位置を調整 */
             left: 50%;
-            transform: translateX(-50%);
+            transform: translateX(-50%); /* 完全に左右中央に合わせる */
             background: rgba(30, 30, 35, 0.70);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
@@ -1016,21 +1016,20 @@
             else if (active.classList.contains('delete-btn')) {
                 if (e.key === 'ArrowUp') {
                     e.preventDefault();
-                    const card = active.closest('.photo-card');
+                    const wrapper = active.closest('.photo-card-wrapper');
+                    const card = wrapper ? wrapper.querySelector('.photo-card.focusable') : null;
                     if (card) card.focus();
                 } else if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
                     e.preventDefault();
-                    // ゴミ箱から左右を押した時は、隣の写真カードにフォーカスを移す
-                    const photoCards = Array.from(document.querySelectorAll('.photo-card.focusable'));
-                    const currentCard = active.closest('.photo-card');
-                    const idx = photoCards.indexOf(currentCard);
+                    const deleteButtons = Array.from(document.querySelectorAll('.delete-btn.focusable'));
+                    const idx = deleteButtons.indexOf(active);
                     if (idx !== -1) {
                         const nextIdx = e.key === 'ArrowRight' 
-                            ? (idx + 1) % photoCards.length 
-                            : (idx - 1 + photoCards.length) % photoCards.length;
-                        const targetCard = photoCards[nextIdx];
-                        targetCard.focus();
-                        targetCard.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                            ? (idx + 1) % deleteButtons.length 
+                            : (idx - 1 + deleteButtons.length) % deleteButtons.length;
+                        const targetBtn = deleteButtons[nextIdx];
+                        targetBtn.focus();
+                        targetBtn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
                     }
                 }
             }
