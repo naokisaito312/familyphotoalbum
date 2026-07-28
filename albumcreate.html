@@ -856,9 +856,10 @@
         let isDeleteModalOpen = false;
         let pendingDeletePhotoId = null;
 
-        function openDeleteModal(photoId) {
+        function openDeleteModal(photoId, triggerElement) {
             pendingDeletePhotoId = photoId;
-            lastFocusedElement = document.activeElement;
+            // 削除ボタンやカードなど、開いたときの要素を直接保持（なければ現在のフォーカス）
+            lastFocusedElement = triggerElement || document.activeElement;
             
             deleteModalOverlay.classList.add('active');
             isDeleteModalOpen = true;
@@ -868,24 +869,47 @@
             }, 50);
         }
 
-        function closeDeleteModal() {
+        function closeDeleteModal(returnTarget = null) {
             deleteModalOverlay.classList.remove('active');
             isDeleteModalOpen = false;
             pendingDeletePhotoId = null;
-            if (lastFocusedElement) {
-                lastFocusedElement.focus();
+            
+            const target = returnTarget || lastFocusedElement;
+            if (target && typeof target.focus === 'function') {
+                target.focus();
+                if (typeof target.scrollIntoView === 'function') {
+                    target.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                }
             }
         }
 
-        cancelDeleteBtn.addEventListener('click', closeDeleteModal);
+        cancelDeleteBtn.addEventListener('click', () => closeDeleteModal());
 
         confirmDeleteBtn.addEventListener('click', async () => {
             if (!pendingDeletePhotoId) return;
+            
+            // 削除前に、現在の写真カード一覧から「次の写真」の要素を見つけておく
+            const photoCards = Array.from(document.querySelectorAll('.photo-card.focusable'));
+            let nextFocusTarget = null;
+            
+            for (let i = 0; i < photoCards.length; i++) {
+                if (photoCards[i].getAttribute('data-id') === pendingDeletePhotoId) {
+                    // 次のカードがあればそれを、最後なら一つ前のカードを候補にする
+                    if (i + 1 < photoCards.length) {
+                        nextFocusTarget = photoCards[i + 1];
+                    } else if (i - 1 >= 0) {
+                        nextFocusTarget = photoCards[i - 1];
+                    }
+                    break;
+                }
+            }
+
             try {
                 await deleteDoc(doc(db, "shared_photos", pendingDeletePhotoId));
-                closeDeleteModal();
+                closeDeleteModal(nextFocusTarget);
             } catch (firestoreError) {
                 console.error("Firestoreの削除エラー:", firestoreError);
+                closeDeleteModal();
             }
         });
 
@@ -901,10 +925,10 @@
         let editModeType = null; // 'group' または 'photo'
         let activeEditingKey = null; // groupKey または photoId
 
-        function openEditModalForGroup(groupKey, currentText) {
+        function openEditModalForGroup(groupKey, currentText, triggerElement) {
             editModeType = 'group';
             activeEditingKey = groupKey;
-            lastFocusedElement = document.activeElement;
+            lastFocusedElement = triggerElement || document.activeElement;
             
             editModalTitle.innerText = "見出しの編集";
             editModalDesc.innerText = "このグループの自由なタイトルを入力してください。";
@@ -919,10 +943,10 @@
             }, 50);
         }
 
-        function openEditModalForPhoto(photoId, currentComment) {
+        function openEditModalForPhoto(photoId, currentComment, triggerElement) {
             editModeType = 'photo';
             activeEditingKey = photoId;
-            lastFocusedElement = document.activeElement;
+            lastFocusedElement = triggerElement || document.activeElement;
             
             editModalTitle.innerText = "写真コメントの編集";
             editModalDesc.innerText = "この写真に添えるコメントを入力してください。";
@@ -944,8 +968,11 @@
             activeEditingKey = null;
 
             setTimeout(() => {
-                if (lastFocusedElement) {
+                if (lastFocusedElement && typeof lastFocusedElement.focus === 'function') {
                     lastFocusedElement.focus();
+                    if (typeof lastFocusedElement.scrollIntoView === 'function') {
+                        lastFocusedElement.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                    }
                 }
             }, 100);
         }
@@ -1078,7 +1105,7 @@
                     } else if (active.classList.contains('group-header-badge')) {
                         const groupKey = active.getAttribute('data-group-key');
                         const currentText = active.getAttribute('data-current-text');
-                        openEditModalForGroup(groupKey, currentText);
+                        openEditModalForGroup(groupKey, currentText, active);
                     } else if (active.classList.contains('photo-card')) {
                         active.click();
                     }
@@ -1384,8 +1411,8 @@
                             <span>${displayTitle}</span>
                         `;
                                                 
-                        headerBadge.addEventListener('click', () => {
-                            openEditModalForGroup(groupKey, displayTitle);
+                        headerBadge.addEventListener('click', (e) => {
+                            openEditModalForGroup(groupKey, displayTitle, headerBadge);
                         });
 
                         cardWrapper.appendChild(headerBadge);
@@ -1448,7 +1475,7 @@
                     
                     editBtn.addEventListener('click', (e) => {
                         e.stopPropagation();
-                        openEditModalForPhoto(data.id, data.comment || "");
+                        openEditModalForPhoto(data.id, data.comment || "", card);
                     });
                     editBtn.addEventListener('focus', handleFocusIn);
                     editBtn.addEventListener('blur', handleFocusOut);
@@ -1462,7 +1489,7 @@
                     
                     deleteBtn.addEventListener('click', (e) => {
                         e.stopPropagation();
-                        openDeleteModal(data.id);
+                        openDeleteModal(data.id, card);
                     });
                     deleteBtn.addEventListener('focus', handleFocusIn);
                     deleteBtn.addEventListener('blur', handleFocusOut);
