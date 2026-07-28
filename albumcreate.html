@@ -962,12 +962,29 @@
         }
 
         function closeEditModal() {
+            // 保存直前の編集対象IDを一時保存しておく
+            const editedKey = activeEditingKey;
+            const editedType = editModeType;
+
             editModalOverlay.classList.remove('active');
             isEditModalOpen = false;
             editModeType = null;
             activeEditingKey = null;
 
             setTimeout(() => {
+                // 写真コメントの編集だった場合は、該当する写真カードにフォーカスを当てる
+                if (editedType === 'photo' && editedKey) {
+                    const targetCard = document.querySelector(`.photo-card.focusable[data-id="${editedKey}"]`);
+                    if (targetCard) {
+                        targetCard.focus();
+                        if (typeof targetCard.scrollIntoView === 'function') {
+                            targetCard.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                        }
+                        return;
+                    }
+                }
+
+                // グループ見出しの編集や、その他のフォールバック
                 if (lastFocusedElement && typeof lastFocusedElement.focus === 'function') {
                     lastFocusedElement.focus();
                     if (typeof lastFocusedElement.scrollIntoView === 'function') {
