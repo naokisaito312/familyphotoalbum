@@ -905,64 +905,130 @@
 
             const photos = [];
             snapshot.forEach((doc) => { photos.push({ id: doc.id, ...doc.data() }); });
+            
+            // 1. 全体を古い順にソート (撮影日時 takenAt 優先)
             photos.sort((a, b) => {
                 const timeA = a.takenAt?.seconds || (a.takenAt ? new Date(a.takenAt).getTime() / 1000 : 0) || (a.createdAt?.seconds || 0);
                 const timeB = b.takenAt?.seconds || (b.takenAt ? new Date(b.takenAt).getTime() / 1000 : 0) || (b.createdAt?.seconds || 0);
                 return timeA - timeB;
             });
 
-            photos.forEach((data, index) => {
-                let dateStr = '';
-                // 撮影日時 (takenAt) があれば優先し、なければ登録日時 (createdAt) を使用する
+            // 2. 撮影時間の分布を見て動的にグループ分け（クラスタリング）する
+            // 閾値：写真と写真の間隔が「2時間 (7200秒)」以上空いたら別の群（イベント）とみなす
+            const GAP_THRESHOLD_SECONDS = 2 * 60 * 60; 
+
+            const groups = [];
+            let currentGroup = null;
+
+            photos.forEach((data) => {
                 const targetDateObj = data.takenAt || data.createdAt;
-                
+                let date = new Date();
                 if (targetDateObj) {
-                    // Firestoreの Timestamp 型か、通常の Date / 文字列かを判別して Date オブジェクトに変換
-                    let date;
-                    if (typeof targetDateObj.toDate === 'function') {
-                        date = targetDateObj.toDate();
-                    } else {
-                        date = new Date(targetDateObj);
-                    }
+                    date = typeof targetDateObj.toDate === 'function' ? targetDateObj.toDate() : new Date(targetDateObj);
+                }
+                if (isNaN(date.getTime())) return;
+
+                const timestamp = date.getTime() / 1000; // 秒単位
+
+                // 初回、または前の写真から一定時間以上空いている場合は新しいグループを作成
+                if (!currentGroup || (timestamp - currentGroup.lastTimestamp > GAP_THRESHOLD_SECONDS)) {
+                    currentGroup = {
+                        startTime: date,
+                        lastTimestamp: timestamp,
+                        items: []
+                    };
+                    groups.push(currentGroup);
+                }
+
+                // グループの最終タイムスタンプを更新し、写真を追加
+                currentGroup.lastTimestamp = timestamp;
+                currentGroup.items.push({ data, date });
+            });
+
+            // 3. グループごとに画面へ描画していく
+            albumContainer.innerHTML = ''; // コンテナをクリア
+
+            groups.forEach((group, groupIndex) => {
+                const firstDate = group.items[0].date;
+                const lastDate = group.items[group.items.length - 1].date;
+
+                const year = firstDate.getFullYear();
+                const month = firstDate.getMonth() + 1;
+                const day = firstDate.getDate();
+                const dateStr = `${year}年${month}月${day}日`;
+
+                const startHour = String(firstDate.getHours()).padStart(2, '0');
+                const startMin = String(firstDate.getMinutes()).padStart(2, '0');
                 
-                    if (!isNaN(date.getTime())) {
-                        dateStr = `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()} ${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`;
+                let timeRangeStr = `${startHour}:${startMin}頃`;
+                
+                // グループ内に複数枚あり、開始と終了で時間が異なる場合は範囲表示にする（お好みで）
+                if (group.items.length > 1) {
+                    const endHour = String(lastDate.getHours()).padStart(2, '0');
+                    const endMin = String(lastDate.getMinutes()).padStart(2, '0');
+                    if (startHour !== endHour || startMin !== endMin) {
+                        timeRangeStr = `${startHour}:${startMin} 〜 ${endHour}:${endMin}`;
                     }
                 }
 
-                const card = document.createElement('div');
-                card.className = 'photo-card focusable';
-                card.tabIndex = 0;
-                card.setAttribute('data-id', data.id);
-                card.setAttribute('data-img', data.imageUrl || '');
-                card.setAttribute('data-comment', data.comment || '');
-                card.setAttribute('data-date', dateStr);
-
-                const randomRotate = (Math.sin(index * 999) * 10).toFixed(1); 
-                const randomOffsetY = (Math.cos(index * 888) * 35).toFixed(1);
+                // --- グループの見出し（ヘッダー）を作成 ---
+                const headerDiv = document.createElement('div');
+                headerDiv.className = 'time-group-header';
+                // 横スクロールのアルバム内できれいに配置するためのスタイル調整例
+                headerDiv.style.display = 'inline-flex';
+                headerDiv.style.alignItems = 'center';
+                headerDiv.style.padding = '10px 18px';
+                headerDiv.style.margin = '0 10px';
+                headerDiv.style.background = 'var(--glass-bg)';
+                headerDiv.style.backdropFilter = 'blur(10px)';
+                headerDiv.style.borderRadius = '14px';
+                headerDiv.style.fontWeight = 'bold';
+                headerDiv.style.fontSize = '1em';
+                headerDiv.style.color = 'var(--text-main)';
+                headerDiv.style.border = '1px solid var(--glass-border)';
+                headerDiv.style.boxShadow = '0 4px 12px rgba(0,0,0,0.05)';
+                headerDiv.innerHTML = `<span>📅 ${dateStr} &nbsp; ⏰ <span style="color: var(--primary-color);">${timeRangeStr}</span> (${group.items.length}枚)</span>`;
                 
-                card.style.setProperty('--rotate', `${randomRotate}deg`);
-                card.style.setProperty('--offset-y', `${randomOffsetY}px`);
+                albumContainer.appendChild(headerDiv);
 
-                card.innerHTML = `
-                    <button class="delete-btn" data-id="${data.id}" title="削除" tabindex="-1">×</button>
-                    <img src="${data.imageUrl}" alt="Memory">
-                    ${data.comment ? `
-                        <div class="sticky-note">
-                            <div class="photo-comment">${data.comment}</div>
-                            <div class="photo-date">${dateStr}</div>
-                        </div>
-                    ` : `
-                        <div class="photo-date" style="margin-top: 8px;">${dateStr}</div>
-                    `}
-                `;
+                // --- そのグループに属する写真カードを順番に生成 ---
+                group.items.forEach(({ data, date }, index) => {
+                    const formattedDateStr = `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
 
-                card.addEventListener('click', (e) => {
-                    if (e.target.classList.contains('delete-btn')) return;
-                    openModal(data.imageUrl, data.comment, dateStr);
+                    const card = document.createElement('div');
+                    card.className = 'photo-card focusable';
+                    card.tabIndex = 0;
+                    card.setAttribute('data-id', data.id);
+                    card.setAttribute('data-img', data.imageUrl || '');
+                    card.setAttribute('data-comment', data.comment || '');
+                    card.setAttribute('data-date', formattedDateStr);
+
+                    const randomRotate = (Math.sin((groupIndex * 10 + index) * 999) * 10).toFixed(1); 
+                    const randomOffsetY = (Math.cos((groupIndex * 10 + index) * 888) * 35).toFixed(1);
+                    
+                    card.style.setProperty('--rotate', `${randomRotate}deg`);
+                    card.style.setProperty('--offset-y', `${randomOffsetY}px`);
+
+                    card.innerHTML = `
+                        <button class="delete-btn" data-id="${data.id}" title="削除" tabindex="-1">×</button>
+                        <img src="${data.imageUrl}" alt="Memory">
+                        ${data.comment ? `
+                            <div class="sticky-note">
+                                <div class="photo-comment">${data.comment}</div>
+                                <div class="photo-date">${formattedDateStr}</div>
+                            </div>
+                        ` : `
+                            <div class="photo-date" style="margin-top: 8px;">${formattedDateStr}</div>
+                        `}
+                    `;
+
+                    card.addEventListener('click', (e) => {
+                        if (e.target.classList.contains('delete-btn')) return;
+                        openModal(data.imageUrl, data.comment, formattedDateStr);
+                    });
+
+                    albumContainer.appendChild(card);
                 });
-
-                albumContainer.appendChild(card);
             });
 
             const deleteButtons = document.querySelectorAll('.delete-btn');
