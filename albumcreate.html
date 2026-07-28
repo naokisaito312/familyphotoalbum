@@ -1041,7 +1041,6 @@
 
         async function fetchAlbumInfo() {
             try {
-                // まずローカルストレージからカスタム見出しを読み込み
                 try {
                     const saved = localStorage.getItem(`album_headings_${albumId}`);
                     if (saved) albumCustomHeadings = JSON.parse(saved);
@@ -1059,7 +1058,6 @@
                         applyTheme(data.theme, false);
                     }
                     if (data.customHeadings) {
-                        // DB上の見出しをマージ
                         albumCustomHeadings = { ...albumCustomHeadings, ...data.customHeadings };
                     }
                 }
@@ -1201,9 +1199,10 @@
                     card.setAttribute('data-date', formattedDateStr);
 
                     const randomRotate = (Math.sin((groupIndex * 10 + index) * 999) * 10).toFixed(1); 
-                    let randomOffsetY = (Math.cos((groupIndex * 10 + index) * 888) * 35).toFixed(1);
                     
-                    if (index > 0 && Number(randomOffsetY) < 0) {
+                    // 修正点：縦方向のオフセットでマイナス（上向き）になるのを防ぎ、下方向（0以上）にのみずれるように制限
+                    let randomOffsetY = (Math.cos((groupIndex * 10 + index) * 888) * 35).toFixed(1);
+                    if (Number(randomOffsetY) < 0) {
                         randomOffsetY = 0;
                     }
                     
