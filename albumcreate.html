@@ -299,16 +299,16 @@
             position: relative;
             z-index: 2;
             /* 見出しと写真の間に適切な隙間を確保し、上部の領域を分ける */
-            gap: 50px;
+            gap: 70px;
         }
 
         /* --- グループ先頭の写真の上に配置される見出し（薄い黒色ベース） --- */
         .group-header-badge {
             display: inline-flex;
             align-items: center;
-            padding: 6px 14px;
+            padding: 6px 16px;
             margin-bottom: 0; /* 余白はwrapperのgapで管理 */
-            background: rgba(30, 30, 35, 0.90);
+            background: rgba(30, 30, 35, 0.50);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
             border-radius: 20px;
@@ -1055,7 +1055,7 @@
                     card.setAttribute('data-date', formattedDateStr);
 
                     const randomRotate = (Math.sin((groupIndex * 10 + index) * 999) * 10).toFixed(1); 
-                    const randomOffsetY = (Math.cos((groupIndex * 10 + index) * 888) * 20).toFixed(1);
+                    const randomOffsetY = (Math.cos((groupIndex * 10 + index) * 888) * 40).toFixed(1);
                     
                     card.style.setProperty('--rotate', `${randomRotate}deg`);
                     card.style.setProperty('--offset-y', `${Number(randomOffsetY)}px`);
