@@ -1021,15 +1021,17 @@
                     if (card) card.focus();
                 } else if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
                     e.preventDefault();
-                    const deleteButtons = Array.from(document.querySelectorAll('.delete-btn.focusable'));
-                    const idx = deleteButtons.indexOf(active);
+                    const photoCards = Array.from(document.querySelectorAll('.photo-card.focusable'));
+                    const currentWrapper = active.closest('.photo-card-wrapper');
+                    const currentCard = currentWrapper ? currentWrapper.querySelector('.photo-card.focusable') : null;
+                    const idx = photoCards.indexOf(currentCard);
                     if (idx !== -1) {
                         const nextIdx = e.key === 'ArrowRight' 
-                            ? (idx + 1) % deleteButtons.length 
-                            : (idx - 1 + deleteButtons.length) % deleteButtons.length;
-                        const targetBtn = deleteButtons[nextIdx];
-                        targetBtn.focus();
-                        targetBtn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                            ? (idx + 1) % photoCards.length 
+                            : (idx - 1 + photoCards.length) % photoCards.length;
+                        const targetCard = photoCards[nextIdx];
+                        targetCard.focus();
+                        targetCard.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
                     }
                 }
             }
