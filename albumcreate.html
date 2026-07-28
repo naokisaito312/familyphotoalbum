@@ -1044,6 +1044,11 @@
                         headerBadge.className = 'group-header-badge';
                         headerBadge.innerHTML = `<span style="margin-left: 4px; color: #f0ebe5;">${timeRangeStr}</span>`;
                         cardWrapper.appendChild(headerBadge);
+                    } else {
+                        // 2枚目以降は見出しがない分の高さを調整するための空スペース、またはマージンを持たせる
+                        const spacer = document.createElement('div');
+                        spacer.style.height = '35px'; // 見出しの高さ＋ギャップ分に相当する調整
+                        cardWrapper.appendChild(spacer);
                     }
 
                     const card = document.createElement('div');
@@ -1055,12 +1060,8 @@
                     card.setAttribute('data-date', formattedDateStr);
 
                     const randomRotate = (Math.sin((groupIndex * 10 + index) * 999) * 10).toFixed(1); 
-                    let randomOffsetY = (Math.cos((groupIndex * 10 + index) * 888) * 35).toFixed(1);
-                    
-                    // 2枚目以降（index > 0）の写真が上に見出しより飛び出さないよう、マイナス値（上へのズレ）を完全に 0 以上にする
-                    if (index > 0 && Number(randomOffsetY) < 0) {
-                        randomOffsetY = 0; // または下側にだけずらしたい場合は Math.abs(randomOffsetY) に変更
-                    }
+                    // 2枚目以降はそもそもマイナス（上方向）のオフセットが発生しないように絶対値または 0 以上にする
+                    let randomOffsetY = index === 0 ? (Math.cos((groupIndex * 10 + index) * 888) * 35).toFixed(1) : (Math.abs(Math.cos((groupIndex * 10 + index) * 888)) * 20).toFixed(1);
                     
                     card.style.setProperty('--rotate', `${randomRotate}deg`);
                     card.style.setProperty('--offset-y', `${Number(randomOffsetY)}px`);
