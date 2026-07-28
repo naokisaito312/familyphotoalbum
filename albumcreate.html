@@ -905,7 +905,11 @@
 
             const photos = [];
             snapshot.forEach((doc) => { photos.push({ id: doc.id, ...doc.data() }); });
-            photos.sort((a, b) => (a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0));
+            photos.sort((a, b) => {
+                const timeA = a.takenAt?.seconds || (a.takenAt ? new Date(a.takenAt).getTime() / 1000 : 0) || (a.createdAt?.seconds || 0);
+                const timeB = b.takenAt?.seconds || (b.takenAt ? new Date(b.takenAt).getTime() / 1000 : 0) || (b.createdAt?.seconds || 0);
+                return timeA - timeB;
+            });
 
             photos.forEach((data, index) => {
                 let dateStr = '';
