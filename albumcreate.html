@@ -945,53 +945,44 @@
                 currentGroup.items.push({ data, date });
             });
 
-            // 3. グループごとに画面へ描画していく
+            // グループごとに画面へ描画していく
             albumContainer.innerHTML = ''; // コンテナをクリア
 
             groups.forEach((group, groupIndex) => {
                 const firstDate = group.items[0].date;
-                const lastDate = group.items[group.items.length - 1].date;
 
                 const year = firstDate.getFullYear();
                 const month = firstDate.getMonth() + 1;
                 const day = firstDate.getDate();
                 const dateStr = `${year}年${month}月${day}日`;
 
-                const startHour = String(firstDate.getHours()).padStart(2, '0');
-                const startMin = String(firstDate.getMinutes()).padStart(2, '0');
-                
-                let timeRangeStr = `${startHour}:${startMin}頃`;
-                
-                // グループ内に複数枚あり、開始と終了で時間が異なる場合は範囲表示にする（お好みで）
-                if (group.items.length > 1) {
-                    const endHour = String(lastDate.getHours()).padStart(2, '0');
-                    const endMin = String(lastDate.getMinutes()).padStart(2, '0');
-                    if (startHour !== endHour || startMin !== endMin) {
-                        timeRangeStr = `${startHour}:${startMin} 〜 ${endHour}:${endMin}`;
-                    }
-                }
+                const hour = firstDate.getHours();
+                // 「13時頃」のようなシンプルな表現にする
+                const timeRangeStr = `${hour}時頃`;
 
-                // --- グループの見出し（ヘッダー）を作成 ---
+                // --- ① 見出しカード（グループヘッダー）を作成 ---
                 const headerDiv = document.createElement('div');
                 headerDiv.className = 'time-group-header';
-                // 横スクロールのアルバム内できれいに配置するためのスタイル調整例
-                headerDiv.style.display = 'inline-flex';
-                headerDiv.style.alignItems = 'center';
-                headerDiv.style.padding = '10px 18px';
-                headerDiv.style.margin = '0 10px';
+                
+                // グリッドレイアウトで全体にまたがるように設定（または横スクロール用のスタイルに適宜調整）
+                headerDiv.style.gridColumn = '1 / -1'; 
+                headerDiv.style.width = '100%';
+                headerDiv.style.margin = '24px 0 12px 0';
+                headerDiv.style.padding = '12px 18px';
                 headerDiv.style.background = 'var(--glass-bg)';
                 headerDiv.style.backdropFilter = 'blur(10px)';
                 headerDiv.style.borderRadius = '14px';
                 headerDiv.style.fontWeight = 'bold';
-                headerDiv.style.fontSize = '1em';
+                headerDiv.style.fontSize = '1.1em';
                 headerDiv.style.color = 'var(--text-main)';
                 headerDiv.style.border = '1px solid var(--glass-border)';
-                headerDiv.style.boxShadow = '0 4px 12px rgba(0,0,0,0.05)';
-                headerDiv.innerHTML = `<span>📅 ${dateStr} &nbsp; ⏰ <span style="color: var(--primary-color);">${timeRangeStr}</span> (${group.items.length}枚)</span>`;
+                headerDiv.style.boxShadow = '0 4px 12px rgba(0,0,0,0.04)';
+                
+                headerDiv.innerHTML = `📅 ${dateStr} &nbsp; <span style="color: var(--primary-color);">⏰ ${timeRangeStr}</span> の写真 (${group.items.length}枚)`;
                 
                 albumContainer.appendChild(headerDiv);
 
-                // --- そのグループに属する写真カードを順番に生成 ---
+                // --- ② そのグループに属する写真カードを順番に生成 ---
                 group.items.forEach(({ data, date }, index) => {
                     const formattedDateStr = `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
 
