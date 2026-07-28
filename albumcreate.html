@@ -1190,6 +1190,11 @@
                         });
 
                         cardWrapper.appendChild(headerBadge);
+                    } else {
+                        // 2枚目以降は見出しがない分の高さを調整するための空スペース、またはマージンを持たせる
+                        const spacer = document.createElement('div');
+                        spacer.style.height = '35px'; // 見出しの高さ＋ギャップ分に相当する調整
+                        cardWrapper.appendChild(spacer);
                     }
 
                     const card = document.createElement('div');
@@ -1202,8 +1207,7 @@
 
                     const randomRotate = (Math.sin((groupIndex * 10 + index) * 999) * 10).toFixed(1); 
                     
-                    // 修正点：縦方向のオフセットが絶対にマイナス（上方向）にならないよう完全に0以上に制限
-                    let randomOffsetY = (Math.abs(Math.cos((groupIndex * 10 + index) * 888)) * 35).toFixed(1);
+                    let randomOffsetY = index === 0 ? (Math.cos((groupIndex * 10 + index) * 888) * 35).toFixed(1) : (Math.abs(Math.cos((groupIndex * 10 + index) * 888)) * 20).toFixed(1);
                     
                     card.style.setProperty('--rotate', `${randomRotate}deg`);
                     card.style.setProperty('--offset-y', `${Number(randomOffsetY)}px`);
