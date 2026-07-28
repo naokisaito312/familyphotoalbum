@@ -8,7 +8,7 @@
     <!-- Webフォント -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;500;700&family=Quicksand:wght@500;700&family=Shippori+Mincho:wght@500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;500;700&family=Quicksand:wght@500;700&family=Shippori+Mincho:wght@500;700&family=Yusei+Magic&display=swap" rel="stylesheet">
 
     <style>
         /* ==========================================================================
@@ -36,12 +36,14 @@
             --glass-border: rgba(255, 255, 255, 0.85);
             --focus-glow: 0 0 0 4px #f7a072, 0 0 25px rgba(247, 160, 114, 0.65);
             
-            /* 見出しタグ用変数 */
+            /* 見出しタグ用変数（マステ風付箋） */
+            --badge-font: 'Yusei Magic', 'M PLUS Rounded 1c', sans-serif;
             --badge-bg: #fffdf4;
-            --badge-border: 2px solid #e6d5b8;
+            --badge-border: 1px solid #e6d5b8;
             --badge-text: #5c4a42;
-            --badge-shadow: 0 4px 12px rgba(90, 70, 50, 0.08);
+            --badge-shadow: 0 6px 16px rgba(90, 70, 50, 0.12);
             --badge-hover-bg: #fff5e1;
+            --badge-tape: rgba(247, 160, 114, 0.45);
         }
 
         /* --- 2. パステルスイート (ポップ・マステ風装飾) --- */
@@ -66,11 +68,13 @@
             --glass-border: rgba(255, 255, 255, 0.9);
             --focus-glow: 0 0 0 4px #ff9ebb, 0 0 25px rgba(255, 158, 187, 0.65);
 
+            --badge-font: 'M PLUS Rounded 1c', sans-serif;
             --badge-bg: #fff0f5;
             --badge-border: 2px dashed #ffb6c1;
             --badge-text: #7a4f5f;
-            --badge-shadow: 0 4px 12px rgba(255, 150, 170, 0.15);
+            --badge-shadow: 0 6px 16px rgba(255, 150, 170, 0.18);
             --badge-hover-bg: #ffe4ec;
+            --badge-tape: rgba(255, 158, 187, 0.5);
         }
         body[data-theme="pastel"] .photo-card::before {
             content: "";
@@ -108,11 +112,13 @@
             --glass-border: rgba(255, 255, 255, 0.9);
             --focus-glow: 0 0 0 4px #43b0f1, 0 0 25px rgba(67, 176, 241, 0.65);
 
+            --badge-font: 'Quicksand', 'M PLUS Rounded 1c', sans-serif;
             --badge-bg: #eaf6ff;
             --badge-border: 2px solid #a6dfff;
             --badge-text: #245b7c;
-            --badge-shadow: 0 4px 12px rgba(67, 176, 241, 0.1);
+            --badge-shadow: 0 6px 16px rgba(67, 176, 241, 0.12);
             --badge-hover-bg: #d4efff;
+            --badge-tape: rgba(67, 176, 241, 0.4);
         }
 
         /* --- 4. ノスタルジックヴィンテージ (クラシック・ステッチ感) --- */
@@ -137,11 +143,13 @@
             --glass-border: rgba(255, 255, 255, 0.6);
             --focus-glow: 0 0 0 4px #a0826c, 0 0 25px rgba(160, 130, 108, 0.65);
 
+            --badge-font: 'Shippori Mincho', serif;
             --badge-bg: #ede4d8;
             --badge-border: 2px dashed #bdaaa0;
             --badge-text: #59473f;
-            --badge-shadow: 0 4px 12px rgba(60, 45, 35, 0.12);
+            --badge-shadow: 0 6px 16px rgba(60, 45, 35, 0.15);
             --badge-hover-bg: #e2d6c7;
+            --badge-tape: rgba(160, 130, 108, 0.4);
         }
 
         /* --- 5. シネマティックダーク (スタイリッシュ・ゴールド枠) --- */
@@ -166,11 +174,13 @@
             --glass-border: rgba(255, 255, 255, 0.1);
             --focus-glow: 0 0 0 4px #e0a96d, 0 0 30px rgba(224, 169, 109, 0.8);
 
+            --badge-font: 'Shippori Mincho', serif;
             --badge-bg: #29232f;
             --badge-border: 2px solid rgba(224, 169, 109, 0.4);
             --badge-text: #e0a96d;
-            --badge-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+            --badge-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
             --badge-hover-bg: #362e3d;
+            --badge-tape: rgba(224, 169, 109, 0.35);
         }
 
         /* --- ページ遷移アニメーション --- */
@@ -205,7 +215,7 @@
         }
 
         .group-header-badge.focusable:focus {
-            transform: translateY(-4px) scale(1.08) !important;
+            transform: translateY(-4px) scale(1.08) rotate(0deg) !important;
             background: var(--badge-hover-bg) !important;
         }
 
@@ -343,16 +353,17 @@
             padding-bottom: 50px;
         }
 
-        /* --- 見出しバッジ --- */
+        /* --- 見出しバッジ（マステ付き手書き付箋風） --- */
         .group-header-badge {
             display: inline-flex;
             align-items: center;
-            padding: 8px 20px;
+            padding: 12px 22px 10px 22px;
             background: var(--badge-bg);
             border: var(--badge-border);
-            border-radius: 8px;
-            font-weight: 700;
-            font-size: 0.9em;
+            border-radius: 6px;
+            font-family: var(--badge-font);
+            font-weight: 500;
+            font-size: 1.05em;
             color: var(--badge-text);
             box-shadow: var(--badge-shadow);
             white-space: nowrap;
@@ -360,7 +371,25 @@
             cursor: pointer;
             transition: all 0.25s ease;
             margin-bottom: 75px;
-            transform: rotate(-1deg);
+            transform: rotate(-1.5deg);
+            position: relative;
+        }
+
+        /* マスキングテープ風の装飾 */
+        .group-header-badge::before {
+            content: "";
+            position: absolute;
+            top: -9px;
+            left: 50%;
+            transform: translateX(-50%) rotate(1deg);
+            width: 55px;
+            height: 18px;
+            background: var(--badge-tape);
+            border-left: 2px dashed rgba(255, 255, 255, 0.6);
+            border-right: 2px dashed rgba(255, 255, 255, 0.6);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            pointer-events: none;
+            z-index: 2;
         }
         
         .group-header-badge:hover {
@@ -369,8 +398,8 @@
         }
 
         .group-edit-icon {
-            width: 20px;
-            height: 20px;
+            width: 18px;
+            height: 18px;
             object-fit: contain;
             opacity: 0;
             width: 0;
@@ -382,7 +411,7 @@
         .group-header-badge:hover .group-edit-icon,
         .group-header-badge:focus .group-edit-icon {
             opacity: 1;
-            width: 20px;
+            width: 18px;
             margin-right: 6px;
         }
         
