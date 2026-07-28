@@ -1588,9 +1588,11 @@
             }
         }
 
-        onSnapshot(q, async (snapshot) => {
+        // 初回のみアルバム情報を取得しておく
+        fetchAlbumInfo();
+
+        onSnapshot(q, (snapshot) => {
             latestPhotosSnapshot = snapshot;
-            await fetchAlbumInfo();
             renderAlbumUI();
         });
     </script>
