@@ -877,32 +877,45 @@
             }, 50);
         }
 
-        function closeDeleteModal(nextFocusTarget = null) {
+        function closeDeleteModal(wasDeleted = false, deletedPhotoId = null) {
             deleteModalOverlay.classList.remove('active');
             isDeleteModalOpen = false;
             pendingDeletePhotoId = null;
 
+            // DOMの再描画（Firestoreの変更検知）を少し待ってからフォーカスを復元する
             setTimeout(() => {
-                // 1. 引数で「次のフォーカス先」が渡されている場合、またはあらかじめ保持していた targetNextElement がある場合
-                const focusTarget = nextFocusTarget || targetNextElement;
-                if (focusTarget && typeof focusTarget.focus === 'function') {
-                    focusTarget.focus();
-                    if (typeof focusTarget.scrollIntoView === 'function') {
-                        focusTarget.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                // 1. 指定されたターゲットIDがある場合、それを最優先で探す
+                if (window.targetFocusCardId) {
+                    const foundCard = document.querySelector(`.photo-card.focusable[data-id="${window.targetFocusCardId}"]`);
+                    window.targetFocusCardId = null;
+                    if (foundCard) {
+                        foundCard.focus();
+                        if (typeof foundCard.scrollIntoView === 'function') {
+                            foundCard.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                        }
+                        return;
                     }
-                    targetNextElement = null;
+                }
+
+                // 2. 残っているカードの先頭にフォールバック
+                const photoCards = Array.from(document.querySelectorAll('.photo-card.focusable'));
+                if (photoCards.length > 0) {
+                    const targetCard = photoCards[0];
+                    targetCard.focus();
+                    if (typeof targetCard.scrollIntoView === 'function') {
+                        targetCard.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                    }
                     return;
                 }
 
-                // 2. キャンセル時など、元の要素に戻す場合
+                // 3. 最後の手段として元の要素に戻す
                 if (lastFocusedElement && typeof lastFocusedElement.focus === 'function') {
                     lastFocusedElement.focus();
                     if (typeof lastFocusedElement.scrollIntoView === 'function') {
                         lastFocusedElement.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
                     }
                 }
-                targetNextElement = null;
-            }, 100);
+            }, 200);
         }
 
         cancelDeleteBtn.addEventListener('click', () => closeDeleteModal());
@@ -910,28 +923,33 @@
         confirmDeleteBtn.addEventListener('click', async () => {
             if (!pendingDeletePhotoId) return;
             
-            // 削除前に、現在の写真カード一覧から「次の写真」の要素を見つけておく
+            // 削除処理の前に、現在のカード一覧から「次にフォーカスすべきカードのID」を特定しておく
             const photoCards = Array.from(document.querySelectorAll('.photo-card.focusable'));
-            let nextFocusTarget = null;
+            let targetCardId = null;
             
             for (let i = 0; i < photoCards.length; i++) {
                 if (photoCards[i].getAttribute('data-id') === pendingDeletePhotoId) {
-                    // 次のカードがあればそれを、最後なら一つ前のカードを候補にする
+                    // 次のカードがあればそのID、なければ一つ前のカードのIDを保持
                     if (i + 1 < photoCards.length) {
-                        nextFocusTarget = photoCards[i + 1];
+                        targetCardId = photoCards[i + 1].getAttribute('data-id');
                     } else if (i - 1 >= 0) {
-                        nextFocusTarget = photoCards[i - 1];
+                        targetCardId = photoCards[i - 1].getAttribute('data-id');
                     }
                     break;
                 }
             }
+            
+            window.targetFocusCardId = targetCardId;
+            const deleteId = pendingDeletePhotoId;
 
             try {
-                await deleteDoc(doc(db, "shared_photos", pendingDeletePhotoId));
-                closeDeleteModal(nextFocusTarget);
+                // 先にモーダルを閉じて画面の操作性をスムーズにしつつ削除を実行
+                closeDeleteModal(true, deleteId);
+                await deleteDoc(doc(db, "shared_photos", deleteId));
             } catch (firestoreError) {
                 console.error("Firestoreの削除エラー:", firestoreError);
-                closeDeleteModal();
+                window.targetFocusCardId = null;
+                alert("削除に失敗しました。");
             }
         });
 
