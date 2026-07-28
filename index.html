@@ -91,7 +91,7 @@
             border-radius: 3px;
         }
 
-        /* アルバムが1つもない（作成カードのみの）場合は中央に配置 */
+        /* アルバムが1つもない場合は中央に配置 */
         .album-container.has-empty-state {
             justify-content: center;
             align-items: center;
@@ -120,6 +120,27 @@
             align-items: center;
             width: 360px;
             height: 420px;
+        }
+
+        /* --- テーマ別のカード背景スタイル --- */
+        .album-card.theme-default {
+            background: rgba(255, 255, 255, 0.85);
+        }
+        .album-card.theme-warm {
+            background: linear-gradient(135deg, rgba(255, 243, 230, 0.9) 0%, rgba(255, 224, 204, 0.85) 100%);
+            border-color: rgba(255, 204, 179, 0.6);
+        }
+        .album-card.theme-cool {
+            background: linear-gradient(135deg, rgba(230, 243, 255, 0.9) 0%, rgba(204, 229, 255, 0.85) 100%);
+            border-color: rgba(179, 217, 255, 0.6);
+        }
+        .album-card.theme-pastel {
+            background: linear-gradient(135deg, rgba(243, 230, 255, 0.9) 0%, rgba(235, 204, 255, 0.85) 100%);
+            border-color: rgba(220, 179, 255, 0.6);
+        }
+        .album-card.theme-nature {
+            background: linear-gradient(135deg, rgba(230, 255, 238, 0.9) 0%, rgba(204, 245, 216, 0.85) 100%);
+            border-color: rgba(179, 235, 196, 0.6);
         }
 
         /* 新規作成用カード */
@@ -298,7 +319,7 @@
             transform: scale(1.08);
         }
 
-        /* --- モーダルポップアップ共通（albumcreate.html 準拠） --- */
+        /* --- モーダルポップアップ共通 --- */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -355,7 +376,7 @@
             color: #8c7d75;
             margin-bottom: 8px;
         }
-        .modal-input {
+        .modal-input, .modal-select {
             width: 100%;
             padding: 14px 18px;
             font-size: 1.1em;
@@ -366,7 +387,7 @@
             background: #fefaf6;
             transition: border-color 0.2s;
         }
-        .modal-input:focus {
+        .modal-input:focus, .modal-select:focus {
             border-color: #f7a072;
             outline: none;
             box-shadow: 0 0 0 3px rgba(247, 160, 114, 0.2);
@@ -404,7 +425,7 @@
             background: #e89163;
         }
 
-        /* --- 削除ダイアログ固有のデザイン（albumcreate.html 準拠） --- */
+        /* --- 削除ダイアログ固有のデザイン --- */
         .delete-dialog {
             background: #ffffff;
             padding: 30px 40px;
@@ -448,13 +469,23 @@
 
     <div class="album-container" id="albumContainer"></div>
 
-    <!-- アルバム名入力モーダル（新規作成用） -->
+    <!-- アルバム名・テーマ入力モーダル（新規作成用） -->
     <div class="modal-overlay" id="createModal">
         <div class="modal-content">
             <div class="modal-title">新しいアルバムを作成</div>
             <div class="modal-input-group">
                 <label class="modal-label">アルバム名</label>
                 <input type="text" id="albumNameInput" class="modal-input modal-focusable" placeholder="アルバム名を入力してください" value="家族の思い出">
+            </div>
+            <div class="modal-input-group">
+                <label class="modal-label">テーマカラー</label>
+                <select id="albumThemeInput" class="modal-select modal-focusable">
+                    <option value="default">スタンダード (白)</option>
+                    <option value="warm">温かみ (オレンジ系)</option>
+                    <option value="cool">クール (ブルー系)</option>
+                    <option value="pastel">パステル (パープル系)</option>
+                    <option value="nature">ネイチャー (グリーン系)</option>
+                </select>
             </div>
             <div class="modal-buttons">
                 <button type="button" class="modal-btn cancel modal-focusable" id="cancelModalBtn">キャンセル</button>
@@ -474,6 +505,16 @@
             <div class="modal-input-group">
                 <label class="modal-label">作成日</label>
                 <input type="date" id="editAlbumDateInput" class="modal-input modal-focusable">
+            </div>
+            <div class="modal-input-group">
+                <label class="modal-label">テーマカラー</label>
+                <select id="editAlbumThemeInput" class="modal-select modal-focusable">
+                    <option value="default">スタンダード (白)</option>
+                    <option value="warm">温かみ (オレンジ系)</option>
+                    <option value="cool">クール (ブルー系)</option>
+                    <option value="pastel">パステル (パープル系)</option>
+                    <option value="nature">ネイチャー (グリーン系)</option>
+                </select>
             </div>
             <div class="modal-buttons">
                 <button type="button" class="modal-btn cancel modal-focusable" id="cancelEditBtn">キャンセル</button>
@@ -516,6 +557,7 @@
         const albumContainer = document.getElementById('albumContainer');
         const createModal = document.getElementById('createModal');
         const albumNameInput = document.getElementById('albumNameInput');
+        const albumThemeInput = document.getElementById('albumThemeInput');
         const cancelModalBtn = document.getElementById('cancelModalBtn');
         const submitModalBtn = document.getElementById('submitModalBtn');
 
@@ -523,6 +565,7 @@
         const editModalOverlay = document.getElementById('editModalOverlay');
         const editAlbumNameInput = document.getElementById('editAlbumNameInput');
         const editAlbumDateInput = document.getElementById('editAlbumDateInput');
+        const editAlbumThemeInput = document.getElementById('editAlbumThemeInput');
         const cancelEditBtn = document.getElementById('cancelEditBtn');
         const confirmEditBtn = document.getElementById('confirmEditBtn');
 
@@ -544,6 +587,7 @@
             isModalOpen = true;
             createModal.classList.add('active');
             albumNameInput.value = "家族の思い出";
+            albumThemeInput.value = "default";
             setTimeout(() => {
                 albumNameInput.focus();
                 albumNameInput.select();
@@ -561,10 +605,11 @@
 
         async function handleCreateAlbum() {
             const albumName = albumNameInput.value.trim() || "無題のアルバム";
+            const albumTheme = albumThemeInput.value || "default";
             try {
                 const newAlbumRef = await addDoc(collection(db, "albums"), {
                     name: albumName,
-                    theme: "default",
+                    theme: albumTheme,
                     createdAt: serverTimestamp()
                 });
                 window.location.href = `albumcreate.html?albumId=${newAlbumRef.id}`;
@@ -584,12 +629,13 @@
         });
 
         // アルバム編集モーダルを開く処理
-        function openEditModal(albumId, currentName, createdAtData) {
+        function openEditModal(albumId, currentName, createdAtData, currentTheme) {
             pendingEditAlbumId = albumId;
             lastFocusedElement = document.activeElement;
             isEditModalOpen = true;
 
             editAlbumNameInput.value = currentName || "";
+            editAlbumThemeInput.value = currentTheme || "default";
             
             let dateObj = new Date();
             if (createdAtData && createdAtData.toDate) {
@@ -628,13 +674,16 @@
             const targetId = pendingEditAlbumId;
             const newName = editAlbumNameInput.value.trim() || "無題のアルバム";
             const newDateVal = editAlbumDateInput.value;
+            const newTheme = editAlbumThemeInput.value || "default";
 
             closeEditModal();
 
             try {
-                const updateData = { name: newName };
+                const updateData = { 
+                    name: newName,
+                    theme: newTheme
+                };
                 if (newDateVal) {
-                    // 日付のみが選択された場合、その日の0時0分0秒としてTimestampに変換
                     updateData.createdAt = Timestamp.fromDate(new Date(newDateVal + 'T00:00:00'));
                 }
                 await updateDoc(doc(db, "albums", targetId), updateData);
@@ -698,7 +747,7 @@
             }
         });
 
-        // アルバム一覧のリアルタイム取得（作成日時の新しい順に並び替え）
+        // アルバム一覧のリアルタイム取得
         const albumsQuery = query(collection(db, "albums"), orderBy("createdAt", "desc"));
         onSnapshot(albumsQuery, async (snapshot) => {
             if (isModalOpen || isEditModalOpen) return;
@@ -732,8 +781,9 @@
                 const albumData = docSnap.data();
                 const albumId = docSnap.id;
                 const albumTitle = albumData.name || albumData.title || "無題のアルバム";
+                const albumTheme = albumData.theme || "default";
 
-                // 作成日時のフォーマット処理（YYYY年M月D日）
+                // 作成日時のフォーマット処理
                 let formattedDate = "";
                 const createdAtData = albumData.createdAt;
                 if (createdAtData) {
@@ -762,7 +812,8 @@
                 wrapper.className = 'album-card-wrapper';
 
                 const card = document.createElement('div');
-                card.className = 'album-card focusable';
+                // テーマに応じたクラスを動的に付与
+                card.className = `album-card theme-${albumTheme} focusable`;
                 card.dataset.type = 'card';
                 card.tabIndex = 0;
 
@@ -794,11 +845,11 @@
 
                 wrapper.appendChild(card);
 
-                // アルバムカード下部のアクションボタングループ（編集・削除ボタン）
+                // アルバムカード下部のアクションボタングループ
                 const actionButtonsGroup = document.createElement('div');
                 actionButtonsGroup.className = 'album-action-buttons';
 
-                // 編集ボタン（左側）
+                // 編集ボタン
                 const editBtn = document.createElement('button');
                 editBtn.className = 'album-action-btn edit-album-btn focusable';
                 editBtn.dataset.type = 'edit';
@@ -806,10 +857,10 @@
                 editBtn.innerHTML = `<img src="rsc/edit.svg" alt="編集">`;
                 editBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
-                    openEditModal(albumId, albumTitle, albumData.createdAt);
+                    openEditModal(albumId, albumTitle, albumData.createdAt, albumTheme);
                 });
 
-                // ゴミ箱ボタン（右側）
+                // ゴミ箱ボタン
                 const deleteBtn = document.createElement('button');
                 deleteBtn.className = 'album-action-btn delete-album-btn focusable';
                 deleteBtn.dataset.type = 'delete';
