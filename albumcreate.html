@@ -1035,7 +1035,7 @@
                     if (idx !== -1) {
                         const nextIdx = e.key === 'ArrowRight' 
                             ? (idx + 1) % photoCards.length 
-                            : (idx - 1 + photoCards.length) % photoCards.length;
+                          : (idx - 1 + photoCards.length) % photoCards.length;
                         const target = photoCards[nextIdx];
                         target.focus();
                         target.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
@@ -1047,10 +1047,14 @@
                     if (deleteBtn) deleteBtn.focus();
                 } else if (e.key === 'ArrowUp') {
                     e.preventDefault();
-                    const wrapper = active.closest('.photo-card-wrapper');
-                    const badge = wrapper ? wrapper.querySelector('.group-header-badge') : null;
+                    // 写真カードが属するグループ全体（またはセクション）のコンテナを取得
+                    // ※HTMLの構造に合わせて '.photo-group' や '.album-section' などのクラス名に変更してください
+                    const groupContainer = active.closest('.photo-group') || active.closest('section') || active.parentElement;
+                    const badge = groupContainer ? groupContainer.querySelector('.group-header-badge') : null;
+                    
                     if (badge) {
                         badge.focus();
+                        badge.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                     } else {
                         const firstThemeDot = document.querySelector('.theme-dot.focusable');
                         if (firstThemeDot) firstThemeDot.focus();
