@@ -488,12 +488,48 @@
                 return;
             }
 
+            // グリッドの1行あたりの列数を自動計算する
+            let columns = 1;
+            if (focusables.length > 1) {
+                const firstTop = focusables[0].getBoundingClientRect().top;
+                for (let i = 1; i < focusables.length; i++) {
+                    if (focusables[i].getBoundingClientRect().top !== firstTop) {
+                        columns = i;
+                        break;
+                    }
+                    if (i === focusables.length - 1) {
+                        columns = focusables.length;
+                    }
+                }
+            }
+
             if (e.key === 'ArrowRight') {
                 e.preventDefault();
                 (focusables[index + 1] || focusables[0]).focus();
             } else if (e.key === 'ArrowLeft') {
                 e.preventDefault();
                 (focusables[index - 1] || focusables[focusables.length - 1]).focus();
+            } else if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                const nextIndex = index + columns;
+                if (nextIndex < focusables.length) {
+                    focusables[nextIndex].focus();
+                } else {
+                    // 最下行にいる場合は一番上の同じ列付近へループまたはそのまま
+                    focusables[index % columns].focus();
+                }
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                const prevIndex = index - columns;
+                if (prevIndex >= 0) {
+                    focusables[prevIndex].focus();
+                } else {
+                    // 最上行にいる場合は一番下の同じ列付近へループ
+                    const targetCol = index % columns;
+                    const lastRowStart = Math.floor((focusables.length - 1) / columns) * columns;
+                    const targetIndex = Math.min(lastRowStart + targetCol, focusables.length - 1);
+                    focusables[targetIndex].focus();
+                }
             } else if (e.key === 'Enter') {
                 if (active) active.click();
             }
