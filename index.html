@@ -492,7 +492,7 @@
         </div>
     </div>
 
-    <!-- アルバム編集モーダル（テーマ選択を削除） -->
+    <!-- アルバム編集モーダル（テーマ選択なし） -->
     <div class="modal-overlay" id="editModalOverlay">
         <div class="modal-content">
             <div class="modal-title">アルバム情報の編集</div>
@@ -615,7 +615,7 @@
             }
         });
 
-        // アルバム編集モーダルを開く処理（テーマ引数を削除）
+        // アルバム編集モーダルを開く処理
         function openEditModal(albumId, currentName, createdAtData) {
             pendingEditAlbumId = albumId;
             lastFocusedElement = document.activeElement;
@@ -796,7 +796,7 @@
                 wrapper.className = 'album-card-wrapper';
 
                 const card = document.createElement('div');
-                // テーマクラスが確実に付与されるように修正
+                // テーマカラークラスを正確に付与
                 card.className = `album-card theme-${albumTheme} focusable`;
                 card.dataset.type = 'card';
                 card.tabIndex = 0;
@@ -833,7 +833,7 @@
                 const actionButtonsGroup = document.createElement('div');
                 actionButtonsGroup.className = 'album-action-buttons';
 
-                // 編集ボタン（クリック時にテーマを渡さないように変更）
+                // 編集ボタン
                 const editBtn = document.createElement('button');
                 editBtn.className = 'album-action-btn edit-album-btn focusable';
                 editBtn.dataset.type = 'edit';
