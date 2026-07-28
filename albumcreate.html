@@ -1232,27 +1232,6 @@
 
             const firstDateObj = getValidDate(photos[0]);
             const lastDateObj = getValidDate(photos[photos.length - 1]);
-            if (firstDateObj && lastDateObj) {
-                const fYear = firstDateObj.getFullYear();
-                const fMonth = firstDateObj.getMonth() + 1;
-                const fDay = firstDateObj.getDate();
-                const lYear = lastDateObj.getFullYear();
-                const lMonth = lastDateObj.getMonth() + 1;
-                const lDay = lastDateObj.getDate();
-
-                let dateSubtitle = `${fYear}年${fMonth}月${fDay}日`;
-                if (fYear !== lYear || fMonth !== lMonth || fDay !== lDay) {
-                    dateSubtitle += ` 〜 ${lMonth}月${lDay}日`;
-                }
-                document.getElementById('albumDateSubtitle').innerText = dateSubtitle;
-            }
-
-            // --- 従来の固定判定（2時間） ---
-            // const GAP_THRESHOLD_SECONDS = 2 * 60 * 60;
-
-            // --- 変更後：アルバム全体の時間長に応じた動的クラスタリング ---
-            const firstDateObj = getValidDate(photos[0]);
-            const lastDateObj = getValidDate(photos[photos.length - 1]);
             
             // 全体の時間長（秒）を計算
             const totalDurationSeconds = (lastDateObj.getTime() - firstDateObj.getTime()) / 1000;
@@ -1266,6 +1245,21 @@
             } else if (totalDurationSeconds < 60 * 60) {
                 // 1時間未満の短いイベントなら10分空きを基準にする
                 GAP_THRESHOLD_SECONDS = 10 * 60;
+            }
+            
+            if (firstDateObj && lastDateObj) {
+                const fYear = firstDateObj.getFullYear();
+                const fMonth = firstDateObj.getMonth() + 1;
+                const fDay = firstDateObj.getDate();
+                const lYear = lastDateObj.getFullYear();
+                const lMonth = lastDateObj.getMonth() + 1;
+                const lDay = lastDateObj.getDate();
+
+                let dateSubtitle = `${fYear}年${fMonth}月${fDay}日`;
+                if (fYear !== lYear || fMonth !== lMonth || fDay !== lDay) {
+                    dateSubtitle += ` 〜 ${lMonth}月${lDay}日`;
+                }
+                document.getElementById('albumDateSubtitle').innerText = dateSubtitle;
             }
 
             const groups = [];
