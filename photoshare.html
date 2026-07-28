@@ -9,7 +9,11 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;500;700&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
 
+    <!-- ★ 追加: Exif読み込み用ライブラリ (EXIF.js) -->
+    <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
+
     <style>
+        /* (スタイルはそのまま変更なし) */
         :root {
             --primary-color: #f7a072;
             --primary-hover: #f38345;
@@ -258,7 +262,6 @@
 
         let selectedFilesData = [];
 
-        // アルバム一覧を取得してドロップダウンにセットする関数
         async function loadAlbums() {
             try {
                 const querySnapshot = await getDocs(collection(db, "albums"));
@@ -276,8 +279,6 @@
 
                 querySnapshot.forEach((doc) => {
                     const data = doc.data();
-                    
-                    // スクリーンショットの構造通り "name" フィールドからアルバム名を取得
                     const albumTitle = data.name || data.title || `アルバム (${doc.id.substring(0, 6)})`;
 
                     const option = document.createElement('option');
@@ -307,33 +308,68 @@
 
         loadAlbums();
 
+        // ★ Exif文字列（"YYYY:MM:DD HH:MM:SS"）を Date オブジェクトに変換するヘルパー関数
+        function parseExifDate(exifDateTimeStr) {
+            if (!exifDateTimeStr) return null;
+            try {
+                const parts = exifDateTimeStr.split(' ');
+                if (parts.length !== 2) return null;
+                const dateParts = parts[0].split(':');
+                const timeParts = parts[1].split(':');
+                if (dateParts.length !== 3 || timeParts.length !== 3) return null;
+
+                return new Date(
+                    parseInt(dateParts[0], 10),
+                    parseInt(dateParts[1], 10) - 1,
+                    parseInt(dateParts[2], 10),
+                    parseInt(timeParts[0], 10),
+                    parseInt(timeParts[1], 10),
+                    parseInt(timeParts[2], 10)
+                );
+            } catch (e) {
+                return null;
+            }
+        }
+
         fileInput.addEventListener('change', (e) => {
             photoList.innerHTML = '';
             selectedFilesData = [];
             const files = Array.from(e.target.files);
 
             files.forEach((file, index) => {
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    const itemDiv = document.createElement('div');
-                    itemDiv.className = 'photo-item';
+                // ★ EXIF.js を使ってExif情報を非同期で解析する
+                EXIF.getData(file, function() {
+                    const exifDateTime = EXIF.getTag(this, "DateTimeOriginal") || EXIF.getTag(this, "DateTime");
+                    let takenDate = parseExifDate(exifDateTime);
+                    
+                    // Exifが無い、または解析できない場合はファイルの最終更新日時を使用
+                    if (!takenDate || isNaN(takenDate.getTime())) {
+                        takenDate = new Date(file.lastModified);
+                    }
 
-                    const img = document.createElement('img');
-                    img.src = event.target.result;
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        const itemDiv = document.createElement('div');
+                        itemDiv.className = 'photo-item';
 
-                    const textarea = document.createElement('textarea');
-                    textarea.placeholder = `写真 ${index + 1} のコメントを入力...`;
+                        const img = document.createElement('img');
+                        img.src = event.target.result;
 
-                    selectedFilesData.push({
-                        file: file,
-                        textarea: textarea
-                    });
+                        const textarea = document.createElement('textarea');
+                        textarea.placeholder = `写真 ${index + 1} のコメントを入力...`;
 
-                    itemDiv.appendChild(img);
-                    itemDiv.appendChild(textarea);
-                    photoList.appendChild(itemDiv);
-                };
-                reader.readAsDataURL(file);
+                        selectedFilesData.push({
+                            file: file,
+                            textarea: textarea,
+                            takenAt: takenDate // 抽出した撮影日時を保持
+                        });
+
+                        itemDiv.appendChild(img);
+                        itemDiv.appendChild(textarea);
+                        photoList.appendChild(itemDiv);
+                    };
+                    reader.readAsDataURL(file);
+                });
             });
         });
 
@@ -397,11 +433,13 @@
                     const base64Image = await convertToBase64(item.file);
                     const comment = item.textarea.value.trim();
 
+                    // ★ Firestoreに保存する際、createdAtの代わりに（あるいは併用して）取得した撮影日時 `takenAt` を保存する
                     await addDoc(collection(db, "shared_photos"), {
                         albumId: targetAlbumId,
                         imageUrl: base64Image,
                         comment: comment,
-                        createdAt: serverTimestamp()
+                        createdAt: serverTimestamp(), // アップロード日時
+                        takenAt: item.takenAt         // 撮影日時 (Exifまたはファイル更新日時)
                     });
                 }
 
