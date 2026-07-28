@@ -273,12 +273,10 @@
             width: 22px;
             height: 22px;
             object-fit: contain;
-            /* 白いSVGを落ち着いたブラウン系（#8f6b58）の色に変換 */
             filter: brightness(0) saturate(100%) invert(45%) sepia(20%) saturate(600%) hue-rotate(345deg) brightness(95%) contrast(90%);
             transition: filter 0.2s;
         }
         .edit-album-btn:hover img, .edit-album-btn:focus img {
-            /* ホバー・フォーカス時は白抜きにする */
             filter: brightness(0) saturate(100%) invert(100%) sepia(0%) saturate(0%) hue-rotate(93deg) brightness(103%) contrast(103%);
         }
 
@@ -492,7 +490,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { 
-            getFirestore, collection, onSnapshot, query, where, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, Timestamp 
+            getFirestore, collection, onSnapshot, query, where, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, Timestamp, orderBy 
         } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -694,8 +692,9 @@
             }
         });
 
-        // アルバム一覧のリアルタイム取得
-        onSnapshot(collection(db, "albums"), async (snapshot) => {
+        // アルバム一覧のリアルタイム取得（作成日時の新しい順に並び替え）
+        const albumsQuery = query(collection(db, "albums"), orderBy("createdAt", "desc"));
+        onSnapshot(albumsQuery, async (snapshot) => {
             if (isModalOpen || isEditModalOpen) return;
             
             albumContainer.innerHTML = '';
