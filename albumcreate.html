@@ -35,6 +35,13 @@
             --glass-bg: rgba(255, 255, 255, 0.75);
             --glass-border: rgba(255, 255, 255, 0.85);
             --focus-glow: 0 0 0 4px #f7a072, 0 0 25px rgba(247, 160, 114, 0.65);
+            
+            /* 見出しタグ用変数 */
+            --badge-bg: #fffdf4;
+            --badge-border: 2px solid #e6d5b8;
+            --badge-text: #5c4a42;
+            --badge-shadow: 0 4px 12px rgba(90, 70, 50, 0.08);
+            --badge-hover-bg: #fff5e1;
         }
 
         /* --- 2. パステルスイート (ポップ・マステ風装飾) --- */
@@ -58,6 +65,12 @@
             --glass-bg: rgba(255, 255, 255, 0.85);
             --glass-border: rgba(255, 255, 255, 0.9);
             --focus-glow: 0 0 0 4px #ff9ebb, 0 0 25px rgba(255, 158, 187, 0.65);
+
+            --badge-bg: #fff0f5;
+            --badge-border: 2px dashed #ffb6c1;
+            --badge-text: #7a4f5f;
+            --badge-shadow: 0 4px 12px rgba(255, 150, 170, 0.15);
+            --badge-hover-bg: #ffe4ec;
         }
         body[data-theme="pastel"] .photo-card::before {
             content: "";
@@ -94,6 +107,12 @@
             --glass-bg: rgba(255, 255, 255, 0.8);
             --glass-border: rgba(255, 255, 255, 0.9);
             --focus-glow: 0 0 0 4px #43b0f1, 0 0 25px rgba(67, 176, 241, 0.65);
+
+            --badge-bg: #eaf6ff;
+            --badge-border: 2px solid #a6dfff;
+            --badge-text: #245b7c;
+            --badge-shadow: 0 4px 12px rgba(67, 176, 241, 0.1);
+            --badge-hover-bg: #d4efff;
         }
 
         /* --- 4. ノスタルジックヴィンテージ (クラシック・ステッチ感) --- */
@@ -117,6 +136,12 @@
             --glass-bg: rgba(248, 244, 239, 0.85);
             --glass-border: rgba(255, 255, 255, 0.6);
             --focus-glow: 0 0 0 4px #a0826c, 0 0 25px rgba(160, 130, 108, 0.65);
+
+            --badge-bg: #ede4d8;
+            --badge-border: 2px dashed #bdaaa0;
+            --badge-text: #59473f;
+            --badge-shadow: 0 4px 12px rgba(60, 45, 35, 0.12);
+            --badge-hover-bg: #e2d6c7;
         }
 
         /* --- 5. シネマティックダーク (スタイリッシュ・ゴールド枠) --- */
@@ -140,6 +165,12 @@
             --glass-bg: rgba(30, 25, 35, 0.85);
             --glass-border: rgba(255, 255, 255, 0.1);
             --focus-glow: 0 0 0 4px #e0a96d, 0 0 30px rgba(224, 169, 109, 0.8);
+
+            --badge-bg: #29232f;
+            --badge-border: 2px solid rgba(224, 169, 109, 0.4);
+            --badge-text: #e0a96d;
+            --badge-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+            --badge-hover-bg: #362e3d;
         }
 
         /* --- ページ遷移アニメーション --- */
@@ -175,12 +206,12 @@
 
         .group-header-badge.focusable:focus {
             transform: translateY(-4px) scale(1.08) !important;
-            background: rgba(50, 45, 55, 0.85) !important;
+            background: var(--badge-hover-bg) !important;
         }
 
         .delete-btn:focus {
             opacity: 1 !important;
-            transform: translateX(-50%) scale(1.2) !important; /* 中央寄せを維持したまま拡大する */
+            transform: translateX(-50%) scale(1.2) !important;
             box-shadow: 0 0 0 3px #e65b5b, 0 0 15px rgba(230, 91, 91, 0.5) !important;
         }
 
@@ -191,7 +222,6 @@
             transition: all 0.2s cubic-bezier(0.25, 1, 0.5, 1) !important;
         }
 
-        /* ゴミ箱にフォーカスがある、またはカードがフォーカス/ホバーされている時に変形を維持 */
         .photo-card-wrapper:hover .photo-card,
         .photo-card-wrapper.focused .photo-card {
             transform: scale(1.05) !important;
@@ -199,8 +229,6 @@
             z-index: 100 !important;
         }
 
-        /* ただし、ゴミ箱自体にフォーカスがある時はカード自体の外枠グロー（フォーカス枠）は出さないようにする場合 */
-        /* ※ .photo-card 自体の :focus によるグローを、ラッパー経由で制御します */
         .photo-card.focusable:focus {
             box-shadow: var(--focus-glow) !important;
             transform: translateY(-6px) scale(1.05) !important;
@@ -317,52 +345,51 @@
             flex-shrink: 0;
             margin: 30px 12px 0 12px;
             vertical-align: top;
-            position: relative; /* 子要素のabsoluteの基準にする */
+            position: relative;
             z-index: 2;
-            padding-bottom: 50px; /* ゴミ箱アイコンが入る余白を下に確保する */
+            padding-bottom: 50px;
         }
 
-        /* --- 見出しバッジ --- */
+        /* --- 見出しバッジ（付箋・ラベル風にブラッシュアップ） --- */
         .group-header-badge {
             display: inline-flex;
             align-items: center;
-            padding: 8px 18px;
-            background: rgba(30, 30, 35, 0.50);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border-radius: 20px;
+            padding: 8px 20px;
+            background: var(--badge-bg);
+            border: var(--badge-border);
+            border-radius: 8px; /* 少し角丸にすることで手帳や付箋のような温かみを出します */
             font-weight: 700;
-            font-size: 0.85em;
-            color: #f0ebe5;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            font-size: 0.9em;
+            color: var(--badge-text);
+            box-shadow: var(--badge-shadow);
             white-space: nowrap;
             flex-shrink: 0;
             cursor: pointer;
             transition: all 0.25s ease;
-            margin-bottom: 70px;
+            margin-bottom: 75px;
+            transform: rotate(-1deg); /* 少し傾けて手書き・アルバム貼りのラフな雰囲気に */
         }
         
         .group-header-badge:hover {
-            background: rgba(50, 45, 55, 0.75);
-            transform: translateY(-2px);
+            background: var(--badge-hover-bg);
+            transform: translateY(-2px) rotate(0deg);
         }
 
         .group-edit-icon {
-            width: 18px;
-            height: 18px;
+            width: 16px;
+            height: 16px;
             object-fit: contain;
             opacity: 0;
             width: 0;
             margin-right: 0;
             transition: opacity 0.2s ease, width 0.2s ease, margin 0.2s ease;
-            filter: brightness(0) invert(1);
+            filter: opacity(0.7);
         }
         
         .group-header-badge:hover .group-edit-icon,
         .group-header-badge:focus .group-edit-icon {
             opacity: 1;
-            width: 18px;
+            width: 16px;
             margin-right: 6px;
         }
         
@@ -384,9 +411,9 @@
 
         .delete-btn {
             position: absolute;
-            bottom: -22px; /* マイナスにしてカードの外側（下部）に少しはみ出すように配置する */
+            bottom: -22px;
             left: 50%;
-            transform: translateX(-50%); /* 完全に左右中央に合わせる */
+            transform: translateX(-50%);
             background: rgba(30, 30, 35, 0.70);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
@@ -833,7 +860,7 @@
             }
         });
 
-        // --- 見出し編集モーダル ---
+        /* --- 見出し編集モーダル --- */
         const editModalOverlay = document.getElementById('editModalOverlay');
         const cancelEditBtn = document.getElementById('cancelEditBtn');
         const confirmEditBtn = document.getElementById('confirmEditBtn');
@@ -999,7 +1026,7 @@
                 return;
             }
 
-            // --- 1. 写真カード（.photo-card）の操作 ---
+            /* --- 1. 写真カード（.photo-card）の操作 --- */
             if (active.classList.contains('photo-card')) {
                 if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
                     e.preventDefault();
@@ -1030,7 +1057,7 @@
                     }
                 }
             }
-            // --- 2. ゴミ箱アイコン（.delete-btn）の操作 ---
+            /* --- 2. ゴミ箱アイコン（.delete-btn）の操作 --- */
             else if (active.classList.contains('delete-btn')) {
                 if (e.key === 'ArrowUp') {
                     e.preventDefault();
@@ -1053,7 +1080,7 @@
                     }
                 }
             }
-            // --- 3. 見出し（.group-header-badge）の操作 ---
+            /* --- 3. 見出し（.group-header-badge）の操作 --- */
             else if (active.classList.contains('group-header-badge')) {
                 if (e.key === 'ArrowDown') {
                     e.preventDefault();
@@ -1077,7 +1104,7 @@
                     if (firstThemeDot) firstThemeDot.focus();
                 }
             }
-            // --- 4. テーマドットなどその他の要素 ---
+            /* --- 4. テーマドットなどその他の要素 --- */
             else {
                 const focusables = getFocusables();
                 const currentIndex = focusables.indexOf(active);
@@ -1263,7 +1290,7 @@
                         headerBadge.setAttribute('data-current-text', displayTitle);
                         headerBadge.innerHTML = `
                             <img src="rsc/edit.svg" class="group-edit-icon" alt="編集">
-                            <span style="color: #f0ebe5;">${displayTitle}</span>
+                            <span>${displayTitle}</span>
                         `;
                                                 
                         headerBadge.addEventListener('click', () => {
@@ -1285,12 +1312,10 @@
                     card.setAttribute('data-comment', data.comment || '');
                     card.setAttribute('data-date', formattedDateStr);
                     
-                    // カードおよびゴミ箱のフォーカス状態を管理してラッパーに反映
                     const handleFocusIn = () => {
                         cardWrapper.classList.add('focused');
                     };
                     const handleFocusOut = (e) => {
-                        // フォーカスの移動先が同じラッパー内（カード ⇔ ゴミ箱）の場合はクラスを外さない
                         setTimeout(() => {
                             if (!cardWrapper.contains(document.activeElement)) {
                                 cardWrapper.classList.remove('focused');
@@ -1318,7 +1343,7 @@
                             <div class="photo-date" style="margin-top: 8px;">${formattedDateStr}</div>
                         `}
                     `;
-                    // ゴミ箱ボタンをカードの外（ラッパー直下）に作成して追加
+
                     const deleteBtn = document.createElement('button');
                     deleteBtn.className = 'delete-btn focusable';
                     deleteBtn.setAttribute('data-id', data.id);
@@ -1335,8 +1360,8 @@
                     deleteBtn.addEventListener('blur', handleFocusOut);
                     
                     cardWrapper.appendChild(card);
-                    cardWrapper.appendChild(deleteBtn); // ここでラッパーに追加
-                    // --- 長押し・タッチ操作のハンドリング（維持） ---
+                    cardWrapper.appendChild(deleteBtn);
+
                     const clearHold = () => {
                         clearTimeout(holdTimer);
                         clearTimeout(holdingVisualTimer);
@@ -1385,20 +1410,10 @@
                         openModal(data.imageUrl, data.comment, formattedDateStr);
                     });
 
-                    cardWrapper.appendChild(card);
                     groupColumn.appendChild(cardWrapper);
                 });
 
                 albumContainer.appendChild(groupColumn);
-            });
-
-            const deleteButtons = document.querySelectorAll('.delete-btn');
-            deleteButtons.forEach(button => {
-                button.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    const id = e.currentTarget.getAttribute('data-id');
-                    openDeleteModal(id);
-                });
             });
 
             if (!isModalOpen && !isDeleteModalOpen && !isEditModalOpen) {
