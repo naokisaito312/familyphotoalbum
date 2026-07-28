@@ -72,7 +72,7 @@
             padding: 30px 20px 40px 20px;
             width: 100%;
             overflow-x: auto;
-            align-items: center;
+            align-items: flex-start; /* 上端を揃えるため */
             justify-content: flex-start;
             scrollbar-width: thin;
             scrollbar-color: rgba(140, 125, 117, 0.3) transparent;
@@ -94,6 +94,7 @@
         /* アルバムが1つもない（作成カードのみの）場合は中央に配置 */
         .album-container.has-empty-state {
             justify-content: center;
+            align-items: center;
         }
 
         .album-card-wrapper {
@@ -102,6 +103,7 @@
             align-items: center;
             flex-shrink: 0;
             position: relative;
+            align-self: flex-start; /* ゴミ箱分で下に伸びても上端位置を一定にする */
         }
 
         .album-card {
@@ -224,7 +226,7 @@
             font-weight: 500;
         }
 
-        /* --- albumcreate.htmlに合わせたゴミ箱削除ボタン --- */
+        /* --- ゴミ箱アイコン（デフォルト非表示、カードまたはゴミ箱にフォーカス・ホバー時のみ表示） --- */
         .delete-album-btn {
             margin-top: 15px;
             background: #ffffff;
@@ -239,7 +241,20 @@
             cursor: pointer;
             box-shadow: 0 4px 12px rgba(217, 83, 79, 0.15);
             transition: all 0.2s;
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(-10px);
         }
+
+        /* フォーカス中またはホバー時にゴミ箱を表示する */
+        .album-card-wrapper:hover .delete-album-btn,
+        .album-card:focus ~ .delete-album-btn,
+        .delete-album-btn:focus {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateY(0);
+        }
+
         .delete-album-btn:hover {
             background: #d9534f;
             color: #ffffff;
@@ -548,7 +563,7 @@
             if (firstCard && !isModalOpen) firstCard.focus();
         });
 
-        // キーボード・TVリモコン操作対応（ご要望のフォーカス仕様に完全に準拠）
+        // キーボード・TVリモコン操作対応
         document.addEventListener('keydown', (e) => {
             if (isModalOpen) {
                 const modalFocusables = Array.from(document.querySelectorAll('.modal-focusable'));
@@ -572,7 +587,6 @@
             const wrappers = Array.from(document.querySelectorAll('.album-card-wrapper'));
             if (wrappers.length === 0) return;
 
-            // 現在アクティブな要素がどのラッパー、どのタイプ（card / delete）に属しているか特定
             let currentWrapperIndex = -1;
             let currentType = '';
 
@@ -588,7 +602,6 @@
                 }
             });
 
-            // 万が一フォーカス外にいる場合のフォールバック
             if (currentWrapperIndex === -1) {
                 const firstCard = wrappers[0].querySelector('.album-card');
                 if (firstCard) firstCard.focus();
@@ -613,14 +626,12 @@
                 }
             } else if (e.key === 'ArrowDown') {
                 e.preventDefault();
-                // アルバムにフォーカスがある状態で下キー -> ゴミ箱アイコンにフォーカス
                 if (currentType === 'card') {
                     const deleteBtn = wrappers[currentWrapperIndex].querySelector('.delete-album-btn');
                     if (deleteBtn) deleteBtn.focus();
                 }
             } else if (e.key === 'ArrowUp') {
                 e.preventDefault();
-                // ゴミ箱アイコンにフォーカスがある状態で上キー -> アルバムに戻る
                 if (currentType === 'delete') {
                     const card = wrappers[currentWrapperIndex].querySelector('.album-card');
                     if (card) card.focus();
