@@ -531,18 +531,22 @@
 
         confirmDeleteBtn.addEventListener('click', async () => {
             if (!pendingDeleteAlbumId) return;
+            const targetId = pendingDeleteAlbumId;
+            
+            // 先にモーダルを閉じ、フラグをリセットして再描画を許可する
+            closeDeleteModal();
+
             try {
-                await deleteDoc(doc(db, "albums", pendingDeleteAlbumId));
-                closeDeleteModal();
+                await deleteDoc(doc(db, "albums", targetId));
             } catch (error) {
                 console.error("アルバムの削除に失敗しました:", error);
                 alert("アルバムの削除に失敗しました。");
             }
         });
 
-        // アルバム一覧のリアルタイム取得
+        // アルバム一覧のリアルタイム取得（削除モーダル表示中でもデータの反映を行うように修正）
         onSnapshot(collection(db, "albums"), async (snapshot) => {
-            if (isModalOpen || isDeleteModalOpen) return;
+            if (isModalOpen) return;
             
             albumContainer.innerHTML = '';
 
