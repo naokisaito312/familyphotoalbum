@@ -63,17 +63,32 @@
             font-weight: 500;
         }
 
-        /* --- アルバム横一列レイアウト --- */
+        /* --- アルバム横一列レイアウト & ミニマムなスクロール表現 --- */
         .album-container {
             display: flex;
             gap: 40px;
             max-width: 1700px;
             margin: 0 auto;
-            padding: 30px 20px;
+            padding: 30px 20px 40px 20px;
             width: 100%;
             overflow-x: auto;
             align-items: center;
             justify-content: flex-start;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(140, 125, 117, 0.3) transparent;
+        }
+
+        .album-container::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        .album-container::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .album-container::-webkit-scrollbar-thumb {
+            background: rgba(140, 125, 117, 0.3);
+            border-radius: 3px;
         }
 
         /* アルバムが1つもない（作成カードのみの）場合は中央に配置 */
@@ -105,7 +120,7 @@
             height: 420px;
         }
 
-        /* 新規作成用カード（サイズを大きく調整） */
+        /* 新規作成用カード */
         .create-album-card {
             border: 2px dashed #e2cfc4;
             background: rgba(255, 255, 255, 0.5);
@@ -136,7 +151,7 @@
             color: #4a3e3d;
         }
 
-        /* 写真サムネイルスタック（カード拡大に伴いサイズアップ） */
+        /* 写真サムネイルスタック */
         .photo-stack-wrapper {
             width: 100%;
             height: 260px;
@@ -209,20 +224,20 @@
             font-weight: 500;
         }
 
-        /* --- ゴミ箱削除ボタン（アルバムカード下部） --- */
+        /* --- albumcreate.htmlに合わせたゴミ箱削除ボタン --- */
         .delete-album-btn {
             margin-top: 15px;
-            background: rgba(255, 255, 255, 0.9);
-            border: 1px solid #e2cfc4;
+            background: #ffffff;
+            border: 2px solid #f2dede;
             color: #d9534f;
-            width: 44px;
-            height: 44px;
+            width: 48px;
+            height: 48px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.06);
+            box-shadow: 0 4px 12px rgba(217, 83, 79, 0.15);
             transition: all 0.2s;
         }
         .delete-album-btn:hover {
@@ -418,7 +433,6 @@
         async function deleteAlbum(albumId, albumTitle) {
             if (!confirm(`「${albumTitle}」を削除してもよろしいですか？\n（紐づく写真はアルバム作成画面から個別に管理できます）`)) return;
             try {
-                // アルバム自体の削除
                 await deleteDoc(doc(db, "albums", albumId));
             } catch (error) {
                 console.error("アルバムの削除に失敗しました:", error);
@@ -444,6 +458,7 @@
             
             const createCard = document.createElement('div');
             createCard.className = 'album-card create-album-card focusable';
+            createCard.dataset.type = 'card';
             createCard.tabIndex = 0;
             createCard.innerHTML = `
                 <div class="create-album-icon">＋</div>
@@ -476,6 +491,7 @@
 
                 const card = document.createElement('div');
                 card.className = 'album-card focusable';
+                card.dataset.type = 'card';
                 card.tabIndex = 0;
 
                 let stackHtml = '<div class="photo-stack-wrapper">';
@@ -508,6 +524,7 @@
                 // アルバムカード下部のゴミ箱アイコン（削除ボタン）
                 const deleteBtn = document.createElement('button');
                 deleteBtn.className = 'delete-album-btn focusable';
+                deleteBtn.dataset.type = 'delete';
                 deleteBtn.tabIndex = 0;
                 deleteBtn.innerHTML = `
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -527,11 +544,11 @@
                 albumContainer.appendChild(wrapper);
             }
 
-            const firstCard = document.querySelector('.focusable');
+            const firstCard = document.querySelector('.album-card.focusable');
             if (firstCard && !isModalOpen) firstCard.focus();
         });
 
-        // キーボード・TVリモコン操作対応（横一列移動 & 上下移動で削除ボタンと切り替え）
+        // キーボード・TVリモコン操作対応（ご要望のフォーカス仕様に完全に準拠）
         document.addEventListener('keydown', (e) => {
             if (isModalOpen) {
                 const modalFocusables = Array.from(document.querySelectorAll('.modal-focusable'));
@@ -552,39 +569,61 @@
             }
 
             const active = document.activeElement;
-            const focusables = Array.from(document.querySelectorAll('.focusable'));
-            if (focusables.length === 0) return;
+            const wrappers = Array.from(document.querySelectorAll('.album-card-wrapper'));
+            if (wrappers.length === 0) return;
 
-            if (!focusables.includes(active)) {
-                focusables[0].focus();
+            // 現在アクティブな要素がどのラッパー、どのタイプ（card / delete）に属しているか特定
+            let currentWrapperIndex = -1;
+            let currentType = '';
+
+            wrappers.forEach((wrapper, wIdx) => {
+                const card = wrapper.querySelector('.album-card');
+                const delBtn = wrapper.querySelector('.delete-album-btn');
+                if (active === card) {
+                    currentWrapperIndex = wIdx;
+                    currentType = 'card';
+                } else if (active === delBtn) {
+                    currentWrapperIndex = wIdx;
+                    currentType = 'delete';
+                }
+            });
+
+            // 万が一フォーカス外にいる場合のフォールバック
+            if (currentWrapperIndex === -1) {
+                const firstCard = wrappers[0].querySelector('.album-card');
+                if (firstCard) firstCard.focus();
                 return;
             }
 
-            const index = focusables.indexOf(active);
-
             if (e.key === 'ArrowRight') {
                 e.preventDefault();
-                const nextEl = focusables[(index + 1) % focusables.length];
-                nextEl.focus();
-                nextEl.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                const nextIndex = (currentWrapperIndex + 1) % wrappers.length;
+                const targetEl = wrappers[nextIndex].querySelector(currentType === 'delete' ? '.delete-album-btn' : '.album-card');
+                if (targetEl) {
+                    targetEl.focus();
+                    targetEl.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                }
             } else if (e.key === 'ArrowLeft') {
                 e.preventDefault();
-                const prevEl = focusables[(index - 1 + focusables.length) % focusables.length];
-                prevEl.focus();
-                prevEl.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                const prevIndex = (currentWrapperIndex - 1 + wrappers.length) % wrappers.length;
+                const targetEl = wrappers[prevIndex].querySelector(currentType === 'delete' ? '.delete-album-btn' : '.album-card');
+                if (targetEl) {
+                    targetEl.focus();
+                    targetEl.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                }
             } else if (e.key === 'ArrowDown') {
                 e.preventDefault();
-                const wrapper = active.closest('.album-card-wrapper');
-                const deleteBtn = wrapper ? wrapper.querySelector('.delete-album-btn') : null;
-                if (deleteBtn && active !== deleteBtn) {
-                    deleteBtn.focus();
+                // アルバムにフォーカスがある状態で下キー -> ゴミ箱アイコンにフォーカス
+                if (currentType === 'card') {
+                    const deleteBtn = wrappers[currentWrapperIndex].querySelector('.delete-album-btn');
+                    if (deleteBtn) deleteBtn.focus();
                 }
             } else if (e.key === 'ArrowUp') {
                 e.preventDefault();
-                const wrapper = active.closest('.album-card-wrapper');
-                const card = wrapper ? wrapper.querySelector('.album-card') : null;
-                if (card && active !== card) {
-                    card.focus();
+                // ゴミ箱アイコンにフォーカスがある状態で上キー -> アルバムに戻る
+                if (currentType === 'delete') {
+                    const card = wrappers[currentWrapperIndex].querySelector('.album-card');
+                    if (card) card.focus();
                 }
             } else if (e.key === 'Enter') {
                 if (active) active.click();
