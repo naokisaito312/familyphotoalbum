@@ -356,13 +356,20 @@
             transition: all 0.2s;
         }
 
-        .edit-album-btn {
-            border: 2px solid #b5a49a; /* 枠線を少し濃く調整 */
+    .edit-album-btn {
+            border: 2px solid #b5a49a;
             color: #3d3531;
         }
-        .edit-album-btn:hover, .edit-album-btn:focus {
+        /* ホバー時は従来通り背景色を変える */
+        .edit-album-btn:hover {
             background: var(--primary-color);
             color: #ffffff;
+            border-color: var(--primary-color);
+            transform: scale(1.08);
+        }
+        /* フォーカス時は背景を白に保ち、フォーカスリングや枠線で強調する */
+        .edit-album-btn:focus {
+            background: #ffffff;
             border-color: var(--primary-color);
             transform: scale(1.08);
         }
@@ -370,12 +377,16 @@
             width: 22px;
             height: 22px;
             object-fit: contain;
-            /* アイコンの色をはっきりしたこげ茶色に固定 */
             filter: brightness(0) saturate(100%) invert(23%) sepia(10%) saturate(600%) hue-rotate(345deg) brightness(90%) contrast(90%);
             transition: filter 0.2s;
         }
-        .edit-album-btn:hover img, .edit-album-btn:focus img {
+        /* ホバー時のみアイコンを白にする */
+        .edit-album-btn:hover img {
             filter: brightness(0) saturate(100%) invert(100%) sepia(0%) saturate(0%) hue-rotate(93deg) brightness(103%) contrast(103%);
+        }
+        /* フォーカス時はアイコンのこげ茶色を維持する */
+        .edit-album-btn:focus img {
+            filter: brightness(0) saturate(100%) invert(23%) sepia(10%) saturate(600%) hue-rotate(345deg) brightness(90%) contrast(90%);
         }
 
         .delete-album-btn {
