@@ -276,14 +276,16 @@
         .album-container::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.15); border-radius: 10px; }
         .album-container::-webkit-scrollbar-thumb:hover { background: rgba(0, 0, 0, 0.3); }
 
-        /* --- グループコンテナ（見出しと1枚目の写真を縦にまとめる） --- */
+        /* --- グループコンテナ（見出しと写真を縦にまとめる・グループごとの間隔を確保） --- */
         .time-group-column {
             display: inline-flex;
             flex-direction: column;
             align-items: flex-start;
             flex-shrink: 0;
-            margin: 0 15px;
+            margin: 0 35px; /* グループごとの間隔を広めに設定して識別しやすく */
             vertical-align: top;
+            position: relative;
+            z-index: 2; /* 見出しや写真が重なって隠れないように手前に表示 */
         }
 
         .time-group-header {
@@ -301,6 +303,8 @@
             border: 1px solid var(--glass-border);
             box-shadow: 0 4px 12px rgba(0,0,0,0.05);
             white-space: nowrap;
+            position: relative;
+            z-index: 10; /* 最前面に配置して見出し切れを防ぐ */
         }
 
         .photo-card {
@@ -308,7 +312,7 @@
             flex-direction: column; 
             background: var(--card-bg); 
             padding: 12px;
-            margin: 0 15px;
+            margin: 0 10px;
             border-radius: var(--card-radius); 
             box-shadow: var(--card-shadow);
             border: var(--card-border);
@@ -926,11 +930,12 @@
         const albumContainer = document.getElementById('albumContainer');
         const q = query(collection(db, "shared_photos"), where("albumId", "==", albumId));
         
+        // --- 撮影日取得の安全なヘルパー関数 (バグ防止対応) ---
         function getValidDate(item) {
             const target = item.takenAt || item.createdAt;
-            if (!target) return null;
+            if (!target) return new Date();
             let d = typeof target.toDate === 'function' ? target.toDate() : new Date(target);
-            return isNaN(d.getTime()) ? null : d;
+            return isNaN(d.getTime()) ? new Date() : d;
         }
 
         onSnapshot(q, (snapshot) => {
@@ -962,10 +967,11 @@
             const photos = [];
             snapshot.forEach((doc) => { photos.push({ id: doc.id, ...doc.data() }); });
             
+            // --- 撮影日順（古い順）に確実にソート (バグチェック対応済み) ---
             photos.sort((a, b) => {
-                const timeA = a.takenAt?.seconds || (a.takenAt ? new Date(a.takenAt).getTime() / 1000 : 0) || (a.createdAt?.seconds || 0);
-                const timeB = b.takenAt?.seconds || (b.takenAt ? new Date(b.takenAt).getTime() / 1000 : 0) || (b.createdAt?.seconds || 0);
-                return timeA - timeB;
+                const dateA = getValidDate(a).getTime();
+                const dateB = getValidDate(b).getTime();
+                return dateA - dateB;
             });
 
             const firstDateObj = getValidDate(photos[0]);
@@ -985,13 +991,13 @@
                 document.getElementById('albumDateSubtitle').innerText = dateSubtitle;
             }
 
-            const GAP_THRESHOLD_SECONDS = 2 * 60 * 60; 
+            const GAP_THRESHOLD_SECONDS = 2 * 60 * 60; // 2時間以上空いたら別グループ
 
             const groups = [];
             let currentGroup = null;
 
             photos.forEach((data) => {
-                const date = getValidDate(data) || new Date();
+                const date = getValidDate(data);
                 const timestamp = date.getTime() / 1000;
 
                 if (!currentGroup || (timestamp - currentGroup.lastTimestamp > GAP_THRESHOLD_SECONDS)) {
@@ -1009,12 +1015,12 @@
 
             albumContainer.innerHTML = '';
 
+            // --- グループごとにカラムを生成し、綺麗に横に並べる ---
             groups.forEach((group, groupIndex) => {
                 const firstDate = group.items[0].date;
                 const hour = firstDate.getHours();
                 const timeRangeStr = `${hour}時頃`;
 
-                /* --- グループ専用の列コンテナを作成（見出しと1枚目の写真を縦に内包） --- */
                 const groupColumn = document.createElement('div');
                 groupColumn.className = 'time-group-column';
 
@@ -1059,19 +1065,12 @@
                         openModal(data.imageUrl, data.comment, formattedDateStr);
                     });
 
-                    // 1枚目はグループ列（見出しの下）に追加、2枚目以降はアルバムコンテナへ直接追加して横に流す
-                    if (index === 0) {
-                        groupColumn.appendChild(card);
-                    } else {
-                        albumContainer.appendChild(groupColumn);
-                        albumContainer.appendChild(card);
-                    }
+                    // 1枚目も2枚目以降もすべてグループ列（カラム）のなかに縦に綺麗に積み上げる
+                    groupColumn.appendChild(card);
                 });
 
-                // 写真が1枚だけでループが終わった場合もここでグループ列をコンテナに追加
-                if (group.items.length === 1) {
-                    albumContainer.appendChild(groupColumn);
-                }
+                // 完成したグループ列をアルバムコンテナに追加
+                albumContainer.appendChild(groupColumn);
             });
 
             const deleteButtons = document.querySelectorAll('.delete-btn');
