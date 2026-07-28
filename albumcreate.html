@@ -179,7 +179,7 @@
             box-shadow: 0 0 0 3px #e65b5b, 0 0 15px rgba(230, 91, 91, 0.5) !important;
         }
 
-        .photo-card.holding {
+        .photo-card-wrapper.holding .photo-card {
             transform: scale(0.96) rotate(0deg) !important;
             border: 3px solid #e74c3c !important;
             box-shadow: 0 0 20px rgba(231, 76, 60, 0.6) !important;
@@ -276,35 +276,48 @@
         .album-container::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.15); border-radius: 10px; }
         .album-container::-webkit-scrollbar-thumb:hover { background: rgba(0, 0, 0, 0.3); }
 
-        /* --- グループコンテナ（見出しと写真を縦にまとめる・グループごとの間隔を確保） --- */
+        /* --- グループコンテナ（横並びでグループ間に余白を確保） --- */
         .time-group-column {
+            display: inline-flex;
+            flex-direction: row;
+            align-items: flex-start;
+            flex-shrink: 0;
+            margin-right: 45px; /* グループごとの間隔を広めに設定 */
+            vertical-align: top;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* 各写真カードを包むラッパー：見出しとカードを縦に配置する */
+        .photo-card-wrapper {
             display: inline-flex;
             flex-direction: column;
             align-items: flex-start;
             flex-shrink: 0;
-            margin: 0 35px; /* グループごとの間隔を広めに設定して識別しやすく */
+            margin: 0 12px;
             vertical-align: top;
             position: relative;
-            z-index: 2; /* 見出しや写真が重なって隠れないように手前に表示 */
+            z-index: 2;
         }
 
-        .time-group-header {
+        /* 各写真の上に個別に配置される見出し */
+        .photo-card-header {
             display: inline-flex;
             align-items: center;
-            padding: 8px 14px;
-            margin-bottom: 12px;
+            padding: 5px 10px;
+            margin-bottom: 8px;
             background: var(--glass-bg);
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
-            border-radius: 12px;
+            border-radius: 10px;
             font-weight: bold;
-            font-size: 0.9em;
+            font-size: 0.8em;
             color: var(--text-main);
             border: 1px solid var(--glass-border);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
             white-space: nowrap;
             position: relative;
-            z-index: 10; /* 最前面に配置して見出し切れを防ぐ */
+            z-index: 10;
         }
 
         .photo-card {
@@ -312,7 +325,6 @@
             flex-direction: column; 
             background: var(--card-bg); 
             padding: 12px;
-            margin: 0 10px;
             border-radius: var(--card-radius); 
             box-shadow: var(--card-shadow);
             border: var(--card-border);
@@ -322,11 +334,6 @@
             position: relative;
             cursor: pointer;
             transform: translateY(var(--offset-y, 0px)) rotate(var(--rotate, 0deg));
-        }
-
-        /* グループ内の最初のカードは独自のマージンをリセットしてカラムに合わせる */
-        .time-group-column .photo-card {
-            margin: 0 !important;
         }
 
         .delete-btn {
@@ -737,7 +744,8 @@
                     return;
                 }
                 if (lastFocusedElement) {
-                    lastFocusedElement.classList.remove('holding');
+                    const wrapper = lastFocusedElement.closest('.photo-card-wrapper');
+                    if (wrapper) wrapper.classList.remove('holding');
                     lastFocusedElement.focus();
                 }
             };
@@ -808,17 +816,18 @@
                 e.preventDefault();
     
                 if (active && active.classList.contains('photo-card')) {
+                    const wrapper = active.closest('.photo-card-wrapper');
                     if (!e.repeat && !isEnterPressed) {
                         isEnterPressed = true;
                         isHoldTriggered = false;
     
                         holdingVisualTimer = setTimeout(() => {
-                            active.classList.add('holding');
+                            if (wrapper) wrapper.classList.add('holding');
                         }, VISUAL_DELAY);
     
                         holdTimer = setTimeout(() => {
                             isHoldTriggered = true;
-                            active.classList.remove('holding');
+                            if (wrapper) wrapper.classList.remove('holding');
                             const photoId = active.getAttribute('data-id');
                             openDeleteModal(photoId);
                         }, HOLD_DURATION);
@@ -864,7 +873,7 @@
             } else if (e.key === 'ArrowUp') {
                 e.preventDefault();
                 if (active.classList.contains('delete-btn')) {
-                    active.closest('.photo-card').focus();
+                    active.closest('.photo-card-wrapper').querySelector('.photo-card').focus();
                 } else if (active.classList.contains('photo-card')) {
                     const firstThemeDot = document.querySelector('.theme-dot.focusable');
                     if (firstThemeDot) firstThemeDot.focus();
@@ -883,7 +892,7 @@
                     holdTimer = null;
                 }
 
-                document.querySelectorAll('.photo-card.holding').forEach(el => el.classList.remove('holding'));
+                document.querySelectorAll('.photo-card-wrapper.holding').forEach(el => el.classList.remove('holding'));
 
                 if (!isHoldTriggered && !isDeleteModalOpen && !isModalOpen && !justClosedModal) {
                     const active = document.activeElement;
@@ -930,7 +939,7 @@
         const albumContainer = document.getElementById('albumContainer');
         const q = query(collection(db, "shared_photos"), where("albumId", "==", albumId));
         
-        // --- 撮影日取得の安全なヘルパー関数 (バグ防止対応) ---
+        // --- 撮影日取得の安全なヘルパー関数 ---
         function getValidDate(item) {
             const target = item.takenAt || item.createdAt;
             if (!target) return new Date();
@@ -967,7 +976,7 @@
             const photos = [];
             snapshot.forEach((doc) => { photos.push({ id: doc.id, ...doc.data() }); });
             
-            // --- 撮影日順（古い順）に確実にソート (バグチェック対応済み) ---
+            // --- 撮影日順（古い順）に確実にソート ---
             photos.sort((a, b) => {
                 const dateA = getValidDate(a).getTime();
                 const dateB = getValidDate(b).getTime();
@@ -1002,7 +1011,6 @@
 
                 if (!currentGroup || (timestamp - currentGroup.lastTimestamp > GAP_THRESHOLD_SECONDS)) {
                     currentGroup = {
-                        startTime: date,
                         lastTimestamp: timestamp,
                         items: []
                     };
@@ -1017,21 +1025,23 @@
 
             // --- グループごとにカラムを生成し、綺麗に横に並べる ---
             groups.forEach((group, groupIndex) => {
-                const firstDate = group.items[0].date;
-                const hour = firstDate.getHours();
-                const timeRangeStr = `${hour}時頃`;
-
                 const groupColumn = document.createElement('div');
                 groupColumn.className = 'time-group-column';
 
-                const headerDiv = document.createElement('div');
-                headerDiv.className = 'time-group-header';
-                headerDiv.innerHTML = `⏰ <span style="color: var(--primary-color);">${timeRangeStr}</span> の写真 <span style="font-size: 0.85em; opacity: 0.7; margin-left: 4px;">(${group.items.length}枚)</span>`;
-                
-                groupColumn.appendChild(headerDiv);
-
                 group.items.forEach(({ data, date }, index) => {
+                    const hour = date.getHours();
+                    const timeRangeStr = `${hour}時頃`;
                     const formattedDateStr = `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+
+                    // 写真1枚ごとに「見出し + カード」を包むラッパー
+                    const cardWrapper = document.createElement('div');
+                    cardWrapper.className = 'photo-card-wrapper';
+
+                    // 写真ごとの個別の小さな見出し
+                    const headerDiv = document.createElement('div');
+                    headerDiv.className = 'photo-card-header';
+                    headerDiv.innerHTML = `⏰ <span style="color: var(--primary-color);">${timeRangeStr}</span>`;
+                    cardWrapper.appendChild(headerDiv);
 
                     const card = document.createElement('div');
                     card.className = 'photo-card focusable';
@@ -1065,8 +1075,8 @@
                         openModal(data.imageUrl, data.comment, formattedDateStr);
                     });
 
-                    // 1枚目も2枚目以降もすべてグループ列（カラム）のなかに縦に綺麗に積み上げる
-                    groupColumn.appendChild(card);
+                    cardWrapper.appendChild(card);
+                    groupColumn.appendChild(cardWrapper);
                 });
 
                 // 完成したグループ列をアルバムコンテナに追加
