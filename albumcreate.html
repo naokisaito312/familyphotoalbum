@@ -883,17 +883,18 @@
             pendingDeletePhotoId = null;
 
             setTimeout(() => {
-                // 1. 削除処理などで「次のフォーカス先」が明確に指定されている場合
-                if (nextFocusTarget && typeof nextFocusTarget.focus === 'function') {
-                    nextFocusTarget.focus();
-                    if (typeof nextFocusTarget.scrollIntoView === 'function') {
-                        nextFocusTarget.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                // 1. 引数で「次のフォーカス先」が渡されている場合、またはあらかじめ保持していた targetNextElement がある場合
+                const focusTarget = nextFocusTarget || targetNextElement;
+                if (focusTarget && typeof focusTarget.focus === 'function') {
+                    focusTarget.focus();
+                    if (typeof focusTarget.scrollIntoView === 'function') {
+                        focusTarget.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
                     }
                     targetNextElement = null;
                     return;
                 }
 
-                // 2. キャンセル時など、開く直前に保持していた元の要素（写真カードなど）に戻す場合
+                // 2. キャンセル時など、元の要素に戻す場合
                 if (lastFocusedElement && typeof lastFocusedElement.focus === 'function') {
                     lastFocusedElement.focus();
                     if (typeof lastFocusedElement.scrollIntoView === 'function') {
