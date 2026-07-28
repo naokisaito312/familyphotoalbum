@@ -1205,6 +1205,13 @@
                     if (editBtn) editBtn.focus();
                 } else if (e.key === 'ArrowUp') {
                     e.preventDefault();
+                    
+                    // ▼ 上キーで見出しへ移動する際、直前のカードのフォーカス状態（ボタン表示）を即座に消す
+                    const currentWrapper = active.closest('.photo-card-wrapper');
+                    if (currentWrapper) {
+                        currentWrapper.classList.remove('focused');
+                    }
+
                     const groupColumn = active.closest('.time-group-column');
                     const badge = groupColumn ? groupColumn.querySelector('.group-header-badge') : null;
                     
