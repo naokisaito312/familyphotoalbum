@@ -300,21 +300,21 @@
             z-index: 2;
         }
 
-        /* グループ先頭の写真の上にのみ配置される見出し（写真カードとは異なるデザイン） */
+        /* --- グループ先頭の写真の上に配置される見出し（薄い黒色ベース） --- */
         .group-header-badge {
             display: inline-flex;
             align-items: center;
             padding: 6px 14px;
-            margin-bottom: 10px;
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(240, 240, 240, 0.8));
+            margin-bottom: 12px;
+            background: rgba(30, 30, 35, 0.75); /* 薄い黒色ベース */
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
             border-radius: 20px;
             font-weight: 700;
             font-size: 0.85em;
-            color: var(--text-main);
-            border: 2px solid var(--primary-color);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            color: #f0ebe5; /* 映える白系文字 */
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
             white-space: nowrap;
             position: relative;
             z-index: 10;
@@ -1037,11 +1037,11 @@
                     const cardWrapper = document.createElement('div');
                     cardWrapper.className = 'photo-card-wrapper';
 
-                    // 【変更】グループ内の先頭の写真カードの上にのみ、独立したデザインの見出しを表示
+                    // グループ内の先頭の写真カードの上にのみ、薄い黒色の見出しを表示
                     if (index === 0) {
                         const headerBadge = document.createElement('div');
                         headerBadge.className = 'group-header-badge';
-                        headerBadge.innerHTML = `<span style="margin-left: 4px; color: var(--text-main);">${timeRangeStr}</span>`;
+                        headerBadge.innerHTML = `⏱ <span style="margin-left: 4px; color: #f0ebe5;">${timeRangeStr}</span>`;
                         cardWrapper.appendChild(headerBadge);
                     }
 
@@ -1057,7 +1057,7 @@
                     const randomOffsetY = (Math.cos((groupIndex * 10 + index) * 888) * 35).toFixed(1);
                     
                     card.style.setProperty('--rotate', `${randomRotate}deg`);
-                    card.style.setProperty('--offset-y', `${randomOffsetY}px`);
+                    card.style.setProperty('--offset-y', `${Number(randomOffsetY) + (index === 0 ? 18 : 0)}px`); // 先頭カードを少し下側に下げて重なりを防止
 
                     card.innerHTML = `
                         <button class="delete-btn" data-id="${data.id}" title="削除" tabindex="-1">×</button>
