@@ -368,46 +368,14 @@
         }
 
         .delete-btn {
-            position: absolute;
-            bottom: -45px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(30, 30, 35, 0.70);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 50%;
-            width: 32px;
-            height: 32px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-            transition: all 0.2s ease;
-            opacity: 0;
-            pointer-events: none;
-            z-index: 20;
+            position: absolute; top: -10px; right: -10px; background: #ffffff; color: #e65b5b;
+            border: 1px solid rgba(0,0,0,0.05); border-radius: 50%; width: 32px; height: 32px;
+            font-size: 16px; font-weight: bold; cursor: pointer; display: flex; align-items: center;
+            justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.15); transition: all 0.2s ease;
+            opacity: 0; transform: scale(0.8); z-index: 20;
         }
-        
-        .delete-icon {
-            width: 14px;
-            height: 14px;
-            object-fit: contain;
-            filter: brightness(0) invert(1);
-        }
-        
-        /* ホバー時、または写真・ゴミ箱にフォーカスが当たっている時に表示 */
-        .photo-card-wrapper:hover .delete-btn,
-        .delete-btn.focusable:focus {
-            opacity: 1;
-            pointer-events: auto;
-        }
-        
-        .delete-btn.focusable:focus {
-            background: rgba(230, 91, 91, 0.85) !important;
-            border-color: #ffffff !important;
-        }
+
+        .photo-card:hover .delete-btn { opacity: 1; transform: scale(1); }
         .photo-card img { 
             width: 100%; height: auto; max-height: 380px; object-fit: contain; 
             border-radius: var(--img-radius); display: block; 
@@ -796,6 +764,26 @@
             }, 50);
         }
 
+        function closeDeleteModal() {
+            deleteModalOverlay.classList.remove('active');
+            isDeleteModalOpen = false;
+            pendingDeletePhotoId = null;
+
+            const restoreFocus = () => {
+                if (isEnterPressed) {
+                    setTimeout(restoreFocus, 50);
+                    return;
+                }
+                if (lastFocusedElement) {
+                    const wrapper = lastFocusedElement.closest('.photo-card-wrapper');
+                    if (wrapper) wrapper.classList.remove('holding');
+                    lastFocusedElement.focus();
+                }
+            };
+
+            setTimeout(restoreFocus, 100);
+        }
+
         cancelDeleteBtn.addEventListener('click', closeDeleteModal);
 
         confirmDeleteBtn.addEventListener('click', async () => {
@@ -961,7 +949,25 @@
 
             if (e.key === 'Enter') {
                 e.preventDefault();
-                if (!e.repeat && active) {
+    
+                if (active && active.classList.contains('photo-card')) {
+                    const wrapper = active.closest('.photo-card-wrapper');
+                    if (!e.repeat && !isEnterPressed) {
+                        isEnterPressed = true;
+                        isHoldTriggered = false;
+    
+                        holdingVisualTimer = setTimeout(() => {
+                            if (wrapper) wrapper.classList.add('holding');
+                        }, VISUAL_DELAY);
+    
+                        holdTimer = setTimeout(() => {
+                            isHoldTriggered = true;
+                            if (wrapper) wrapper.classList.remove('holding');
+                            const photoId = active.getAttribute('data-id');
+                            openDeleteModal(photoId);
+                        }, HOLD_DURATION);
+                    }
+                } else if (!e.repeat) {
                     if (active.classList.contains('theme-dot')) {
                         active.click();
                     } else if (active.classList.contains('delete-btn')) {
@@ -1024,7 +1030,18 @@
 
         document.addEventListener('keyup', (e) => {
             if (e.key === 'Enter') {
-                if (!isDeleteModalOpen && !isEditModalOpen && !isModalOpen && !justClosedModal) {
+                if (holdingVisualTimer) {
+                    clearTimeout(holdingVisualTimer);
+                    holdingVisualTimer = null;
+                }
+                if (holdTimer) {
+                    clearTimeout(holdTimer);
+                    holdTimer = null;
+                }
+
+                document.querySelectorAll('.photo-card-wrapper.holding').forEach(el => el.classList.remove('holding'));
+
+                if (!isHoldTriggered && !isDeleteModalOpen && !isEditModalOpen && !isModalOpen && !justClosedModal) {
                     const active = document.activeElement;
                     if (active && active.classList.contains('photo-card')) {
                         const imgUrl = active.getAttribute('data-img');
@@ -1033,6 +1050,9 @@
                         openModal(imgUrl, comment, dateStr);
                     }
                 }
+
+                isEnterPressed = false;
+                isHoldTriggered = false;
                 justClosedModal = false;
             }
         });
@@ -1215,9 +1235,7 @@
                     card.style.setProperty('--offset-y', `${Number(randomOffsetY)}px`);
                                            
                     card.innerHTML = `
-                        <button class="delete-btn focusable" data-id="${data.id}" title="削除" tabindex="0">
-                            <img src="rsc/delete.svg" class="delete-icon" alt="削除">
-                        </button>
+                        <button class="delete-btn" data-id="${data.id}" title="削除" tabindex="-1">×</button>
                         <img src="${data.imageUrl}" alt="Memory">
                         ${data.comment ? `
                             <div class="sticky-note">
