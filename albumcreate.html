@@ -209,17 +209,10 @@
             background: var(--badge-hover-bg) !important;
         }
 
-        .delete-btn:focus {
+        .delete-btn:focus, .photo-edit-btn:focus {
             opacity: 1 !important;
-            transform: translateX(-50%) scale(1.2) !important;
-            box-shadow: 0 0 0 3px #e65b5b, 0 0 15px rgba(230, 91, 91, 0.5) !important;
-        }
-
-        .photo-card-wrapper.holding .photo-card {
-            transform: scale(0.96) rotate(0deg) !important;
-            border: 3px solid #e74c3c !important;
-            box-shadow: 0 0 20px rgba(231, 76, 60, 0.6) !important;
-            transition: all 0.2s cubic-bezier(0.25, 1, 0.5, 1) !important;
+            transform: scale(1.2) !important;
+            box-shadow: 0 0 0 3px var(--primary-color), 0 0 15px rgba(247, 160, 114, 0.6) !important;
         }
 
         .photo-card-wrapper:hover .photo-card,
@@ -350,14 +343,14 @@
             padding-bottom: 50px;
         }
 
-        /* --- 見出しバッジ（付箋・ラベル風にブラッシュアップ） --- */
+        /* --- 見出しバッジ --- */
         .group-header-badge {
             display: inline-flex;
             align-items: center;
             padding: 8px 20px;
             background: var(--badge-bg);
             border: var(--badge-border);
-            border-radius: 8px; /* 少し角丸にすることで手帳や付箋のような温かみを出します */
+            border-radius: 8px;
             font-weight: 700;
             font-size: 0.9em;
             color: var(--badge-text);
@@ -367,7 +360,7 @@
             cursor: pointer;
             transition: all 0.25s ease;
             margin-bottom: 75px;
-            transform: rotate(-1deg); /* 少し傾けて手書き・アルバム貼りのラフな雰囲気に */
+            transform: rotate(-1deg);
         }
         
         .group-header-badge:hover {
@@ -409,11 +402,27 @@
             transform: translateY(var(--offset-y, 0px)) rotate(var(--rotate, 0deg));
         }
 
-        .delete-btn {
+        /* --- 写真下部のアクションボタン群（Edit & Delete） --- */
+        .photo-actions-container {
             position: absolute;
             bottom: -22px;
             left: 50%;
             transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+            z-index: 20;
+        }
+
+        .photo-card-wrapper:hover .photo-actions-container,
+        .photo-card-wrapper.focused .photo-actions-container {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .photo-edit-btn, .delete-btn {
             background: rgba(30, 30, 35, 0.70);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
@@ -427,27 +436,22 @@
             justify-content: center;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
             transition: all 0.2s ease;
-            opacity: 0;
-            pointer-events: none;
-            z-index: 20;
         }
         
-        .delete-icon {
+        .action-icon {
             width: 20px;
             height: 20px;
             object-fit: contain;
             filter: brightness(0) invert(1);
         }
         
-        .photo-card-wrapper:hover .delete-btn,
-        .photo-card-wrapper.focused .delete-btn,
-        .delete-btn.focusable:focus {
-            opacity: 1;
-            pointer-events: auto;
-        }
-        
         .delete-btn.focusable:focus {
             background: rgba(230, 91, 91, 0.85) !important;
+            border-color: #ffffff !important;
+        }
+
+        .photo-edit-btn.focusable:focus {
+            background: var(--primary-color) !important;
             border-color: #ffffff !important;
         }
 
@@ -554,7 +558,7 @@
             line-height: 1.6;
         }
 
-        /* --- モーダル --- */
+        /* --- モーダル共通 --- */
         .modal-overlay {
             position: fixed;
             top: 0; left: 0; width: 100vw; height: 100vh;
@@ -714,9 +718,9 @@
 
     <div class="modal-overlay" id="editModalOverlay">
         <div class="edit-dialog">
-            <h3>見出しの編集</h3>
-            <p>このグループの自由なタイトルを入力してください。</p>
-            <input type="text" id="groupTitleInput" class="edit-input" placeholder="例: 楽しかったランチタイム">
+            <h3 id="editModalTitle">見出しの編集</h3>
+            <p id="editModalDesc">このグループの自由なタイトルを入力してください。</p>
+            <input type="text" id="groupTitleInput" class="edit-input" placeholder="">
             <div class="edit-dialog-actions">
                 <button id="cancelEditBtn" class="modal-btn focusable" tabindex="0">キャンセル</button>
                 <button id="confirmEditBtn" class="modal-btn primary focusable" tabindex="0">保存する</button>
@@ -821,12 +825,6 @@
         let isDeleteModalOpen = false;
         let pendingDeletePhotoId = null;
 
-        let holdTimer = null;
-        let holdingVisualTimer = null;
-        const HOLD_DURATION = 800;
-        const VISUAL_DELAY = 200;
-        let isHoldTriggered = false;
-
         function openDeleteModal(photoId) {
             pendingDeletePhotoId = photoId;
             lastFocusedElement = document.activeElement;
@@ -860,18 +858,45 @@
             }
         });
 
-        /* --- 見出し編集モーダル --- */
+        /* --- 編集モーダル（グループ見出し & 写真コメント共通） --- */
         const editModalOverlay = document.getElementById('editModalOverlay');
         const cancelEditBtn = document.getElementById('cancelEditBtn');
         const confirmEditBtn = document.getElementById('confirmEditBtn');
         const groupTitleInput = document.getElementById('groupTitleInput');
+        const editModalTitle = document.getElementById('editModalTitle');
+        const editModalDesc = document.getElementById('editModalDesc');
+        
         let isEditModalOpen = false;
-        let activeEditingGroupKey = null;
+        let editModeType = null; // 'group' または 'photo'
+        let activeEditingKey = null; // groupKey または photoId
 
-        function openEditModal(groupKey, currentText) {
-            activeEditingGroupKey = groupKey;
+        function openEditModalForGroup(groupKey, currentText) {
+            editModeType = 'group';
+            activeEditingKey = groupKey;
             lastFocusedElement = document.activeElement;
+            
+            editModalTitle.innerText = "見出しの編集";
+            editModalDesc.innerText = "このグループの自由なタイトルを入力してください。";
+            groupTitleInput.placeholder = "例: 楽しかったランチタイム";
             groupTitleInput.value = currentText;
+
+            editModalOverlay.classList.add('active');
+            isEditModalOpen = true;
+
+            setTimeout(() => {
+                groupTitleInput.focus();
+            }, 50);
+        }
+
+        function openEditModalForPhoto(photoId, currentComment) {
+            editModeType = 'photo';
+            activeEditingKey = photoId;
+            lastFocusedElement = document.activeElement;
+            
+            editModalTitle.innerText = "写真コメントの編集";
+            editModalDesc.innerText = "この写真に添えるコメントを入力してください。";
+            groupTitleInput.placeholder = "例: みんなでピース！";
+            groupTitleInput.value = currentComment || "";
 
             editModalOverlay.classList.add('active');
             isEditModalOpen = true;
@@ -884,7 +909,8 @@
         function closeEditModal() {
             editModalOverlay.classList.remove('active');
             isEditModalOpen = false;
-            activeEditingGroupKey = null;
+            editModeType = null;
+            activeEditingKey = null;
 
             setTimeout(() => {
                 if (lastFocusedElement) {
@@ -896,30 +922,39 @@
         cancelEditBtn.addEventListener('click', closeEditModal);
 
         confirmEditBtn.addEventListener('click', async () => {
-            if (!activeEditingGroupKey) return;
-            const newTitle = groupTitleInput.value.trim();
+            if (!activeEditingKey) return;
+            const newVal = groupTitleInput.value.trim();
             
-            let localHeadings = {};
-            try {
-                const saved = localStorage.getItem(`album_headings_${albumId}`);
-                if (saved) localHeadings = JSON.parse(saved);
-            } catch(e) {}
-            localHeadings[activeEditingGroupKey] = newTitle;
-            localStorage.setItem(`album_headings_${albumId}`, JSON.stringify(localHeadings));
-            albumCustomHeadings = localHeadings;
+            if (editModeType === 'group') {
+                let localHeadings = {};
+                try {
+                    const saved = localStorage.getItem(`album_headings_${albumId}`);
+                    if (saved) localHeadings = JSON.parse(saved);
+                } catch(e) {}
+                localHeadings[activeEditingKey] = newVal;
+                localStorage.setItem(`album_headings_${albumId}`, JSON.stringify(localHeadings));
+                albumCustomHeadings = localHeadings;
 
-            try {
-                const albumRef = doc(db, "albums", albumId);
-                const albumSnap = await getDoc(albumRef);
-                let customHeadings = {};
-                if (albumSnap.exists() && albumSnap.data().customHeadings) {
-                    customHeadings = albumSnap.data().customHeadings;
+                try {
+                    const albumRef = doc(db, "albums", albumId);
+                    const albumSnap = await getDoc(albumRef);
+                    let customHeadings = {};
+                    if (albumSnap.exists() && albumSnap.data().customHeadings) {
+                        customHeadings = albumSnap.data().customHeadings;
+                    }
+                    customHeadings[activeEditingKey] = newVal;
+                    await setDoc(albumRef, { customHeadings }, { merge: true });
+                } catch (err) {
+                    console.warn("Firestoreへの見出し保存がスキップされました（ローカルには保存済み）:", err);
                 }
-                customHeadings[activeEditingGroupKey] = newTitle;
-
-                await setDoc(albumRef, { customHeadings }, { merge: true });
-            } catch (err) {
-                console.warn("Firestoreへの見出し保存がスキップされました（ローカルには保存済み）:", err);
+            } else if (editModeType === 'photo') {
+                try {
+                    const photoRef = doc(db, "shared_photos", activeEditingKey);
+                    await updateDoc(photoRef, { comment: newVal });
+                } catch (err) {
+                    console.error("写真コメントの更新に失敗しました:", err);
+                    alert("コメントの更新に失敗しました。");
+                }
             }
 
             closeEditModal();
@@ -1007,12 +1042,12 @@
                 if (!e.repeat && active) {
                     if (active.classList.contains('theme-dot')) {
                         active.click();
-                    } else if (active.classList.contains('delete-btn')) {
+                    } else if (active.classList.contains('delete-btn') || active.classList.contains('photo-edit-btn')) {
                         active.click();
                     } else if (active.classList.contains('group-header-badge')) {
                         const groupKey = active.getAttribute('data-group-key');
                         const currentText = active.getAttribute('data-current-text');
-                        openEditModal(groupKey, currentText);
+                        openEditModalForGroup(groupKey, currentText);
                     } else if (active.classList.contains('photo-card')) {
                         active.click();
                     }
@@ -1035,7 +1070,7 @@
                     if (idx !== -1) {
                         const nextIdx = e.key === 'ArrowRight' 
                             ? (idx + 1) % photoCards.length 
-                          : (idx - 1 + photoCards.length) % photoCards.length;
+                            : (idx - 1 + photoCards.length) % photoCards.length;
                         const target = photoCards[nextIdx];
                         target.focus();
                         target.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
@@ -1043,11 +1078,10 @@
                 } else if (e.key === 'ArrowDown') {
                     e.preventDefault();
                     const wrapper = active.closest('.photo-card-wrapper');
-                    const deleteBtn = wrapper ? wrapper.querySelector('.delete-btn') : null;
-                    if (deleteBtn) deleteBtn.focus();
+                    const editBtn = wrapper ? wrapper.querySelector('.photo-edit-btn') : null;
+                    if (editBtn) editBtn.focus();
                 } else if (e.key === 'ArrowUp') {
                     e.preventDefault();
-                    // 写真カードが属する時間グループ列（.time-group-column）を取得し、その中にある最初の見出しを探す
                     const groupColumn = active.closest('.time-group-column');
                     const badge = groupColumn ? groupColumn.querySelector('.group-header-badge') : null;
                     
@@ -1060,24 +1094,39 @@
                     }
                 }
             }
-            /* --- 2. ゴミ箱アイコン（.delete-btn）の操作 --- */
+            /* --- 2. 写真編集・削除ボタンの操作 --- */
+            else if (active.classList.contains('photo-edit-btn')) {
+                if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    const wrapper = active.closest('.photo-card-wrapper');
+                    const card = wrapper ? wrapper.querySelector('.photo-card.focusable') : null;
+                    if (card) card.focus();
+                } else if (e.key === 'ArrowRight') {
+                    e.preventDefault();
+                    const wrapper = active.closest('.photo-card-wrapper');
+                    const deleteBtn = wrapper ? wrapper.querySelector('.delete-btn') : null;
+                    if (deleteBtn) deleteBtn.focus();
+                }
+            }
             else if (active.classList.contains('delete-btn')) {
                 if (e.key === 'ArrowUp') {
                     e.preventDefault();
                     const wrapper = active.closest('.photo-card-wrapper');
                     const card = wrapper ? wrapper.querySelector('.photo-card.focusable') : null;
                     if (card) card.focus();
-                } else if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+                } else if (e.key === 'ArrowLeft') {
+                    e.preventDefault();
+                    const wrapper = active.closest('.photo-card-wrapper');
+                    const editBtn = wrapper ? wrapper.querySelector('.photo-edit-btn') : null;
+                    if (editBtn) editBtn.focus();
+                } else if (e.key === 'ArrowRight') {
                     e.preventDefault();
                     const photoCards = Array.from(document.querySelectorAll('.photo-card.focusable'));
                     const currentWrapper = active.closest('.photo-card-wrapper');
                     const currentCard = currentWrapper ? currentWrapper.querySelector('.photo-card.focusable') : null;
                     const idx = photoCards.indexOf(currentCard);
-                    if (idx !== -1) {
-                        const nextIdx = e.key === 'ArrowRight' 
-                            ? (idx + 1) % photoCards.length 
-                            : (idx - 1 + photoCards.length) % photoCards.length;
-                        const targetCard = photoCards[nextIdx];
+                    if (idx !== -1 && idx < photoCards.length - 1) {
+                        const targetCard = photoCards[idx + 1];
                         targetCard.focus();
                         targetCard.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
                     }
@@ -1233,17 +1282,12 @@
             const firstDateObj = getValidDate(photos[0]);
             const lastDateObj = getValidDate(photos[photos.length - 1]);
             
-            // 全体の時間長（秒）を計算
             const totalDurationSeconds = (lastDateObj.getTime() - firstDateObj.getTime()) / 1000;
 
-            // 運動会のように数時間〜半日ある場合は、間隔のしきい値をイベントの長さに応じて変動させる
-            // 例: 全体が3時間以上の場合は、30分（1800秒）以上空いたら別グループ（競技）とみなす
-            let GAP_THRESHOLD_SECONDS = 30 * 60; // デフォルト 30分
+            let GAP_THRESHOLD_SECONDS = 30 * 60;
             if (totalDurationSeconds > 6 * 60 * 60) {
-                // 6時間以上の長丁場なら45分空きを基準にするなど
                 GAP_THRESHOLD_SECONDS = 45 * 60;
             } else if (totalDurationSeconds < 60 * 60) {
-                // 1時間未満の短いイベントなら10分空きを基準にする
                 GAP_THRESHOLD_SECONDS = 10 * 60;
             }
             
@@ -1310,7 +1354,7 @@
                         `;
                                                 
                         headerBadge.addEventListener('click', () => {
-                            openEditModal(groupKey, displayTitle);
+                            openEditModalForGroup(groupKey, displayTitle);
                         });
 
                         cardWrapper.appendChild(headerBadge);
@@ -1331,7 +1375,7 @@
                     const handleFocusIn = () => {
                         cardWrapper.classList.add('focused');
                     };
-                    const handleFocusOut = (e) => {
+                    const handleFocusOut = () => {
                         setTimeout(() => {
                             if (!cardWrapper.contains(document.activeElement)) {
                                 cardWrapper.classList.remove('focused');
@@ -1360,69 +1404,46 @@
                         `}
                     `;
 
+                    // アクションボタンをまとめるコンテナ（Edit & Delete）
+                    const actionsContainer = document.createElement('div');
+                    actionsContainer.className = 'photo-actions-container';
+
+                    // 編集ボタン (rsc/edit.svg)
+                    const editBtn = document.createElement('button');
+                    editBtn.className = 'photo-edit-btn focusable';
+                    editBtn.setAttribute('title', 'コメント編集');
+                    editBtn.tabIndex = 0;
+                    editBtn.innerHTML = `<img src="rsc/edit.svg" class="action-icon" alt="編集">`;
+                    
+                    editBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        openEditModalForPhoto(data.id, data.comment || "");
+                    });
+                    editBtn.addEventListener('focus', handleFocusIn);
+                    editBtn.addEventListener('blur', handleFocusOut);
+
+                    // 削除ボタン (rsc/delete.svg)
                     const deleteBtn = document.createElement('button');
                     deleteBtn.className = 'delete-btn focusable';
-                    deleteBtn.setAttribute('data-id', data.id);
                     deleteBtn.setAttribute('title', '削除');
                     deleteBtn.tabIndex = 0;
-                    deleteBtn.innerHTML = `<img src="rsc/delete.svg" class="delete-icon" alt="削除">`;
+                    deleteBtn.innerHTML = `<img src="rsc/delete.svg" class="action-icon" alt="削除">`;
                     
                     deleteBtn.addEventListener('click', (e) => {
                         e.stopPropagation();
                         openDeleteModal(data.id);
                     });
-
                     deleteBtn.addEventListener('focus', handleFocusIn);
                     deleteBtn.addEventListener('blur', handleFocusOut);
+
+                    actionsContainer.appendChild(editBtn);
+                    actionsContainer.appendChild(deleteBtn);
                     
                     cardWrapper.appendChild(card);
-                    cardWrapper.appendChild(deleteBtn);
-
-                    const clearHold = () => {
-                        clearTimeout(holdTimer);
-                        clearTimeout(holdingVisualTimer);
-                        cardWrapper.classList.remove('holding');
-                        isHoldTriggered = false;
-                    };
-
-                    card.addEventListener('mousedown', (e) => {
-                        if (e.target.classList.contains('delete-btn')) return;
-                        isHoldTriggered = false;
-                        holdingVisualTimer = setTimeout(() => {
-                            cardWrapper.classList.add('holding');
-                        }, VISUAL_DELAY);
-                        holdTimer = setTimeout(() => {
-                            isHoldTriggered = true;
-                            cardWrapper.classList.remove('holding');
-                            openDeleteModal(data.id);
-                        }, HOLD_DURATION);
-                    });
-
-                    card.addEventListener('mouseup', clearHold);
-                    card.addEventListener('mouseleave', clearHold);
-
-                    card.addEventListener('touchstart', (e) => {
-                        if (e.target.classList.contains('delete-btn')) return;
-                        isHoldTriggered = false;
-                        holdingVisualTimer = setTimeout(() => {
-                            cardWrapper.classList.add('holding');
-                        }, VISUAL_DELAY);
-                        holdTimer = setTimeout(() => {
-                            isHoldTriggered = true;
-                            cardWrapper.classList.remove('holding');
-                            openDeleteModal(data.id);
-                        }, HOLD_DURATION);
-                    }, { passive: true });
-
-                    card.addEventListener('touchend', clearHold);
-                    card.addEventListener('touchmove', clearHold);
+                    cardWrapper.appendChild(actionsContainer);
 
                     card.addEventListener('click', (e) => {
-                        if (e.target.classList.contains('delete-btn')) return;
-                        if (isHoldTriggered) {
-                            isHoldTriggered = false;
-                            return;
-                        }
+                        if (e.target.closest('.photo-actions-container')) return;
                         openModal(data.imageUrl, data.comment, formattedDateStr);
                     });
 
@@ -1434,7 +1455,7 @@
 
             if (!isModalOpen && !isDeleteModalOpen && !isEditModalOpen) {
                 const active = document.activeElement;
-                if (!active || (!active.classList.contains('focusable') && !active.classList.contains('delete-btn'))) {
+                if (!active || (!active.classList.contains('focusable') && !active.classList.contains('delete-btn') && !active.classList.contains('photo-edit-btn'))) {
                     const firstPhoto = document.querySelector('.photo-card.focusable');
                     if (firstPhoto) firstPhoto.focus();
                 }
