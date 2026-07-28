@@ -877,32 +877,23 @@
             }, 50);
         }
 
-        function closeDeleteModal(wasDeleted = false) {
-            // 削除された場合、次にフォーカスすべき要素のIDを保持しておく
-            let nextFocusId = null;
-            if (wasDeleted && targetNextElement) {
-                nextFocusId = targetNextElement.getAttribute('data-id');
-            }
-
+        function closeDeleteModal(nextFocusTarget = null) {
             deleteModalOverlay.classList.remove('active');
             isDeleteModalOpen = false;
-            activeDeletingKey = null;
+            pendingDeletePhotoId = null;
 
             setTimeout(() => {
-                // 削除後の再描画が終わっているため、保存しておいたIDから要素を再取得してフォーカス
-                if (nextFocusId) {
-                    const nextCard = document.querySelector(`.photo-card.focusable[data-id="${nextFocusId}"]`);
-                    if (nextCard) {
-                        nextCard.focus();
-                        if (typeof nextCard.scrollIntoView === 'function') {
-                            nextCard.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-                        }
-                        targetNextElement = null;
-                        return;
+                // 1. 削除処理などで「次のフォーカス先」が明確に指定されている場合
+                if (nextFocusTarget && typeof nextFocusTarget.focus === 'function') {
+                    nextFocusTarget.focus();
+                    if (typeof nextFocusTarget.scrollIntoView === 'function') {
+                        nextFocusTarget.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
                     }
+                    targetNextElement = null;
+                    return;
                 }
 
-                // フォールバック（通常のフォーカス復元）
+                // 2. キャンセル時など、開く直前に保持していた元の要素（写真カードなど）に戻す場合
                 if (lastFocusedElement && typeof lastFocusedElement.focus === 'function') {
                     lastFocusedElement.focus();
                     if (typeof lastFocusedElement.scrollIntoView === 'function') {
