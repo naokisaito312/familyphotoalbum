@@ -226,12 +226,28 @@
             font-weight: 500;
         }
 
-        /* --- ゴミ箱アイコン（デフォルト非表示、カードまたはゴミ箱にフォーカス・ホバー時のみ表示） --- */
-        .delete-album-btn {
+        /* --- アルバム下部のアクションボタングループ（編集・削除） --- */
+        .album-action-buttons {
+            display: flex;
+            gap: 12px;
             margin-top: 15px;
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(-10px);
+            transition: all 0.2s;
+        }
+
+        .album-card-wrapper:hover .album-action-buttons,
+        .album-card:focus ~ .album-action-buttons,
+        .album-action-buttons:focus-within {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateY(0);
+        }
+
+        /* 編集・削除共通ボタンデザイン */
+        .album-action-btn {
             background: #ffffff;
-            border: 2px solid #f2dede;
-            color: #d9534f;
             width: 48px;
             height: 48px;
             border-radius: 50%;
@@ -239,22 +255,31 @@
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            box-shadow: 0 4px 12px rgba(217, 83, 79, 0.15);
+            box-shadow: 0 4px 12px rgba(60, 40, 30, 0.1);
             transition: all 0.2s;
-            opacity: 0;
-            pointer-events: none;
-            transform: translateY(-10px);
         }
 
-        .album-card-wrapper:hover .delete-album-btn,
-        .album-card:focus ~ .delete-album-btn,
-        .delete-album-btn:focus {
-            opacity: 1;
-            pointer-events: auto;
-            transform: translateY(0);
+        .edit-album-btn {
+            border: 2px solid #e2cfc4;
+            color: #8f6b58;
+        }
+        .edit-album-btn:hover, .edit-album-btn:focus {
+            background: #f7a072;
+            color: #ffffff;
+            border-color: #f7a072;
+            transform: scale(1.08);
+        }
+        .edit-album-btn img {
+            width: 20px;
+            height: 20px;
+            object-fit: contain;
         }
 
-        .delete-album-btn:hover {
+        .delete-album-btn {
+            border: 2px solid #f2dede;
+            color: #d9534f;
+        }
+        .delete-album-btn:hover, .delete-album-btn:focus {
             background: #d9534f;
             color: #ffffff;
             border-color: #d9534f;
@@ -306,6 +331,18 @@
             color: #3d3531;
             margin-bottom: 20px;
         }
+        
+        .modal-input-group {
+            text-align: left;
+            margin-bottom: 20px;
+        }
+        .modal-label {
+            display: block;
+            font-size: 0.9em;
+            font-weight: 700;
+            color: #8c7d75;
+            margin-bottom: 8px;
+        }
         .modal-input {
             width: 100%;
             padding: 14px 18px;
@@ -313,7 +350,6 @@
             font-family: inherit;
             border: 2px solid #e2cfc4;
             border-radius: 12px;
-            margin-bottom: 25px;
             color: #3d3531;
             background: #fefaf6;
             transition: border-color 0.2s;
@@ -327,6 +363,7 @@
             display: flex;
             gap: 15px;
             justify-content: center;
+            margin-top: 25px;
         }
         .modal-btn {
             flex: 1;
@@ -399,11 +436,14 @@
 
     <div class="album-container" id="albumContainer"></div>
 
-    <!-- アルバム名入力モーダル -->
+    <!-- アルバム名入力モーダル（新規作成用） -->
     <div class="modal-overlay" id="createModal">
         <div class="modal-content">
             <div class="modal-title">新しいアルバムを作成</div>
-            <input type="text" id="albumNameInput" class="modal-input modal-focusable" placeholder="アルバム名を入力してください" value="家族の思い出">
+            <div class="modal-input-group">
+                <label class="modal-label">アルバム名</label>
+                <input type="text" id="albumNameInput" class="modal-input modal-focusable" placeholder="アルバム名を入力してください" value="家族の思い出">
+            </div>
             <div class="modal-buttons">
                 <button type="button" class="modal-btn cancel modal-focusable" id="cancelModalBtn">キャンセル</button>
                 <button type="button" class="modal-btn submit modal-focusable" id="submitModalBtn">作成する</button>
@@ -411,7 +451,26 @@
         </div>
     </div>
 
-    <!-- アルバム削除確認ダイアログ（albumcreate.html と共通のデザイン） -->
+    <!-- アルバム編集モーダル -->
+    <div class="modal-overlay" id="editModalOverlay">
+        <div class="modal-content">
+            <div class="modal-title">アルバム情報の編集</div>
+            <div class="modal-input-group">
+                <label class="modal-label">アルバム名</label>
+                <input type="text" id="editAlbumNameInput" class="modal-input modal-focusable" placeholder="アルバム名を入力">
+            </div>
+            <div class="modal-input-group">
+                <label class="modal-label">作成日時</label>
+                <input type="datetime-local" id="editAlbumDateInput" class="modal-input modal-focusable">
+            </div>
+            <div class="modal-buttons">
+                <button type="button" class="modal-btn cancel modal-focusable" id="cancelEditBtn">キャンセル</button>
+                <button type="button" class="modal-btn submit modal-focusable" id="confirmEditBtn">保存する</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- アルバム削除確認ダイアログ -->
     <div class="modal-overlay" id="deleteModalOverlay">
         <div class="delete-dialog">
             <h3 id="deleteDialogTitle">アルバムを削除しますか？</h3>
@@ -426,7 +485,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { 
-            getFirestore, collection, onSnapshot, query, where, getDocs, addDoc, deleteDoc, doc, serverTimestamp 
+            getFirestore, collection, onSnapshot, query, where, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, Timestamp 
         } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -448,6 +507,13 @@
         const cancelModalBtn = document.getElementById('cancelModalBtn');
         const submitModalBtn = document.getElementById('submitModalBtn');
 
+        // 編集モーダル関連要素
+        const editModalOverlay = document.getElementById('editModalOverlay');
+        const editAlbumNameInput = document.getElementById('editAlbumNameInput');
+        const editAlbumDateInput = document.getElementById('editAlbumDateInput');
+        const cancelEditBtn = document.getElementById('cancelEditBtn');
+        const confirmEditBtn = document.getElementById('confirmEditBtn');
+
         // 削除モーダル関連要素
         const deleteModalOverlay = document.getElementById('deleteModalOverlay');
         const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
@@ -456,7 +522,9 @@
         const deleteDialogDesc = document.getElementById('deleteDialogDesc');
 
         let isModalOpen = false;
+        let isEditModalOpen = false;
         let isDeleteModalOpen = false;
+        let pendingEditAlbumId = null;
         let pendingDeleteAlbumId = null;
         let lastFocusedElement = null;
 
@@ -503,6 +571,83 @@
             }
         });
 
+        // アルバム編集モーダルを開く処理
+        function openEditModal(albumId, currentName, createdAtData) {
+            pendingEditAlbumId = albumId;
+            lastFocusedElement = document.activeElement;
+            isEditModalOpen = true;
+
+            editAlbumNameInput.value = currentName || "";
+            
+            // 既存の作成日時（Firestore Timestamp or Date）を datetime-local 形式に変換
+            let dateObj = new Date();
+            if (createdAtData && createdAtData.toDate) {
+                dateObj = createdAtData.toDate();
+            } else if (createdAtData instanceof Date) {
+                dateObj = createdAtData;
+            } else if (typeof createdAtData === 'number') {
+                dateObj = new Date(createdAtData);
+            }
+            
+            const year = dateObj.getFullYear();
+            const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const day = String(dateObj.getDate()).padStart(2, '0');
+            const hours = String(dateObj.getHours()).padStart(2, '0');
+            const minutes = String(dateObj.getMinutes()).padStart(2, '0');
+            editAlbumDateInput.value = `${year}-${month}-${day}T${hours}:${minutes}`;
+
+            editModalOverlay.classList.add('active');
+            setTimeout(() => {
+                editAlbumNameInput.focus();
+                editAlbumNameInput.select();
+            }, 50);
+        }
+
+        function closeEditModal() {
+            isEditModalOpen = false;
+            editModalOverlay.classList.remove('active');
+            pendingEditAlbumId = null;
+            if (lastFocusedElement) {
+                lastFocusedElement.focus();
+            }
+        }
+
+        cancelEditBtn.addEventListener('click', closeEditModal);
+
+        async function handleUpdateAlbum() {
+            if (!pendingEditAlbumId) return;
+            const targetId = pendingEditAlbumId;
+            const newName = editAlbumNameInput.value.trim() || "無題のアルバム";
+            const newDateVal = editAlbumDateInput.value;
+
+            closeEditModal();
+
+            try {
+                const updateData = { name: newName };
+                if (newDateVal) {
+                    updateData.createdAt = Timestamp.fromDate(new Date(newDateVal));
+                }
+                await updateDoc(doc(db, "albums", targetId), updateData);
+            } catch (error) {
+                console.error("アルバムの更新に失敗しました:", error);
+                alert("アルバムの更新に失敗しました。");
+            }
+        }
+
+        confirmEditBtn.addEventListener('click', handleUpdateAlbum);
+        editAlbumNameInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                handleUpdateAlbum();
+            }
+        });
+        editAlbumDateInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                handleUpdateAlbum();
+            }
+        });
+
         // アルバム削除ダイアログを開く処理
         function openDeleteModal(albumId, albumTitle) {
             pendingDeleteAlbumId = albumId;
@@ -533,7 +678,6 @@
             if (!pendingDeleteAlbumId) return;
             const targetId = pendingDeleteAlbumId;
             
-            // 先にモーダルを閉じ、フラグをリセットして再描画を許可する
             closeDeleteModal();
 
             try {
@@ -544,9 +688,9 @@
             }
         });
 
-        // アルバム一覧のリアルタイム取得（削除モーダル表示中でもデータの反映を行うように修正）
+        // アルバム一覧のリアルタイム取得
         onSnapshot(collection(db, "albums"), async (snapshot) => {
-            if (isModalOpen) return;
+            if (isModalOpen || isEditModalOpen) return;
             
             albumContainer.innerHTML = '';
 
@@ -625,11 +769,28 @@
 
                 wrapper.appendChild(card);
 
-                // アルバムカード下部のゴミ箱アイコン（削除ボタン）
+                // アルバムカード下部のアクションボタングループ（編集・削除ボタン）
+                const actionButtonsGroup = document.createElement('div');
+                actionButtonsGroup.className = 'album-action-buttons';
+
+                // 編集ボタン（左側）
+                const editBtn = document.createElement('button');
+                editBtn.className = 'album-action-btn edit-album-btn focusable';
+                editBtn.dataset.type = 'edit';
+                editBtn.tabIndex = 0;
+                editBtn.title = "アルバム情報を編集";
+                editBtn.innerHTML = `<img src="src/edit.svg" alt="編集">`;
+                editBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    openEditModal(albumId, albumTitle, albumData.createdAt);
+                });
+
+                // ゴミ箱ボタン（右側）
                 const deleteBtn = document.createElement('button');
-                deleteBtn.className = 'delete-album-btn focusable';
+                deleteBtn.className = 'album-action-btn delete-album-btn focusable';
                 deleteBtn.dataset.type = 'delete';
                 deleteBtn.tabIndex = 0;
+                deleteBtn.title = "アルバムを削除";
                 deleteBtn.innerHTML = `
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <polyline points="3 6 5 6 21 6"></polyline>
@@ -643,12 +804,14 @@
                     openDeleteModal(albumId, albumTitle);
                 });
 
-                wrapper.appendChild(deleteBtn);
+                actionButtonsGroup.appendChild(editBtn);
+                actionButtonsGroup.appendChild(deleteBtn);
+                wrapper.appendChild(actionButtonsGroup);
                 albumContainer.appendChild(wrapper);
             }
 
             const firstCard = document.querySelector('.album-card.focusable');
-            if (firstCard && !isModalOpen && !isDeleteModalOpen) firstCard.focus();
+            if (firstCard && !isModalOpen && !isEditModalOpen && !isDeleteModalOpen) firstCard.focus();
         });
 
         // キーボード・TVリモコン操作対応
@@ -667,6 +830,24 @@
                 } else if (e.key === 'Escape') {
                     e.preventDefault();
                     closeCreateModal();
+                }
+                return;
+            }
+
+            if (isEditModalOpen) {
+                const editFocusables = Array.from(document.querySelectorAll('#editModalOverlay .modal-focusable'));
+                const active = document.activeElement;
+                let index = editFocusables.indexOf(active);
+
+                if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    (editFocusables[index + 1] || editFocusables[0]).focus();
+                } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    (editFocusables[index - 1] || editFocusables[editFocusables.length - 1]).focus();
+                } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    closeEditModal();
                 }
                 return;
             }
@@ -698,14 +879,18 @@
             if (wrappers.length === 0) return;
 
             let currentWrapperIndex = -1;
-            let currentType = '';
+            let currentType = ''; // 'card', 'edit', 'delete'
 
             wrappers.forEach((wrapper, wIdx) => {
                 const card = wrapper.querySelector('.album-card');
+                const editBtn = wrapper.querySelector('.edit-album-btn');
                 const delBtn = wrapper.querySelector('.delete-album-btn');
                 if (active === card) {
                     currentWrapperIndex = wIdx;
                     currentType = 'card';
+                } else if (active === editBtn) {
+                    currentWrapperIndex = wIdx;
+                    currentType = 'edit';
                 } else if (active === delBtn) {
                     currentWrapperIndex = wIdx;
                     currentType = 'delete';
@@ -719,30 +904,42 @@
             }
 
             if (e.key === 'ArrowRight') {
-                e.preventDefault();
-                const nextIndex = (currentWrapperIndex + 1) % wrappers.length;
-                const targetEl = wrappers[nextIndex].querySelector('.album-card');
-                if (targetEl) {
-                    targetEl.focus();
-                    targetEl.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                if (currentType === 'edit') {
+                    e.preventDefault();
+                    const delBtn = wrappers[currentWrapperIndex].querySelector('.delete-album-btn');
+                    if (delBtn) delBtn.focus();
+                } else if (currentType === 'card') {
+                    e.preventDefault();
+                    const nextIndex = (currentWrapperIndex + 1) % wrappers.length;
+                    const targetEl = wrappers[nextIndex].querySelector('.album-card');
+                    if (targetEl) {
+                        targetEl.focus();
+                        targetEl.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                    }
                 }
             } else if (e.key === 'ArrowLeft') {
-                e.preventDefault();
-                const prevIndex = (currentWrapperIndex - 1 + wrappers.length) % wrappers.length;
-                const targetEl = wrappers[prevIndex].querySelector('.album-card');
-                if (targetEl) {
-                    targetEl.focus();
-                    targetEl.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                if (currentType === 'delete') {
+                    e.preventDefault();
+                    const editBtn = wrappers[currentWrapperIndex].querySelector('.edit-album-btn');
+                    if (editBtn) editBtn.focus();
+                } else if (currentType === 'card') {
+                    e.preventDefault();
+                    const prevIndex = (currentWrapperIndex - 1 + wrappers.length) % wrappers.length;
+                    const targetEl = wrappers[prevIndex].querySelector('.album-card');
+                    if (targetEl) {
+                        targetEl.focus();
+                        targetEl.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                    }
                 }
             } else if (e.key === 'ArrowDown') {
                 e.preventDefault();
                 if (currentType === 'card') {
-                    const deleteBtn = wrappers[currentWrapperIndex].querySelector('.delete-album-btn');
-                    if (deleteBtn) deleteBtn.focus();
+                    const editBtn = wrappers[currentWrapperIndex].querySelector('.edit-album-btn');
+                    if (editBtn) editBtn.focus();
                 }
             } else if (e.key === 'ArrowUp') {
                 e.preventDefault();
-                if (currentType === 'delete') {
+                if (currentType === 'edit' || currentType === 'delete') {
                     const card = wrappers[currentWrapperIndex].querySelector('.album-card');
                     if (card) card.focus();
                 }
