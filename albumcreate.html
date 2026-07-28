@@ -1002,7 +1002,7 @@
             activeEditingKey = null;
 
             setTimeout(() => {
-                // 写真コメントの編集だった場合は、該当する写真カードにフォーカスを当てる
+                // 1. 写真コメントの編集だった場合
                 if (editedType === 'photo' && editedKey) {
                     const targetCard = document.querySelector(`.photo-card.focusable[data-id="${editedKey}"]`);
                     if (targetCard) {
@@ -1014,7 +1014,20 @@
                     }
                 }
 
-                // グループ見出しの編集や、その他のフォールバック
+                // 2. グループ見出しの編集だった場合 ★ここを追加
+                if (editedType === 'group' && editedGroupKey) {
+                    // 見出し要素に付与しているセレクタや属性名に合わせて変更してください
+                    const targetGroupHeading = document.querySelector(`.group-heading.focusable[data-group-id="${editedGroupKey}"]`);
+                    if (targetGroupHeading) {
+                        targetGroupHeading.focus();
+                        if (typeof targetGroupHeading.scrollIntoView === 'function') {
+                            targetGroupHeading.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                        }
+                        return;
+                    }
+                }
+
+                // 3. フォールバック
                 if (lastFocusedElement && typeof lastFocusedElement.focus === 'function') {
                     lastFocusedElement.focus();
                     if (typeof lastFocusedElement.scrollIntoView === 'function') {
