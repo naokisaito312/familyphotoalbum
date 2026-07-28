@@ -8,9 +8,100 @@
     <!-- Webフォント -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;500;700&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;500;700&family=Quicksand:wght@500;700&family=Shippori+Mincho:wght@500;700&display=swap" rel="stylesheet">
 
     <style>
+        /* ==========================================================================
+            デザインテーマ ＆ カードデザイン拡張
+           ========================================================================== */
+        /* --- 1. デフォルト: 暖色クラシック --- */
+        .album-card[data-theme="default"], body[data-theme="default"] {
+            --bg-gradient: linear-gradient(135deg, #fefaf6 0%, #f7ede2 50%, #f5e6d8 100%);
+            --primary-color: #f7a072;
+            --primary-hover: #f38345;
+            --text-main: #3d3531;
+            --text-sub: #8c7d75;
+            --card-bg: #ffffff;
+            --card-border: 1px solid rgba(255, 255, 255, 0.9);
+            --card-radius: 24px;
+            --card-shadow: 0 20px 40px -8px rgba(60, 40, 30, 0.1);
+            --title-font: 'Quicksand', 'M PLUS Rounded 1c', sans-serif;
+            --title-gradient: linear-gradient(45deg, #4a3e3d, #8f6b58);
+            --focus-glow: 0 0 0 4px #f7a072, 0 0 25px rgba(247, 160, 114, 0.65);
+        }
+
+        /* --- 2. パステルスイート --- */
+        .album-card[data-theme="pastel"] {
+            --bg-gradient: linear-gradient(135deg, #fff5f7 0%, #ffedf2 50%, #f0fff4 100%);
+            --primary-color: #ff9ebb;
+            --primary-hover: #ff7599;
+            --text-main: #4a353d;
+            --text-sub: #9e7d89;
+            --card-bg: #ffffff;
+            --card-border: 2px dashed #ffc0d0;
+            --card-radius: 24px;
+            --card-shadow: 0 12px 28px rgba(255, 180, 200, 0.2);
+            --title-font: 'M PLUS Rounded 1c', sans-serif;
+            --title-gradient: linear-gradient(45deg, #633b4d, #a86b84);
+            --focus-glow: 0 0 0 4px #ff9ebb, 0 0 25px rgba(255, 158, 187, 0.65);
+        }
+
+        /* --- 3. シーサイドブルー --- */
+        .album-card[data-theme="ocean"] {
+            --bg-gradient: linear-gradient(135deg, #eef9ff 0%, #e1f3fe 50%, #d8f0fa 100%);
+            --primary-color: #43b0f1;
+            --primary-hover: #1c92d2;
+            --text-main: #1e3240;
+            --text-sub: #637f94;
+            --card-bg: rgba(255, 255, 255, 0.85);
+            --card-border: 1px solid #bce3fb;
+            --card-radius: 16px;
+            --card-shadow: 0 10px 30px rgba(30, 80, 120, 0.1);
+            --title-font: 'Quicksand', sans-serif;
+            --title-gradient: linear-gradient(45deg, #1c3b57, #3a7bd5);
+            --focus-glow: 0 0 0 4px #43b0f1, 0 0 25px rgba(67, 176, 241, 0.65);
+        }
+
+        /* --- 4. ノスタルジックヴィンテージ --- */
+        .album-card[data-theme="vintage"] {
+            --bg-gradient: linear-gradient(135deg, #f4efe9 0%, #e8dfd5 50%, #ded3c5 100%);
+            --primary-color: #a0826c;
+            --primary-hover: #836551;
+            --text-main: #362f2d;
+            --text-sub: #7a6e6a;
+            --card-bg: #f7f3ec;
+            --card-border: 2px dashed #bdaaa0;
+            --card-radius: 12px;
+            --card-shadow: 0 10px 25px rgba(50, 40, 30, 0.15);
+            --title-font: 'Shippori Mincho', serif;
+            --title-gradient: linear-gradient(45deg, #3d312a, #735a4c);
+            --focus-glow: 0 0 0 4px #a0826c, 0 0 25px rgba(160, 130, 108, 0.65);
+        }
+
+        /* --- 5. シネマティックダーク --- */
+        .album-card[data-theme="dark"] {
+            --bg-gradient: linear-gradient(135deg, #141215 0%, #1f1b22 50%, #100e12 100%);
+            --primary-color: #e0a96d;
+            --primary-hover: #cca047;
+            --text-main: #f0ebe5;
+            --text-sub: #a89f91;
+            --card-bg: #221d26;
+            --card-border: 1px solid rgba(224, 169, 109, 0.3);
+            --card-radius: 16px;
+            --card-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+            --title-font: 'Shippori Mincho', serif;
+            --title-gradient: linear-gradient(45deg, #ffffff, #e0a96d);
+            --focus-glow: 0 0 0 4px #e0a96d, 0 0 30px rgba(224, 169, 109, 0.8);
+        }
+
+        /* ページ全体のデフォルト背景（一番最初のテーマや全体ベース用） */
+        :root {
+            --bg-gradient: linear-gradient(135deg, #fefaf6 0%, #f7ede2 50%, #f5e6d8 100%);
+            --text-main: #3d3531;
+            --text-sub: #8c7d75;
+            --primary-color: #f7a072;
+        }
+
         /* --- ページ遷移アニメーション --- */
         ::view-transition-old(root) { animation: fade-zoom-out 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
         ::view-transition-new(root) { animation: fade-zoom-in 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
@@ -21,26 +112,27 @@
         * { box-sizing: border-box; }
 
         body {
-            background: linear-gradient(135deg, #fefaf6 0%, #f7ede2 50%, #f5e6d8 100%);
+            background: var(--bg-gradient);
             min-height: 100vh;
-            color: #3d3531;
-            font-family: 'Quicksand', 'M PLUS Rounded 1c', -apple-system, sans-serif;
+            color: var(--text-main);
+            font-family: 'Quicksand', 'M PLUS Rounded 1c', sans-serif;
             margin: 0;
             padding: 40px;
             display: flex;
             flex-direction: column;
             justify-content: center;
             overflow-x: hidden;
+            transition: background 0.3s ease, color 0.3s ease;
         }
 
         /* --- フォーカス強調表示（TV GUI対応） --- */
         :focus { outline: none; }
 
         .focusable:focus, .modal-focusable:focus {
-            box-shadow: 0 0 0 4px #f7a072, 0 0 25px rgba(247, 160, 114, 0.65) !important;
+            box-shadow: var(--focus-glow) !important;
             transform: translateY(-4px) scale(1.02) !important;
             z-index: 100 !important;
-            border-color: #f7a072 !important;
+            border-color: var(--primary-color) !important;
         }
 
         header {
@@ -58,7 +150,7 @@
         }
 
         .subtitle {
-            color: #8c7d75;
+            color: var(--text-sub);
             font-size: 1.1em;
             font-weight: 500;
         }
@@ -91,7 +183,6 @@
             border-radius: 3px;
         }
 
-        /* アルバムが1つもない場合は中央に配置 */
         .album-container.has-empty-state {
             justify-content: center;
             align-items: center;
@@ -106,13 +197,14 @@
             align-self: flex-start;
         }
 
+        /* --- 共通アルバムカードスタイル（テーマ変数連動） --- */
         .album-card {
-            background: rgba(255, 255, 255, 0.85);
+            background: var(--card-bg);
             backdrop-filter: blur(10px);
-            border-radius: 24px;
+            border-radius: var(--card-radius);
             padding: 28px;
-            border: 1px solid rgba(255, 255, 255, 0.9);
-            box-shadow: 0 20px 40px -8px rgba(60, 40, 30, 0.1);
+            border: var(--card-border);
+            box-shadow: var(--card-shadow);
             transition: all 0.35s cubic-bezier(0.25, 1, 0.5, 1);
             cursor: pointer;
             display: flex;
@@ -120,44 +212,25 @@
             align-items: center;
             width: 360px;
             height: 420px;
-        }
-
-        /* --- テーマ別のカード背景スタイル（詳細度を上げて確実に適用） --- */
-        .album-card.album-card.theme-default {
-            background: rgba(255, 255, 255, 0.85) !important;
-        }
-        .album-card.album-card.theme-warm {
-            background: linear-gradient(135deg, rgba(255, 243, 230, 0.9) 0%, rgba(255, 224, 204, 0.85) 100%) !important;
-            border-color: rgba(255, 204, 179, 0.6) !important;
-        }
-        .album-card.album-card.theme-cool {
-            background: linear-gradient(135deg, rgba(230, 243, 255, 0.9) 0%, rgba(204, 229, 255, 0.85) 100%) !important;
-            border-color: rgba(179, 217, 255, 0.6) !important;
-        }
-        .album-card.album-card.theme-pastel {
-            background: linear-gradient(135deg, rgba(243, 230, 255, 0.9) 0%, rgba(235, 204, 255, 0.85) 100%) !important;
-            border-color: rgba(220, 179, 255, 0.6) !important;
-        }
-        .album-card.album-card.theme-nature {
-            background: linear-gradient(135deg, rgba(230, 255, 238, 0.9) 0%, rgba(204, 245, 216, 0.85) 100%) !important;
-            border-color: rgba(179, 235, 196, 0.6) !important;
+            font-family: var(--title-font);
         }
 
         /* 新規作成用カード */
         .create-album-card {
-            border: 2px dashed #e2cfc4;
-            background: rgba(255, 255, 255, 0.5) !important;
+            border: 2px dashed var(--text-sub);
+            background: #ffffff !important;
             justify-content: center;
             align-items: center;
             height: 420px;
             width: 360px;
+            opacity: 0.9;
         }
 
         .create-album-icon {
             width: 90px;
             height: 90px;
             border-radius: 50%;
-            background: #f7a072;
+            background: var(--primary-color);
             color: #ffffff;
             display: flex;
             align-items: center;
@@ -165,13 +238,14 @@
             font-size: 44px;
             font-weight: bold;
             margin-bottom: 20px;
-            box-shadow: 0 10px 25px rgba(247, 160, 114, 0.35);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            transition: background 0.3s;
         }
 
         .create-album-text {
             font-size: 1.25em;
             font-weight: 700;
-            color: #4a3e3d;
+            color: var(--text-main);
         }
 
         /* 写真サムネイルスタック */
@@ -219,12 +293,12 @@
             width: 100%;
             height: 100%;
             background: rgba(0, 0, 0, 0.03);
-            border: 2px dashed #d8c8bc;
+            border: 2px dashed var(--text-sub);
             border-radius: 14px;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: #a08e85;
+            color: var(--text-sub);
             font-size: 15px;
             font-weight: 500;
         }
@@ -232,29 +306,33 @@
         .album-title {
             font-size: 1.3em;
             font-weight: 700;
-            color: #3d3531;
+            color: var(--text-main);
             margin: 5px 0 3px 0;
             text-align: center;
             width: 100%;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            background: var(--title-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
         .album-date {
             font-size: 0.85em;
-            color: #a08e85;
+            color: var(--text-sub);
             font-weight: 500;
             margin-bottom: 3px;
         }
 
         .album-count {
             font-size: 0.95em;
-            color: #8c7d75;
+            color: var(--text-main);
             font-weight: 500;
+            opacity: 0.8;
         }
 
-        /* --- アルバム下部のアクションボタングループ（編集・削除） --- */
+        /* --- アルバム下部のアクションボタングループ --- */
         .album-action-buttons {
             display: flex;
             gap: 12px;
@@ -273,7 +351,6 @@
             transform: translateY(0);
         }
 
-        /* 編集・削除共通ボタンデザイン */
         .album-action-btn {
             background: #ffffff;
             width: 48px;
@@ -283,29 +360,28 @@
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            box-shadow: 0 4px 12px rgba(60, 40, 30, 0.1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
             transition: all 0.2s;
         }
 
         .edit-album-btn {
-            border: 2px solid #e2cfc4;
-            color: #8f6b58;
+            border: 2px solid var(--text-sub);
+            color: var(--text-main);
         }
         .edit-album-btn:hover, .edit-album-btn:focus {
-            background: #f7a072;
+            background: var(--primary-color);
             color: #ffffff;
-            border-color: #f7a072;
+            border-color: var(--primary-color);
             transform: scale(1.08);
         }
         .edit-album-btn img {
             width: 22px;
             height: 22px;
             object-fit: contain;
-            filter: brightness(0) saturate(100%) invert(45%) sepia(20%) saturate(600%) hue-rotate(345deg) brightness(95%) contrast(90%);
-            transition: filter 0.2s;
+            filter: brightness(0) saturate(100%) invert(50%);
         }
         .edit-album-btn:hover img, .edit-album-btn:focus img {
-            filter: brightness(0) saturate(100%) invert(100%) sepia(0%) saturate(0%) hue-rotate(93deg) brightness(103%) contrast(103%);
+            filter: brightness(0) saturate(100%) invert(100%);
         }
 
         .delete-album-btn {
@@ -350,10 +426,11 @@
             border-radius: 24px;
             width: 90%;
             max-width: 440px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
             text-align: center;
             transform: scale(0.95);
             transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+            border: 1px solid rgba(255, 255, 255, 0.9);
         }
         .modal-overlay.active .modal-content {
             transform: scale(1);
@@ -376,21 +453,21 @@
             color: #8c7d75;
             margin-bottom: 8px;
         }
-        .modal-input, .modal-select {
+        .modal-input {
             width: 100%;
             padding: 14px 18px;
             font-size: 1.1em;
             font-family: inherit;
-            border: 2px solid #e2cfc4;
+            border: 2px solid #8c7d75;
             border-radius: 12px;
             color: #3d3531;
-            background: #fefaf6;
+            background: #ffffff;
             transition: border-color 0.2s;
         }
-        .modal-input:focus, .modal-select:focus {
+        .modal-input:focus {
             border-color: #f7a072;
             outline: none;
-            box-shadow: 0 0 0 3px rgba(247, 160, 114, 0.2);
+            box-shadow: 0 0 0 4px #f7a072, 0 0 25px rgba(247, 160, 114, 0.65);
         }
         .modal-buttons {
             display: flex;
@@ -410,22 +487,21 @@
             transition: all 0.2s;
         }
         .modal-btn.cancel {
-            background: #f1eae2;
+            background: rgba(0, 0, 0, 0.05);
             color: #8c7d75;
         }
         .modal-btn.cancel:hover {
-            background: #e5ded5;
+            background: rgba(0, 0, 0, 0.1);
         }
         .modal-btn.submit {
             background: #f7a072;
             color: #ffffff;
-            box-shadow: 0 4px 12px rgba(247, 160, 114, 0.3);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         }
         .modal-btn.submit:hover {
-            background: #e89163;
+            background: #f38345;
         }
 
-        /* --- 削除ダイアログ固有のデザイン --- */
         .delete-dialog {
             background: #ffffff;
             padding: 30px 40px;
@@ -434,7 +510,6 @@
             box-shadow: 0 20px 40px rgba(0,0,0,0.4);
             max-width: 440px;
             width: 90%;
-            white-space: normal;
         }
         .delete-dialog h3 {
             margin: 0 0 10px 0;
@@ -446,11 +521,6 @@
             color: #8c7d75;
             font-size: 0.95em;
         }
-        .delete-dialog-actions {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-        }
         .modal-btn.danger {
             background: #e74c3c;
             color: #ffffff;
@@ -460,7 +530,7 @@
         }
     </style>
 </head>
-<body>
+<body data-theme="default">
 
     <header>
         <h1>Memory Album Studio</h1>
@@ -469,7 +539,7 @@
 
     <div class="album-container" id="albumContainer"></div>
 
-    <!-- アルバム名・テーマ入力モーダル（新規作成用） -->
+    <!-- アルバム名入力モーダル（新規作成用・テーマ選択なし） -->
     <div class="modal-overlay" id="createModal">
         <div class="modal-content">
             <div class="modal-title">新しいアルバムを作成</div>
@@ -477,48 +547,9 @@
                 <label class="modal-label">アルバム名</label>
                 <input type="text" id="albumNameInput" class="modal-input modal-focusable" placeholder="アルバム名を入力してください" value="家族の思い出">
             </div>
-            <div class="modal-input-group">
-                <label class="modal-label">テーマカラー</label>
-                <select id="albumThemeInput" class="modal-select modal-focusable">
-                    <option value="default">スタンダード (白)</option>
-                    <option value="warm">温かみ (オレンジ系)</option>
-                    <option value="cool">クール (ブルー系)</option>
-                    <option value="pastel">パステル (パープル系)</option>
-                    <option value="nature">ネイチャー (グリーン系)</option>
-                </select>
-            </div>
             <div class="modal-buttons">
                 <button type="button" class="modal-btn cancel modal-focusable" id="cancelModalBtn">キャンセル</button>
                 <button type="button" class="modal-btn submit modal-focusable" id="submitModalBtn">作成する</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- アルバム編集モーダル -->
-    <div class="modal-overlay" id="editModalOverlay">
-        <div class="modal-content">
-            <div class="modal-title">アルバム情報の編集</div>
-            <div class="modal-input-group">
-                <label class="modal-label">アルバム名</label>
-                <input type="text" id="editAlbumNameInput" class="modal-input modal-focusable" placeholder="アルバム名を入力">
-            </div>
-            <div class="modal-input-group">
-                <label class="modal-label">作成日</label>
-                <input type="date" id="editAlbumDateInput" class="modal-input modal-focusable">
-            </div>
-            <div class="modal-input-group">
-                <label class="modal-label">テーマカラー</label>
-                <select id="editAlbumThemeInput" class="modal-select modal-focusable">
-                    <option value="default">スタンダード (白)</option>
-                    <option value="warm">温かみ (オレンジ系)</option>
-                    <option value="cool">クール (ブルー系)</option>
-                    <option value="pastel">パステル (パープル系)</option>
-                    <option value="nature">ネイチャー (グリーン系)</option>
-                </select>
-            </div>
-            <div class="modal-buttons">
-                <button type="button" class="modal-btn cancel modal-focusable" id="cancelEditBtn">キャンセル</button>
-                <button type="button" class="modal-btn submit modal-focusable" id="confirmEditBtn">保存する</button>
             </div>
         </div>
     </div>
@@ -528,7 +559,7 @@
         <div class="delete-dialog">
             <h3 id="deleteDialogTitle">アルバムを削除しますか？</h3>
             <p id="deleteDialogDesc">この操作は取り消せません。</p>
-            <div class="delete-dialog-actions">
+            <div class="delete-dialog-actions" style="display: flex; gap: 15px; justify-content: center;">
                 <button id="cancelDeleteBtn" class="modal-btn cancel modal-focusable" tabindex="0">キャンセル</button>
                 <button id="confirmDeleteBtn" class="modal-btn danger modal-focusable" tabindex="0">削除する</button>
             </div>
@@ -538,7 +569,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { 
-            getFirestore, collection, onSnapshot, query, where, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, Timestamp, orderBy 
+            getFirestore, collection, onSnapshot, query, where, getDocs, addDoc, deleteDoc, doc, serverTimestamp, orderBy 
         } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -557,19 +588,9 @@
         const albumContainer = document.getElementById('albumContainer');
         const createModal = document.getElementById('createModal');
         const albumNameInput = document.getElementById('albumNameInput');
-        const albumThemeInput = document.getElementById('albumThemeInput');
         const cancelModalBtn = document.getElementById('cancelModalBtn');
         const submitModalBtn = document.getElementById('submitModalBtn');
 
-        // 編集モーダル関連要素
-        const editModalOverlay = document.getElementById('editModalOverlay');
-        const editAlbumNameInput = document.getElementById('editAlbumNameInput');
-        const editAlbumDateInput = document.getElementById('editAlbumDateInput');
-        const editAlbumThemeInput = document.getElementById('editAlbumThemeInput');
-        const cancelEditBtn = document.getElementById('cancelEditBtn');
-        const confirmEditBtn = document.getElementById('confirmEditBtn');
-
-        // 削除モーダル関連要素
         const deleteModalOverlay = document.getElementById('deleteModalOverlay');
         const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
         const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
@@ -577,9 +598,7 @@
         const deleteDialogDesc = document.getElementById('deleteDialogDesc');
 
         let isModalOpen = false;
-        let isEditModalOpen = false;
         let isDeleteModalOpen = false;
-        let pendingEditAlbumId = null;
         let pendingDeleteAlbumId = null;
         let lastFocusedElement = null;
 
@@ -587,7 +606,6 @@
             isModalOpen = true;
             createModal.classList.add('active');
             albumNameInput.value = "家族の思い出";
-            albumThemeInput.value = "default";
             setTimeout(() => {
                 albumNameInput.focus();
                 albumNameInput.select();
@@ -605,11 +623,10 @@
 
         async function handleCreateAlbum() {
             const albumName = albumNameInput.value.trim() || "無題のアルバム";
-            const albumTheme = albumThemeInput.value || "default";
             try {
                 const newAlbumRef = await addDoc(collection(db, "albums"), {
                     name: albumName,
-                    theme: albumTheme,
+                    theme: "default", // 新規時はデフォルトテーマを設定
                     createdAt: serverTimestamp()
                 });
                 window.location.href = `albumcreate.html?albumId=${newAlbumRef.id}`;
@@ -628,86 +645,6 @@
             }
         });
 
-        // アルバム編集モーダルを開く処理
-        function openEditModal(albumId, currentName, createdAtData, currentTheme) {
-            pendingEditAlbumId = albumId;
-            lastFocusedElement = document.activeElement;
-            isEditModalOpen = true;
-
-            editAlbumNameInput.value = currentName || "";
-            editAlbumThemeInput.value = currentTheme || "default";
-            
-            let dateObj = new Date();
-            if (createdAtData && createdAtData.toDate) {
-                dateObj = createdAtData.toDate();
-            } else if (createdAtData instanceof Date) {
-                dateObj = createdAtData;
-            } else if (typeof createdAtData === 'number') {
-                dateObj = new Date(createdAtData);
-            }
-            
-            const year = dateObj.getFullYear();
-            const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-            const day = String(dateObj.getDate()).padStart(2, '0');
-            editAlbumDateInput.value = `${year}-${month}-${day}`;
-
-            editModalOverlay.classList.add('active');
-            setTimeout(() => {
-                editAlbumNameInput.focus();
-                editAlbumNameInput.select();
-            }, 50);
-        }
-
-        function closeEditModal() {
-            isEditModalOpen = false;
-            editModalOverlay.classList.remove('active');
-            pendingEditAlbumId = null;
-            if (lastFocusedElement) {
-                lastFocusedElement.focus();
-            }
-        }
-
-        cancelEditBtn.addEventListener('click', closeEditModal);
-
-        async function handleUpdateAlbum() {
-            if (!pendingEditAlbumId) return;
-            const targetId = pendingEditAlbumId;
-            const newName = editAlbumNameInput.value.trim() || "無題のアルバム";
-            const newDateVal = editAlbumDateInput.value;
-            const newTheme = editAlbumThemeInput.value || "default";
-
-            closeEditModal();
-
-            try {
-                const updateData = { 
-                    name: newName,
-                    theme: newTheme
-                };
-                if (newDateVal) {
-                    updateData.createdAt = Timestamp.fromDate(new Date(newDateVal + 'T00:00:00'));
-                }
-                await updateDoc(doc(db, "albums", targetId), updateData);
-            } catch (error) {
-                console.error("アルバムの更新に失敗しました:", error);
-                alert("アルバムの更新に失敗しました。");
-            }
-        }
-
-        confirmEditBtn.addEventListener('click', handleUpdateAlbum);
-        editAlbumNameInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                handleUpdateAlbum();
-            }
-        });
-        editAlbumDateInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                handleUpdateAlbum();
-            }
-        });
-
-        // アルバム削除ダイアログを開く処理
         function openDeleteModal(albumId, albumTitle) {
             pendingDeleteAlbumId = albumId;
             lastFocusedElement = document.activeElement;
@@ -747,10 +684,9 @@
             }
         });
 
-        // アルバム一覧のリアルタイム取得
         const albumsQuery = query(collection(db, "albums"), orderBy("createdAt", "desc"));
         onSnapshot(albumsQuery, async (snapshot) => {
-            if (isModalOpen || isEditModalOpen) return;
+            if (isModalOpen) return;
             
             albumContainer.innerHTML = '';
 
@@ -760,7 +696,15 @@
                 albumContainer.classList.remove('has-empty-state');
             }
 
-            // 1. 「新しいアルバムを作成する」カードを先頭に追加
+            // 最初のアルバムのテーマを全体の背景グラデーションに反映
+            if (!snapshot.empty) {
+                const firstAlbumTheme = snapshot.docs[0].data().theme || "default";
+                document.body.setAttribute('data-theme', firstAlbumTheme);
+            } else {
+                document.body.setAttribute('data-theme', 'default');
+            }
+
+            // 「新しいアルバムを作成する」カードを先頭に追加
             const createWrapper = document.createElement('div');
             createWrapper.className = 'album-card-wrapper';
             
@@ -776,14 +720,13 @@
             createWrapper.appendChild(createCard);
             albumContainer.appendChild(createWrapper);
 
-            // 2. 既存のアルバムカードを追加
+            // 既存のアルバムカードを追加
             for (const docSnap of snapshot.docs) {
                 const albumData = docSnap.data();
                 const albumId = docSnap.id;
                 const albumTitle = albumData.name || albumData.title || "無題のアルバム";
-                const albumTheme = albumData.theme || "default";
+                const albumTheme = albumData.theme || "default"; // Firebaseからテーマを取得
 
-                // 作成日時のフォーマット処理
                 let formattedDate = "";
                 const createdAtData = albumData.createdAt;
                 if (createdAtData) {
@@ -812,10 +755,15 @@
                 wrapper.className = 'album-card-wrapper';
 
                 const card = document.createElement('div');
-                // テーマに応じたクラスを動的に付与
-                card.className = `album-card theme-${albumTheme} focusable`;
+                card.className = 'album-card focusable';
+                card.dataset.theme = albumTheme; // ← 各カードにテーマを付与してCSSを連動
                 card.dataset.type = 'card';
                 card.tabIndex = 0;
+
+                // カードにホバーした際にページの全体背景テーマも追従
+                card.addEventListener('mouseenter', () => {
+                    document.body.setAttribute('data-theme', albumTheme);
+                });
 
                 let stackHtml = '<div class="photo-stack-wrapper">';
                 if (photoList.length > 0) {
@@ -845,22 +793,9 @@
 
                 wrapper.appendChild(card);
 
-                // アルバムカード下部のアクションボタングループ
                 const actionButtonsGroup = document.createElement('div');
                 actionButtonsGroup.className = 'album-action-buttons';
 
-                // 編集ボタン
-                const editBtn = document.createElement('button');
-                editBtn.className = 'album-action-btn edit-album-btn focusable';
-                editBtn.dataset.type = 'edit';
-                editBtn.tabIndex = 0;
-                editBtn.innerHTML = `<img src="rsc/edit.svg" alt="編集">`;
-                editBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    openEditModal(albumId, albumTitle, albumData.createdAt, albumTheme);
-                });
-
-                // ゴミ箱ボタン
                 const deleteBtn = document.createElement('button');
                 deleteBtn.className = 'album-action-btn delete-album-btn focusable';
                 deleteBtn.dataset.type = 'delete';
@@ -878,14 +813,13 @@
                     openDeleteModal(albumId, albumTitle);
                 });
 
-                actionButtonsGroup.appendChild(editBtn);
                 actionButtonsGroup.appendChild(deleteBtn);
                 wrapper.appendChild(actionButtonsGroup);
                 albumContainer.appendChild(wrapper);
             }
 
             const firstCard = document.querySelector('.album-card.focusable');
-            if (firstCard && !isModalOpen && !isEditModalOpen && !isDeleteModalOpen) firstCard.focus();
+            if (firstCard && !isModalOpen && !isDeleteModalOpen) firstCard.focus();
         });
 
         // キーボード・TVリモコン操作対応
@@ -904,24 +838,6 @@
                 } else if (e.key === 'Escape') {
                     e.preventDefault();
                     closeCreateModal();
-                }
-                return;
-            }
-
-            if (isEditModalOpen) {
-                const editFocusables = Array.from(document.querySelectorAll('#editModalOverlay .modal-focusable'));
-                const active = document.activeElement;
-                let index = editFocusables.indexOf(active);
-
-                if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
-                    e.preventDefault();
-                    (editFocusables[index + 1] || editFocusables[0]).focus();
-                } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
-                    e.preventDefault();
-                    (editFocusables[index - 1] || editFocusables[editFocusables.length - 1]).focus();
-                } else if (e.key === 'Escape') {
-                    e.preventDefault();
-                    closeEditModal();
                 }
                 return;
             }
@@ -957,14 +873,10 @@
 
             wrappers.forEach((wrapper, wIdx) => {
                 const card = wrapper.querySelector('.album-card');
-                const editBtn = wrapper.querySelector('.edit-album-btn');
                 const delBtn = wrapper.querySelector('.delete-album-btn');
                 if (active === card) {
                     currentWrapperIndex = wIdx;
                     currentType = 'card';
-                } else if (active === editBtn) {
-                    currentWrapperIndex = wIdx;
-                    currentType = 'edit';
                 } else if (active === delBtn) {
                     currentWrapperIndex = wIdx;
                     currentType = 'delete';
@@ -978,11 +890,7 @@
             }
 
             if (e.key === 'ArrowRight') {
-                if (currentType === 'edit') {
-                    e.preventDefault();
-                    const delBtn = wrappers[currentWrapperIndex].querySelector('.delete-album-btn');
-                    if (delBtn) delBtn.focus();
-                } else if (currentType === 'card') {
+                if (currentType === 'card') {
                     e.preventDefault();
                     const nextIndex = (currentWrapperIndex + 1) % wrappers.length;
                     const targetEl = wrappers[nextIndex].querySelector('.album-card');
@@ -992,11 +900,7 @@
                     }
                 }
             } else if (e.key === 'ArrowLeft') {
-                if (currentType === 'delete') {
-                    e.preventDefault();
-                    const editBtn = wrappers[currentWrapperIndex].querySelector('.edit-album-btn');
-                    if (editBtn) editBtn.focus();
-                } else if (currentType === 'card') {
+                if (currentType === 'card') {
                     e.preventDefault();
                     const prevIndex = (currentWrapperIndex - 1 + wrappers.length) % wrappers.length;
                     const targetEl = wrappers[prevIndex].querySelector('.album-card');
@@ -1008,12 +912,12 @@
             } else if (e.key === 'ArrowDown') {
                 e.preventDefault();
                 if (currentType === 'card') {
-                    const editBtn = wrappers[currentWrapperIndex].querySelector('.edit-album-btn');
-                    if (editBtn) editBtn.focus();
+                    const delBtn = wrappers[currentWrapperIndex].querySelector('.delete-album-btn');
+                    if (delBtn) delBtn.focus();
                 }
             } else if (e.key === 'ArrowUp') {
                 e.preventDefault();
-                if (currentType === 'edit' || currentType === 'delete') {
+                if (currentType === 'delete') {
                     const card = wrappers[currentWrapperIndex].querySelector('.album-card');
                     if (card) card.focus();
                 }
