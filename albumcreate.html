@@ -1055,7 +1055,12 @@
                     card.setAttribute('data-date', formattedDateStr);
 
                     const randomRotate = (Math.sin((groupIndex * 10 + index) * 999) * 10).toFixed(1); 
-                    const randomOffsetY = (Math.cos((groupIndex * 10 + index) * 888) * 40).toFixed(1);
+                    let randomOffsetY = (Math.cos((groupIndex * 10 + index) * 888) * 35).toFixed(1);
+                    
+                    // 2枚目以降（index > 0）の写真が上に行きすぎないよう、マイナス値（上へのズレ）を制限またはゼロ以上にする
+                    if (index > 0 && Number(randomOffsetY) < 0) {
+                        randomOffsetY = Math.abs(randomOffsetY) * 0.3; // 上に行く代わりに少し下げる、または 0 に固定
+                    }
                     
                     card.style.setProperty('--rotate', `${randomRotate}deg`);
                     card.style.setProperty('--offset-y', `${Number(randomOffsetY)}px`);
