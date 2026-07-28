@@ -913,9 +913,21 @@
 
             photos.forEach((data, index) => {
                 let dateStr = '';
-                if (data.createdAt) {
-                    const date = data.createdAt.toDate();
-                    dateStr = `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()} ${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`;
+                // 撮影日時 (takenAt) があれば優先し、なければ登録日時 (createdAt) を使用する
+                const targetDateObj = data.takenAt || data.createdAt;
+                
+                if (targetDateObj) {
+                    // Firestoreの Timestamp 型か、通常の Date / 文字列かを判別して Date オブジェクトに変換
+                    let date;
+                    if (typeof targetDateObj.toDate === 'function') {
+                        date = targetDateObj.toDate();
+                    } else {
+                        date = new Date(targetDateObj);
+                    }
+                
+                    if (!isNaN(date.getTime())) {
+                        dateStr = `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()} ${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`;
+                    }
                 }
 
                 const card = document.createElement('div');
