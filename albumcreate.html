@@ -997,7 +997,8 @@
                     }
                 } else if (e.key === 'ArrowDown') {
                     e.preventDefault();
-                    const deleteBtn = active.querySelector('.delete-btn');
+                    const wrapper = active.closest('.photo-card-wrapper');
+                    const deleteBtn = wrapper ? wrapper.querySelector('.delete-btn') : null;
                     if (deleteBtn) deleteBtn.focus();
                 } else if (e.key === 'ArrowUp') {
                     e.preventDefault();
