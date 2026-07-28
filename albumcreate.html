@@ -331,22 +331,23 @@
             transform: translateY(-2px);
         }
 
-        /* 編集用SVGアイコン: 初期状態は非表示（透明＆幅ゼロにするなど） */
         .group-edit-icon {
-            width: 14px;
-            height: 14px;
+            width: 16px;                     /* アイコンのサイズを調整 */
+            height: 16px;
             object-fit: contain;
             opacity: 0;
             width: 0;
-            transition: opacity 0.2s ease, width 0.2s ease;
-            filter: invert(1); /* 白系アイコンに合わせる場合 */
+            margin-right: 0;                 /* 非表示時のマージン */
+            transition: opacity 0.2s ease, width 0.2s ease, margin 0.2s ease;
+            filter: brightness(0) invert(1); /* 黒いSVGを白色に変更 */
         }
         
-        /* ホバー時またはフォーカス時にアイコンを表示する */
+        /* ホバー時またはフォーカス時にアイコンを表示し、テキストとのマージン（間隔）を確保 */
         .group-header-badge:hover .group-edit-icon,
         .group-header-badge:focus .group-edit-icon {
             opacity: 1;
-            width: 14px;
+            width: 16px;
+            margin-right: 6px;               /* テキストとの間の余白を設定 */
         }
         
         .photo-card {
