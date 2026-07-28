@@ -955,11 +955,7 @@
                 return;
             }
 
-            const focusables = getFocusables();
-            if (focusables.length === 0) return;
-
             const active = document.activeElement;
-            let currentIndex = focusables.indexOf(active);
 
             if (e.key === 'Enter') {
                 e.preventDefault();
@@ -972,53 +968,114 @@
                         const groupKey = active.getAttribute('data-group-key');
                         const currentText = active.getAttribute('data-current-text');
                         openEditModal(groupKey, currentText);
+                    } else if (active.classList.contains('photo-card')) {
+                        active.click();
                     }
                 }
                 return;
             }
 
-            if (currentIndex === -1) {
-                focusables[0].focus();
+            if (!active || !active.classList.contains('focusable')) {
+                const firstPhoto = document.querySelector('.photo-card.focusable');
+                if (firstPhoto) firstPhoto.focus();
                 return;
             }
 
-            if (e.key === 'ArrowRight') {
-                e.preventDefault();
-                const next = focusables[currentIndex + 1] || focusables[0];
-                next.focus();
-                if (next.classList.contains('photo-card') || next.classList.contains('group-header-badge')) {
-                    next.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-                }
-            } else if (e.key === 'ArrowLeft') {
-                e.preventDefault();
-                const prev = focusables[currentIndex - 1] || focusables[focusables.length - 1];
-                prev.focus();
-                if (prev.classList.contains('photo-card') || prev.classList.contains('group-header-badge')) {
-                    prev.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-                }
-            } else if (e.key === 'ArrowDown') {
-                e.preventDefault();
-                if (active.classList.contains('theme-dot')) {
-                    const firstPhoto = document.querySelector('.photo-card.focusable');
-                    if (firstPhoto) firstPhoto.focus();
-                } else if (active.classList.contains('photo-card')) {
+            // --- 1. 写真カード（.photo-card）の操作 ---
+            if (active.classList.contains('photo-card')) {
+                if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+                    e.preventDefault();
+                    const photoCards = Array.from(document.querySelectorAll('.photo-card.focusable'));
+                    const idx = photoCards.indexOf(active);
+                    if (idx !== -1) {
+                        const nextIdx = e.key === 'ArrowRight' 
+                            ? (idx + 1) % photoCards.length 
+                            : (idx - 1 + photoCards.length) % photoCards.length;
+                        const target = photoCards[nextIdx];
+                        target.focus();
+                        target.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                    }
+                } else if (e.key === 'ArrowDown') {
+                    e.preventDefault();
                     const deleteBtn = active.querySelector('.delete-btn');
                     if (deleteBtn) deleteBtn.focus();
-                } else if (active.classList.contains('group-header-badge')) {
-                    const card = active.closest('.photo-card-wrapper').querySelector('.photo-card');
-                    if (card) card.focus();
-                }
-            } else if (e.key === 'ArrowUp') {
-                e.preventDefault();
-                if (active.classList.contains('delete-btn')) {
-                    active.closest('.photo-card-wrapper').querySelector('.photo-card').focus();
-                } else if (active.classList.contains('photo-card')) {
-                    const badge = active.closest('.photo-card-wrapper').querySelector('.group-header-badge');
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    const wrapper = active.closest('.photo-card-wrapper');
+                    const badge = wrapper ? wrapper.querySelector('.group-header-badge') : null;
                     if (badge) {
                         badge.focus();
                     } else {
                         const firstThemeDot = document.querySelector('.theme-dot.focusable');
                         if (firstThemeDot) firstThemeDot.focus();
+                    }
+                }
+            }
+            // --- 2. ゴミ箱アイコン（.delete-btn）の操作 ---
+            else if (active.classList.contains('delete-btn')) {
+                if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    const card = active.closest('.photo-card');
+                    if (card) card.focus();
+                } else if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+                    e.preventDefault();
+                    // ゴミ箱から左右を押した時は、隣の写真カードにフォーカスを移す
+                    const photoCards = Array.from(document.querySelectorAll('.photo-card.focusable'));
+                    const currentCard = active.closest('.photo-card');
+                    const idx = photoCards.indexOf(currentCard);
+                    if (idx !== -1) {
+                        const nextIdx = e.key === 'ArrowRight' 
+                            ? (idx + 1) % photoCards.length 
+                            : (idx - 1 + photoCards.length) % photoCards.length;
+                        const targetCard = photoCards[nextIdx];
+                        targetCard.focus();
+                        targetCard.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                    }
+                }
+            }
+            // --- 3. 見出し（.group-header-badge）の操作 ---
+            else if (active.classList.contains('group-header-badge')) {
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    const card = active.closest('.photo-card-wrapper').querySelector('.photo-card');
+                    if (card) card.focus();
+                } else if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+                    e.preventDefault();
+                    const badges = Array.from(document.querySelectorAll('.group-header-badge.focusable'));
+                    const idx = badges.indexOf(active);
+                    if (idx !== -1) {
+                        const nextIdx = e.key === 'ArrowRight' 
+                            ? (idx + 1) % badges.length 
+                            : (idx - 1 + badges.length) % badges.length;
+                        const target = badges[nextIdx];
+                        target.focus();
+                        target.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                    }
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    const firstThemeDot = document.querySelector('.theme-dot.focusable');
+                    if (firstThemeDot) firstThemeDot.focus();
+                }
+            }
+            // --- 4. テーマドットなどその他の要素 ---
+            else {
+                const focusables = getFocusables();
+                const currentIndex = focusables.indexOf(active);
+                if (currentIndex === -1) return;
+
+                if (e.key === 'ArrowRight') {
+                    e.preventDefault();
+                    const next = focusables[currentIndex + 1] || focusables[0];
+                    next.focus();
+                } else if (e.key === 'ArrowLeft') {
+                    e.preventDefault();
+                    const prev = focusables[currentIndex - 1] || focusables[focusables.length - 1];
+                    prev.focus();
+                } else if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    if (active.classList.contains('theme-dot')) {
+                        const firstPhoto = document.querySelector('.photo-card.focusable');
+                        if (firstPhoto) firstPhoto.focus();
                     }
                 }
             }
