@@ -856,11 +856,19 @@
         let isDeleteModalOpen = false;
         let pendingDeletePhotoId = null;
 
+        let targetNextElement = null; // スコープに合わせて適切に宣言・配置してください
+
         function openDeleteModal(photoId, triggerElement) {
             pendingDeletePhotoId = photoId;
-            // 削除ボタンやカードなど、開いたときの要素を直接保持（なければ現在のフォーカス）
             lastFocusedElement = triggerElement || document.activeElement;
             
+            // ▼ ここで削除対象の「次のカード（なければ前のカード）」を予め特定して保持する
+            targetNextElement = null;
+            const currentCard = document.querySelector(`.photo-card.focusable[data-id="${photoId}"]`);
+            if (currentCard) {
+                targetNextElement = currentCard.nextElementSibling || currentCard.previousElementSibling;
+            }
+
             deleteModalOverlay.classList.add('active');
             isDeleteModalOpen = true;
             
@@ -869,18 +877,40 @@
             }, 50);
         }
 
-        function closeDeleteModal(returnTarget = null) {
+        function closeDeleteModal(wasDeleted = false) {
+            // 削除された場合、次にフォーカスすべき要素のIDを保持しておく
+            let nextFocusId = null;
+            if (wasDeleted && targetNextElement) {
+                nextFocusId = targetNextElement.getAttribute('data-id');
+            }
+
             deleteModalOverlay.classList.remove('active');
             isDeleteModalOpen = false;
-            pendingDeletePhotoId = null;
-            
-            const target = returnTarget || lastFocusedElement;
-            if (target && typeof target.focus === 'function') {
-                target.focus();
-                if (typeof target.scrollIntoView === 'function') {
-                    target.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+            activeDeletingKey = null;
+
+            setTimeout(() => {
+                // 削除後の再描画が終わっているため、保存しておいたIDから要素を再取得してフォーカス
+                if (nextFocusId) {
+                    const nextCard = document.querySelector(`.photo-card.focusable[data-id="${nextFocusId}"]`);
+                    if (nextCard) {
+                        nextCard.focus();
+                        if (typeof nextCard.scrollIntoView === 'function') {
+                            nextCard.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                        }
+                        targetNextElement = null;
+                        return;
+                    }
                 }
-            }
+
+                // フォールバック（通常のフォーカス復元）
+                if (lastFocusedElement && typeof lastFocusedElement.focus === 'function') {
+                    lastFocusedElement.focus();
+                    if (typeof lastFocusedElement.scrollIntoView === 'function') {
+                        lastFocusedElement.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                    }
+                }
+                targetNextElement = null;
+            }, 100);
         }
 
         cancelDeleteBtn.addEventListener('click', () => closeDeleteModal());
