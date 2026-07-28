@@ -1247,7 +1247,26 @@
                 document.getElementById('albumDateSubtitle').innerText = dateSubtitle;
             }
 
-            const GAP_THRESHOLD_SECONDS = 2 * 60 * 60;
+            // --- 従来の固定判定（2時間） ---
+            // const GAP_THRESHOLD_SECONDS = 2 * 60 * 60;
+
+            // --- 変更後：アルバム全体の時間長に応じた動的クラスタリング ---
+            const firstDateObj = getValidDate(photos[0]);
+            const lastDateObj = getValidDate(photos[photos.length - 1]);
+            
+            // 全体の時間長（秒）を計算
+            const totalDurationSeconds = (lastDateObj.getTime() - firstDateObj.getTime()) / 1000;
+
+            // 運動会のように数時間〜半日ある場合は、間隔のしきい値をイベントの長さに応じて変動させる
+            // 例: 全体が3時間以上の場合は、30分（1800秒）以上空いたら別グループ（競技）とみなす
+            let GAP_THRESHOLD_SECONDS = 30 * 60; // デフォルト 30分
+            if (totalDurationSeconds > 6 * 60 * 60) {
+                // 6時間以上の長丁場なら45分空きを基準にするなど
+                GAP_THRESHOLD_SECONDS = 45 * 60;
+            } else if (totalDurationSeconds < 60 * 60) {
+                // 1時間未満の短いイベントなら10分空きを基準にする
+                GAP_THRESHOLD_SECONDS = 10 * 60;
+            }
 
             const groups = [];
             let currentGroup = null;
