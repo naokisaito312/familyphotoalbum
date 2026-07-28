@@ -166,10 +166,8 @@
         /* --- TV GUI風 フォーカス強調表示 --- */
         :focus { outline: none; }
 
-        /* TV GUI フォーカス時の強調（ランダムな傾きを一旦リセットして大きく見せる） */
         .focusable:focus {
             box-shadow: var(--focus-glow) !important;
-            /* フォーカスが当たった時はまっすぐにして手前に拡大表示 */
             transform: translateY(-10px) rotate(0deg) scale(1.08) !important;
             z-index: 100 !important;
             border-color: var(--primary-color) !important;
@@ -181,7 +179,6 @@
             box-shadow: 0 0 0 3px #e65b5b, 0 0 15px rgba(230, 91, 91, 0.5) !important;
         }
 
-        /* 長押し中の演出スタイル */
         .photo-card.holding {
             transform: scale(0.96) rotate(0deg) !important;
             border: 3px solid #e74c3c !important;
@@ -193,7 +190,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 20px; /* タイトルとQRコードの間の余白 */
+            gap: 25px;
             margin-bottom: 20px;
             padding: 10px 20px;
             position: relative;
@@ -260,30 +257,17 @@
             white-space: nowrap; padding: 40px 20px 60px 20px; height: 75vh; scroll-behavior: smooth;
         }
 
-        /* スクロールバー全体の高さ（8px → 4pxへ細く） */
-        .album-container::-webkit-scrollbar { 
-            height: 4px; 
-        }
-        /* スクロールバーの背景（トラック）を透明化 */
-        .album-container::-webkit-scrollbar-track { 
-            background: transparent; 
-        }
-        /* つまみ（バー）を半透明にして目立たなくする */
-        .album-container::-webkit-scrollbar-thumb { 
-            background: rgba(0, 0, 0, 0.15); 
-            border-radius: 10px; 
-        }
-        /* ホバーした時だけ少し濃く見せる */
-        .album-container::-webkit-scrollbar-thumb:hover { 
-            background: rgba(0, 0, 0, 0.3); 
-        }
+        .album-container::-webkit-scrollbar { height: 4px; }
+        .album-container::-webkit-scrollbar-track { background: transparent; }
+        .album-container::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.15); border-radius: 10px; }
+        .album-container::-webkit-scrollbar-thumb:hover { background: rgba(0, 0, 0, 0.3); }
 
         .photo-card {
             display: inline-flex; 
             flex-direction: column; 
             background: var(--card-bg); 
             padding: 12px;
-            margin: 0 15px; /* マージンを少し狭めて重ね感を微調整 */
+            margin: 0 15px;
             border-radius: var(--card-radius); 
             box-shadow: var(--card-shadow);
             border: var(--card-border);
@@ -292,9 +276,6 @@
             width: 260px; 
             position: relative;
             cursor: pointer;
-
-            /* --- ランダム配置用の変数を適用 --- */
-            /* デフォルトは0deg / 0px。JSで動的に個別の値を設定します */
             transform: translateY(var(--offset-y, 0px)) rotate(var(--rotate, 0deg));
         }
 
@@ -327,36 +308,36 @@
         .photo-comment { color: var(--text-main); font-size: 13px; font-weight: 500; line-height: 1.5; white-space: normal; word-wrap: break-word; text-align: left; }
         .photo-date { font-size: 10px; font-weight: 700; color: var(--text-sub); text-align: right; margin-top: 8px; }
 
+        /* --- ヘッダー内のQRコード（写真がある時用） --- */
         .qr-container {
-            /* fixed配置を解除してヘッダー内に収める */
             position: relative; 
             top: auto;
             right: auto;
             background: var(--glass-bg);
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
-            padding: 10px 14px;
+            padding: 12px 16px;
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
-            border-radius: 16px;
+            border-radius: 18px;
             text-align: center;
             z-index: 10;
             border: 1px solid var(--glass-border);
-            width: auto; /* サイズをコンパクトに調整 */
+            width: auto;
             flex-shrink: 0;
         }
 
         .qr-container img { 
-            width: 70px;  /* タイトル横に収まりやすいよう少し小ぶりに調整 */
-            height: 70px; 
+            width: 95px;  /* 従来より大きく調整[cite: 6] */
+            height: 95px; 
             display: block; 
             margin: 0 auto; 
             border-radius: 8px; 
             background: #ffffff; 
-            padding: 4px; 
+            padding: 5px; 
         }
 
         .qr-text { 
-            font-size: 10px; 
+            font-size: 11px; 
             color: var(--text-main); 
             margin-top: 6px; 
             white-space: nowrap; 
@@ -364,11 +345,50 @@
             line-height: 1.2; 
         }
 
-        .empty-album {
-            color: var(--text-sub);
-            font-size: 16px;
+        /* --- 写真ゼロのときのセンター大画面QRコード用スタイル --- */
+        .empty-album-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
             margin: auto;
             text-align: center;
+            gap: 20px;
+            padding: 30px;
+        }
+
+        .empty-qr-box {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            padding: 24px 30px;
+            border-radius: 24px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.12);
+            border: 1px solid var(--glass-border);
+            display: inline-block;
+        }
+
+        .empty-qr-box img {
+            width: 220px; /* ユーザーの最初のアクション用に大きく表示[cite: 6] */
+            height: 220px;
+            display: block;
+            margin: 0 auto 12px auto;
+            border-radius: 12px;
+            background: #ffffff;
+            padding: 8px;
+        }
+
+        .empty-qr-label {
+            font-size: 1.1em;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-top: 10px;
+        }
+
+        .empty-album-text {
+            color: var(--text-sub);
+            font-size: 15px;
+            line-height: 1.6;
         }
 
         /* --- モーダル共通スタイル --- */
@@ -381,17 +401,17 @@
             background: rgba(15, 12, 10, 0.85);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
-            display: none; /* ← 通常時は完全に非表示(none)にする */
+            display: none;
             align-items: center;
             justify-content: center;
             opacity: 0;
             pointer-events: none;
             transition: opacity 0.3s ease;
-            z-index: 9999; /* ← 他の要素(theme-barやqr-container: z-index 100)より確実に前面に配置 */
+            z-index: 9999;
         }
         
         .modal-overlay.active {
-            display: flex !important; /* ← activeクラスがついたらflex表示にする */
+            display: flex !important;
             opacity: 1;
             pointer-events: auto;
         }
@@ -504,7 +524,7 @@
 
     <header class="album-header">
         <h1 id="albumTitle">アルバム</h1>
-        <!-- タイトルの右側に配置 -->
+        <!-- タイトルの右側にあるQRコード（写真がある時に表示） -->
         <div class="qr-container" id="qrContainer">
             <img id="qrImage" src="" alt="QR Code">
             <div class="qr-text">スマホで送る</div>
@@ -558,14 +578,13 @@
         const urlParams = new URLSearchParams(window.location.search);
         const albumId = urlParams.get('albumId');
 
-        let justClosedModal = false; // モーダルを閉じた直後か判定するフラグ
+        let justClosedModal = false;
         
         if (!albumId) {
             alert("アルバムIDが見つかりません。一覧に戻ります。");
             window.location.href = "index.html";
         }
 
-        // --- テーマ変更 ＆ アクティブ表示切り替え ＆ Firestore保存 ---
         async function applyTheme(themeName, saveToDb = true) {
             document.body.setAttribute('data-theme', themeName);
 
@@ -594,7 +613,6 @@
             });
         });
 
-        // --- 全画面拡大モーダル制御機能 ---
         const modalOverlay = document.getElementById('modalOverlay');
         const modalImg = document.getElementById('modalImg');
         const modalComment = document.getElementById('modalComment');
@@ -629,7 +647,6 @@
 
         modalOverlay.addEventListener('click', closeModal);
 
-        // --- 削除確認ポップアップ制御 ---
         const deleteModalOverlay = document.getElementById('deleteModalOverlay');
         const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
         const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
@@ -637,9 +654,9 @@
         let pendingDeletePhotoId = null;
 
         let holdTimer = null;
-        let holdingVisualTimer = null; // ← 赤枠表示用のタイマーを追加
-        const HOLD_DURATION = 800; // 800ms長押しで発動
-        const VISUAL_DELAY = 200;  // ← 200ms押され続けたら赤枠（holding）を表示
+        let holdingVisualTimer = null;
+        const HOLD_DURATION = 800;
+        const VISUAL_DELAY = 200;
         let isHoldTriggered = false;
 
         function openDeleteModal(photoId) {
@@ -649,7 +666,6 @@
             deleteModalOverlay.classList.add('active');
             isDeleteModalOpen = true;
             
-            // ダイアログ内のキャンセルボタンへ確実にフォーカスをあてる
             setTimeout(() => {
                 cancelDeleteBtn.focus();
             }, 50);
@@ -660,8 +676,6 @@
             isDeleteModalOpen = false;
             pendingDeletePhotoId = null;
 
-            // Enterキーが放された後（または少し遅れて）フォーカスを戻す
-            // isEnterPressed が false になるのを待ってフォーカスを戻す
             const restoreFocus = () => {
                 if (isEnterPressed) {
                     setTimeout(restoreFocus, 50);
@@ -688,16 +702,13 @@
             }
         });
 
-        // --- TV GUI キーボードナビゲーション ＆ 長押し処理 ---
         function getFocusables() {
             return Array.from(document.querySelectorAll('.focusable'));
         }
 
-        // 長押し状態・キー押しっぱなしを管理するフラグ
         let isEnterPressed = false; 
 
         document.addEventListener('keydown', (e) => {
-            // 1. 削除モーダル展開中
             if (isDeleteModalOpen) {
                 if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
                     e.preventDefault();
@@ -709,7 +720,7 @@
                 } else if (e.key === 'Enter') {
                     e.preventDefault();
                     if (!e.repeat) {
-                        justClosedModal = true; // ← このEnterでモーダルが閉じるためフラグを立てる
+                        justClosedModal = true;
                         document.activeElement.click();
                     }
                 } else if (e.key === 'Escape' || e.key === 'b' || e.key === 'B') {
@@ -719,7 +730,6 @@
                 return;
             }
 
-            // 2. 拡大モーダル展開中
             if (isModalOpen) {
                 if (e.key === 'b' || e.key === 'B' || e.key === 'Escape') {
                     e.preventDefault();
@@ -728,7 +738,6 @@
                 return;
             }
 
-            // 戻るショートカット
             if (e.key === 'b' || e.key === 'B') {
                 window.location.href = "index.html";
                 return;
@@ -740,7 +749,6 @@
             const active = document.activeElement;
             let currentIndex = focusables.indexOf(active);
 
-            // --- 長押し判定処理 (Enter) ---
             if (e.key === 'Enter') {
                 e.preventDefault();
     
@@ -749,12 +757,10 @@
                         isEnterPressed = true;
                         isHoldTriggered = false;
     
-                        // ① 200ms押され続けたら赤枠をつける（短押しの時は発動する前にクリアされる）
                         holdingVisualTimer = setTimeout(() => {
                             active.classList.add('holding');
                         }, VISUAL_DELAY);
     
-                        // ② 800ms押され続けたら削除ダイアログを開く
                         holdTimer = setTimeout(() => {
                             isHoldTriggered = true;
                             active.classList.remove('holding');
@@ -813,7 +819,6 @@
 
         document.addEventListener('keyup', (e) => {
             if (e.key === 'Enter') {
-                // 赤枠用タイマーと長押し用タイマーの両方をクリア
                 if (holdingVisualTimer) {
                     clearTimeout(holdingVisualTimer);
                     holdingVisualTimer = null;
@@ -823,10 +828,8 @@
                     holdTimer = null;
                 }
 
-                // 見た目の長押しスタイル解除
                 document.querySelectorAll('.photo-card.holding').forEach(el => el.classList.remove('holding'));
 
-                // 【修正ポイント】 justClosedModal フラグのチェックを追加
                 if (!isHoldTriggered && !isDeleteModalOpen && !isModalOpen && !justClosedModal) {
                     const active = document.activeElement;
                     if (active && active.classList.contains('photo-card')) {
@@ -839,11 +842,10 @@
 
                 isEnterPressed = false;
                 isHoldTriggered = false;
-                justClosedModal = false; // keyupが完了したらフラグを戻す
+                justClosedModal = false;
             }
         });
 
-        // アルバム情報取得
         async function fetchAlbumInfo() {
             try {
                 const albumRef = doc(db, "albums", albumId);
@@ -864,21 +866,42 @@
         }
         fetchAlbumInfo();
 
-        // QRコード生成
         const baseUrl = window.location.origin + window.location.pathname.replace(/albumcreate\.html$/, '');
         const shareUrl = `${baseUrl}photoshare.html?albumId=${albumId}`;
-        document.getElementById('qrImage').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(shareUrl)}`;
+        const generatedQrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(shareUrl)}`;
+        
+        // ヘッダー用とセンター用の両方にQRコードを設定
+        document.getElementById('qrImage').src = generatedQrSrc;
 
         const albumContainer = document.getElementById('albumContainer');
         const q = query(collection(db, "shared_photos"), where("albumId", "==", albumId));
         
         onSnapshot(q, (snapshot) => {
             albumContainer.innerHTML = '';
+            const qrContainerElement = document.getElementById('qrContainer');
             
             if (snapshot.empty) {
-                albumContainer.innerHTML = '<div class="empty-album">写真がまだありません。<br>右上のQRコードからスマホで写真を送信してください。<br><small style="opacity:0.7; margin-top:8px; display:inline-block;">[B]キーでアルバム一覧へ戻る</small></div>';
+                // 写真がゼロの時は、ヘッダーの小さめQRを非表示にして、中央にさらに大きなQRコードを表示
+                qrContainerElement.style.display = 'none';
+
+                const emptyWrapper = document.createElement('div');
+                emptyWrapper.className = 'empty-album-wrapper';
+                emptyWrapper.innerHTML = `
+                    <div class="empty-qr-box">
+                        <img src="${generatedQrSrc}" alt="Large QR Code">
+                        <div class="empty-qr-label">スマホで撮影して写真を送信</div>
+                    </div>
+                    <div class="empty-album-text">
+                        まだ写真がありません。上のQRコードをスマホで読み取って最初の思い出を追加してください。<br>
+                        <small style="opacity:0.7; margin-top:6px; display:inline-block;">[B]キーでアルバム一覧へ戻る</small>
+                    </div>
+                `;
+                albumContainer.appendChild(emptyWrapper);
                 return;
             }
+
+            // 写真がある場合はヘッダーのQRコードを表示する
+            qrContainerElement.style.display = 'block';
 
             const photos = [];
             snapshot.forEach((doc) => { photos.push({ id: doc.id, ...doc.data() }); });
@@ -899,13 +922,8 @@
                 card.setAttribute('data-comment', data.comment || '');
                 card.setAttribute('data-date', dateStr);
 
-                // --- 【追加】手貼りアルバム風のランダム値を設定 ---
-                // ① -3.5度 〜 +3.5度 のランダムな回転
                 const randomRotate = (Math.sin(index * 999) * 10).toFixed(1); 
-                // ② -25px 〜 +25px のランダムな上下ズレ
                 const randomOffsetY = (Math.cos(index * 888) * 35).toFixed(1);
-                // ③ 【追加】幅を 245px 〜 280px の範囲でランダム化（基本サイズ260px前後）
-                const randomWidth = (260 + Math.sin(index * 777) * 30).toFixed(0);
                 
                 card.style.setProperty('--rotate', `${randomRotate}deg`);
                 card.style.setProperty('--offset-y', `${randomOffsetY}px`);
@@ -931,7 +949,6 @@
                 albumContainer.appendChild(card);
             });
 
-            // マウスクリック用の削除ボタンイベント
             const deleteButtons = document.querySelectorAll('.delete-btn');
             deleteButtons.forEach(button => {
                 button.addEventListener('click', (e) => {
@@ -941,7 +958,6 @@
                 });
             });
 
-            // フォーカス位置調整
             if (!isModalOpen && !isDeleteModalOpen) {
                 const active = document.activeElement;
                 if (!active || (!active.classList.contains('focusable') && !active.classList.contains('delete-btn'))) {
