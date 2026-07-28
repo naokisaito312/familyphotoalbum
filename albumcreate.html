@@ -168,9 +168,14 @@
 
         .focusable:focus {
             box-shadow: var(--focus-glow) !important;
-            transform: translateY(-10px) rotate(0deg) scale(1.08) !important;
+            transform: translateY(-6px) scale(1.05) !important;
             z-index: 100 !important;
             border-color: var(--primary-color) !important;
+        }
+
+        .group-header-badge.focusable:focus {
+            transform: translateY(-4px) scale(1.08) !important;
+            background: rgba(50, 45, 55, 0.85) !important;
         }
 
         .delete-btn:focus {
@@ -298,16 +303,14 @@
             vertical-align: top;
             position: relative;
             z-index: 2;
-            /* 見出しと写真の間に適切な隙間を確保し、上部の領域を分ける */
             gap: 70px;
         }
 
-        /* --- グループ先頭の写真の上に配置される見出し（薄い黒色ベース） --- */
+        /* --- グループ先頭の写真の上に配置される見出し（編集可能バッジ） --- */
         .group-header-badge {
             display: inline-flex;
             align-items: center;
-            padding: 6px 16px;
-            margin-bottom: 0; /* 余白はwrapperのgapで管理 */
+            padding: 8px 18px;
             background: rgba(30, 30, 35, 0.50);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
@@ -319,6 +322,13 @@
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
             white-space: nowrap;
             flex-shrink: 0;
+            cursor: pointer;
+            transition: all 0.25s ease;
+        }
+        
+        .group-header-badge:hover {
+            background: rgba(50, 45, 55, 0.75);
+            transform: translateY(-2px);
         }
 
         .photo-card {
@@ -366,7 +376,7 @@
         .photo-comment { color: var(--text-main); font-size: 13px; font-weight: 500; line-height: 1.5; white-space: normal; word-wrap: break-word; text-align: left; }
         .photo-date { font-size: 10px; font-weight: 700; color: var(--text-sub); text-align: right; margin-top: 8px; }
 
-        /* --- ヘッダー内のQRコード（写真がある時用） --- */
+        /* --- ヘッダー内のQRコード --- */
         .qr-container {
             position: relative; 
             top: auto;
@@ -523,31 +533,49 @@
             font-weight: 500;
         }
 
-        /* --- TV UI 削除確認ポップアップスタイル --- */
-        .delete-dialog {
+        /* --- ダイアログ（削除・見出し編集共通） --- */
+        .delete-dialog, .edit-dialog {
             background: #ffffff;
             padding: 30px 40px;
             border-radius: 20px;
             text-align: center;
             box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-            max-width: 420px;
+            max-width: 440px;
             width: 90%;
             white-space: normal;
         }
 
-        .delete-dialog h3 {
+        .delete-dialog h3, .edit-dialog h3 {
             margin: 0 0 10px 0;
             color: #3d3531;
             font-size: 1.4em;
         }
 
-        .delete-dialog p {
-            margin: 0 0 25px 0;
+        .delete-dialog p, .edit-dialog p {
+            margin: 0 0 20px 0;
             color: #8c7d75;
             font-size: 0.95em;
         }
 
-        .delete-dialog-actions {
+        .edit-input {
+            width: 100%;
+            padding: 12px 16px;
+            font-size: 1.1em;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            font-family: inherit;
+            color: #3d3531;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .edit-input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 10px rgba(247, 160, 114, 0.3);
+        }
+
+        .delete-dialog-actions, .edit-dialog-actions {
             display: flex;
             justify-content: center;
             gap: 20px;
@@ -563,6 +591,11 @@
             background: #f0ece9;
             color: #3d3531;
             transition: all 0.2s ease;
+        }
+
+        .modal-btn.primary {
+            background: var(--primary-color);
+            color: #ffffff;
         }
 
         .modal-btn.danger {
@@ -619,10 +652,23 @@
         </div>
     </div>
 
+    <!-- 見出し編集用モーダル -->
+    <div class="modal-overlay" id="editModalOverlay">
+        <div class="edit-dialog">
+            <h3>見出しの編集</h3>
+            <p>このグループの自由なタイトルを入力してください。</p>
+            <input type="text" id="groupTitleInput" class="edit-input" placeholder="例: 楽しかったランチタイム">
+            <div class="edit-dialog-actions">
+                <button id="cancelEditBtn" class="modal-btn focusable" tabindex="0">キャンセル</button>
+                <button id="confirmEditBtn" class="modal-btn primary focusable" tabindex="0">保存する</button>
+            </div>
+        </div>
+    </div>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { 
-            getFirestore, collection, query, where, onSnapshot, doc, getDoc, updateDoc, deleteDoc 
+            getFirestore, collection, query, where, onSnapshot, doc, getDoc, updateDoc, deleteDoc, setDoc 
         } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -766,6 +812,61 @@
             }
         });
 
+        // --- 見出し編集モーダル関連変数 ---
+        const editModalOverlay = document.getElementById('editModalOverlay');
+        const cancelEditBtn = document.getElementById('cancelEditBtn');
+        const confirmEditBtn = document.getElementById('confirmEditBtn');
+        const groupTitleInput = document.getElementById('groupTitleInput');
+        let isEditModalOpen = false;
+        let activeEditingGroupKey = null;
+
+        function openEditModal(groupKey, currentText) {
+            activeEditingGroupKey = groupKey;
+            lastFocusedElement = document.activeElement;
+            groupTitleInput.value = currentText;
+
+            editModalOverlay.classList.add('active');
+            isEditModalOpen = true;
+
+            setTimeout(() => {
+                groupTitleInput.focus();
+            }, 50);
+        }
+
+        function closeEditModal() {
+            editModalOverlay.classList.remove('active');
+            isEditModalOpen = false;
+            activeEditingGroupKey = null;
+
+            setTimeout(() => {
+                if (lastFocusedElement) {
+                    lastFocusedElement.focus();
+                }
+            }, 100);
+        }
+
+        cancelEditBtn.addEventListener('click', closeEditModal);
+
+        confirmEditBtn.addEventListener('click', async () => {
+            if (!activeEditingGroupKey) return;
+            const newTitle = groupTitleInput.value.trim();
+            try {
+                // アルバムドキュメント内にカスタム見出しを保存（例: customHeadings: { "group_0": "楽しかったランチタイム" }）
+                const albumRef = doc(db, "albums", albumId);
+                const albumSnap = await getDoc(albumRef);
+                let customHeadings = {};
+                if (albumSnap.exists() && albumSnap.data().customHeadings) {
+                    customHeadings = albumSnap.data().customHeadings;
+                }
+                customHeadings[activeEditingGroupKey] = newTitle;
+
+                await updateDoc(albumRef, { customHeadings });
+                closeEditModal();
+            } catch (err) {
+                console.error("見出しの保存に失敗しました:", err);
+            }
+        });
+
         function getFocusables() {
             return Array.from(document.querySelectorAll('.focusable'));
         }
@@ -790,6 +891,41 @@
                 } else if (e.key === 'Escape' || e.key === 'b' || e.key === 'B') {
                     e.preventDefault();
                     closeDeleteModal();
+                }
+                return;
+            }
+
+            if (isEditModalOpen) {
+                if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+                    e.preventDefault();
+                    if (document.activeElement === groupTitleInput) {
+                        cancelEditBtn.focus();
+                    } else if (document.activeElement === cancelEditBtn) {
+                        confirmEditBtn.focus();
+                    } else {
+                        groupTitleInput.focus();
+                    }
+                } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    if (document.activeElement === groupTitleInput) {
+                        cancelEditBtn.focus();
+                    } else {
+                        groupTitleInput.focus();
+                    }
+                } else if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (!e.repeat) {
+                        if (document.activeElement === cancelEditBtn) {
+                            closeEditModal();
+                        } else {
+                            confirmEditBtn.click();
+                        }
+                    }
+                } else if (e.key === 'Escape' || e.key === 'b' || e.key === 'B') {
+                    if (document.activeElement !== groupTitleInput) {
+                        e.preventDefault();
+                        closeEditModal();
+                    }
                 }
                 return;
             }
@@ -838,6 +974,10 @@
                         active.click();
                     } else if (active.classList.contains('delete-btn')) {
                         active.click();
+                    } else if (active.classList.contains('group-header-badge')) {
+                        const groupKey = active.getAttribute('data-group-key');
+                        const currentText = active.getAttribute('data-current-text');
+                        openEditModal(groupKey, currentText);
                     }
                 }
                 return;
@@ -852,14 +992,14 @@
                 e.preventDefault();
                 const next = focusables[currentIndex + 1] || focusables[0];
                 next.focus();
-                if (next.classList.contains('photo-card')) {
+                if (next.classList.contains('photo-card') || next.classList.contains('group-header-badge')) {
                     next.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
                 }
             } else if (e.key === 'ArrowLeft') {
                 e.preventDefault();
                 const prev = focusables[currentIndex - 1] || focusables[focusables.length - 1];
                 prev.focus();
-                if (prev.classList.contains('photo-card')) {
+                if (prev.classList.contains('photo-card') || prev.classList.contains('group-header-badge')) {
                     prev.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
                 }
             } else if (e.key === 'ArrowDown') {
@@ -870,14 +1010,24 @@
                 } else if (active.classList.contains('photo-card')) {
                     const deleteBtn = active.querySelector('.delete-btn');
                     if (deleteBtn) deleteBtn.focus();
+                } else if (active.classList.contains('group-header-badge')) {
+                    // 見出しから下のカードへ移動
+                    const card = active.closest('.photo-card-wrapper').querySelector('.photo-card');
+                    if (card) card.focus();
                 }
             } else if (e.key === 'ArrowUp') {
                 e.preventDefault();
                 if (active.classList.contains('delete-btn')) {
                     active.closest('.photo-card-wrapper').querySelector('.photo-card').focus();
                 } else if (active.classList.contains('photo-card')) {
-                    const firstThemeDot = document.querySelector('.theme-dot.focusable');
-                    if (firstThemeDot) firstThemeDot.focus();
+                    // カードから上の見出しへ移動（見出しがあれば）
+                    const badge = active.closest('.photo-card-wrapper').querySelector('.group-header-badge');
+                    if (badge) {
+                        badge.focus();
+                    } else {
+                        const firstThemeDot = document.querySelector('.theme-dot.focusable');
+                        if (firstThemeDot) firstThemeDot.focus();
+                    }
                 }
             }
         });
@@ -895,7 +1045,7 @@
 
                 document.querySelectorAll('.photo-card-wrapper.holding').forEach(el => el.classList.remove('holding'));
 
-                if (!isHoldTriggered && !isDeleteModalOpen && !isModalOpen && !justClosedModal) {
+                if (!isHoldTriggered && !isDeleteModalOpen && !isEditModalOpen && !isModalOpen && !justClosedModal) {
                     const active = document.activeElement;
                     if (active && active.classList.contains('photo-card')) {
                         const imgUrl = active.getAttribute('data-img');
@@ -911,6 +1061,8 @@
             }
         });
 
+        let albumCustomHeadings = {};
+
         async function fetchAlbumInfo() {
             try {
                 const albumRef = doc(db, "albums", albumId);
@@ -924,12 +1076,14 @@
                     if (data.theme) {
                         applyTheme(data.theme, false);
                     }
+                    if (data.customHeadings) {
+                        albumCustomHeadings = data.customHeadings;
+                    }
                 }
             } catch (error) {
                 console.error("アルバム情報の取得エラー:", error);
             }
         }
-        fetchAlbumInfo();
 
         const baseUrl = window.location.origin + window.location.pathname.replace(/albumcreate\.html$/, '');
         const shareUrl = `${baseUrl}photoshare.html?albumId=${albumId}`;
@@ -940,7 +1094,6 @@
         const albumContainer = document.getElementById('albumContainer');
         const q = query(collection(db, "shared_photos"), where("albumId", "==", albumId));
         
-        // --- 撮影日取得の安全なヘルパー関数 ---
         function getValidDate(item) {
             const target = item.takenAt || item.createdAt;
             if (!target) return new Date();
@@ -948,7 +1101,10 @@
             return isNaN(d.getTime()) ? new Date() : d;
         }
 
-        onSnapshot(q, (snapshot) => {
+        onSnapshot(q, async (snapshot) => {
+            // 最新のアルバムカスタム見出しも再取得しておく
+            await fetchAlbumInfo();
+
             albumContainer.innerHTML = '';
             const qrContainerElement = document.getElementById('qrContainer');
             
@@ -977,7 +1133,6 @@
             const photos = [];
             snapshot.forEach((doc) => { photos.push({ id: doc.id, ...doc.data() }); });
             
-            // --- 撮影日順（古い順）に確実にソート ---
             photos.sort((a, b) => {
                 const dateA = getValidDate(a).getTime();
                 const dateB = getValidDate(b).getTime();
@@ -1024,31 +1179,35 @@
 
             albumContainer.innerHTML = '';
 
-            // --- グループごとにカラムを生成し、綺麗に横に並べる ---
             groups.forEach((group, groupIndex) => {
                 const groupColumn = document.createElement('div');
                 groupColumn.className = 'time-group-column';
 
+                const groupKey = `group_${groupIndex}`;
+                const hour = group.items[0].date.getHours();
+                const defaultTimeRangeStr = `${hour}時頃`;
+                const displayTitle = albumCustomHeadings[groupKey] !== undefined ? albumCustomHeadings[groupKey] : defaultTimeRangeStr;
+
                 group.items.forEach(({ data, date }, index) => {
-                    const hour = date.getHours();
-                    const timeRangeStr = `${hour}時頃`;
                     const formattedDateStr = `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
 
-                    // 写真1枚ごとにカードを包むラッパー
                     const cardWrapper = document.createElement('div');
                     cardWrapper.className = 'photo-card-wrapper';
 
-                    // グループ内の先頭の写真カードの上にのみ、薄い黒色の見出しを表示
+                    // グループ先頭の写真の上にのみ、フォーカス＆編集可能な見出しバッジを表示
                     if (index === 0) {
                         const headerBadge = document.createElement('div');
-                        headerBadge.className = 'group-header-badge';
-                        headerBadge.innerHTML = `<span style="margin-left: 4px; color: #f0ebe5;">${timeRangeStr}</span>`;
+                        headerBadge.className = 'group-header-badge focusable';
+                        headerBadge.tabIndex = 0;
+                        headerBadge.setAttribute('data-group-key', groupKey);
+                        headerBadge.setAttribute('data-current-text', displayTitle);
+                        headerBadge.innerHTML = `<span style="margin-left: 4px; color: #f0ebe5;">✏️ ${displayTitle}</span>`;
+                        
+                        headerBadge.addEventListener('click', () => {
+                            openEditModal(groupKey, displayTitle);
+                        });
+
                         cardWrapper.appendChild(headerBadge);
-                    } else {
-                        // 2枚目以降は見出しがない分の高さを調整するための空スペース、またはマージンを持たせる
-                        const spacer = document.createElement('div');
-                        spacer.style.height = '35px'; // 見出しの高さ＋ギャップ分に相当する調整
-                        cardWrapper.appendChild(spacer);
                     }
 
                     const card = document.createElement('div');
@@ -1060,8 +1219,11 @@
                     card.setAttribute('data-date', formattedDateStr);
 
                     const randomRotate = (Math.sin((groupIndex * 10 + index) * 999) * 10).toFixed(1); 
-                    // 2枚目以降はそもそもマイナス（上方向）のオフセットが発生しないように絶対値または 0 以上にする
-                    let randomOffsetY = index === 0 ? (Math.cos((groupIndex * 10 + index) * 888) * 35).toFixed(1) : (Math.abs(Math.cos((groupIndex * 10 + index) * 888)) * 20).toFixed(1);
+                    let randomOffsetY = (Math.cos((groupIndex * 10 + index) * 888) * 35).toFixed(1);
+                    
+                    if (index > 0 && Number(randomOffsetY) < 0) {
+                        randomOffsetY = 0;
+                    }
                     
                     card.style.setProperty('--rotate', `${randomRotate}deg`);
                     card.style.setProperty('--offset-y', `${Number(randomOffsetY)}px`);
@@ -1088,7 +1250,6 @@
                     groupColumn.appendChild(cardWrapper);
                 });
 
-                // 完成したグループ列をアルバムコンテナに追加
                 albumContainer.appendChild(groupColumn);
             });
 
@@ -1101,7 +1262,7 @@
                 });
             });
 
-            if (!isModalOpen && !isDeleteModalOpen) {
+            if (!isModalOpen && !isDeleteModalOpen && !isEditModalOpen) {
                 const active = document.activeElement;
                 if (!active || (!active.classList.contains('focusable') && !active.classList.contains('delete-btn'))) {
                     const firstPhoto = document.querySelector('.photo-card.focusable');
