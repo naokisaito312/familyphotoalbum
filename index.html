@@ -270,9 +270,16 @@
             transform: scale(1.08);
         }
         .edit-album-btn img {
-            width: 20px;
-            height: 20px;
+            width: 22px;
+            height: 22px;
             object-fit: contain;
+            /* 白いSVGを落ち着いたブラウン系（#8f6b58）の色に変換 */
+            filter: brightness(0) saturate(100%) invert(45%) sepia(20%) saturate(600%) hue-rotate(345deg) brightness(95%) contrast(90%);
+            transition: filter 0.2s;
+        }
+        .edit-album-btn:hover img, .edit-album-btn:focus img {
+            /* ホバー・フォーカス時は白抜きにする */
+            filter: brightness(0) saturate(100%) invert(100%) sepia(0%) saturate(0%) hue-rotate(93deg) brightness(103%) contrast(103%);
         }
 
         .delete-album-btn {
@@ -579,7 +586,6 @@
 
             editAlbumNameInput.value = currentName || "";
             
-            // 既存の作成日時（Firestore Timestamp or Date）を datetime-local 形式に変換
             let dateObj = new Date();
             if (createdAtData && createdAtData.toDate) {
                 dateObj = createdAtData.toDate();
@@ -779,7 +785,7 @@
                 editBtn.dataset.type = 'edit';
                 editBtn.tabIndex = 0;
                 editBtn.title = "アルバム情報を編集";
-                editBtn.innerHTML = `<img src="rsc/edit.svg" alt="編集">`;
+                editBtn.innerHTML = `<img src="src/edit.svg" alt="編集">`;
                 editBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
                     openEditModal(albumId, albumTitle, albumData.createdAt);
@@ -879,7 +885,7 @@
             if (wrappers.length === 0) return;
 
             let currentWrapperIndex = -1;
-            let currentType = ''; // 'card', 'edit', 'delete'
+            let currentType = '';
 
             wrappers.forEach((wrapper, wIdx) => {
                 const card = wrapper.querySelector('.album-card');
