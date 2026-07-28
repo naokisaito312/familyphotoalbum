@@ -276,22 +276,31 @@
         .album-container::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.15); border-radius: 10px; }
         .album-container::-webkit-scrollbar-thumb:hover { background: rgba(0, 0, 0, 0.3); }
 
+        /* --- グループコンテナ（見出しと1枚目の写真を縦にまとめる） --- */
+        .time-group-column {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: flex-start;
+            flex-shrink: 0;
+            margin: 0 15px;
+            vertical-align: top;
+        }
+
         .time-group-header {
             display: inline-flex;
             align-items: center;
-            padding: 10px 18px;
-            margin: 0 15px;
+            padding: 8px 14px;
+            margin-bottom: 12px;
             background: var(--glass-bg);
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
-            border-radius: 14px;
+            border-radius: 12px;
             font-weight: bold;
-            font-size: 1em;
+            font-size: 0.9em;
             color: var(--text-main);
             border: 1px solid var(--glass-border);
             box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-            flex-shrink: 0;
-            align-self: flex-start; /* 縦方向の基準を上側に合わせる */
+            white-space: nowrap;
         }
 
         .photo-card {
@@ -309,6 +318,11 @@
             position: relative;
             cursor: pointer;
             transform: translateY(var(--offset-y, 0px)) rotate(var(--rotate, 0deg));
+        }
+
+        /* グループ内の最初のカードは独自のマージンをリセットしてカラムに合わせる */
+        .time-group-column .photo-card {
+            margin: 0 !important;
         }
 
         .delete-btn {
@@ -907,13 +921,11 @@
         const shareUrl = `${baseUrl}photoshare.html?albumId=${albumId}`;
         const generatedQrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(shareUrl)}`;
         
-        // ヘッダー用とセンター用の両方にQRコードを設定
         document.getElementById('qrImage').src = generatedQrSrc;
 
         const albumContainer = document.getElementById('albumContainer');
         const q = query(collection(db, "shared_photos"), where("albumId", "==", albumId));
         
-        // 補助関数：有効なDateオブジェクトを取得
         function getValidDate(item) {
             const target = item.takenAt || item.createdAt;
             if (!target) return null;
@@ -950,14 +962,12 @@
             const photos = [];
             snapshot.forEach((doc) => { photos.push({ id: doc.id, ...doc.data() }); });
             
-            // 1. 全体を古い順にソート (撮影日時 takenAt 優先)
             photos.sort((a, b) => {
                 const timeA = a.takenAt?.seconds || (a.takenAt ? new Date(a.takenAt).getTime() / 1000 : 0) || (a.createdAt?.seconds || 0);
                 const timeB = b.takenAt?.seconds || (b.takenAt ? new Date(b.takenAt).getTime() / 1000 : 0) || (b.createdAt?.seconds || 0);
                 return timeA - timeB;
             });
 
-            // 2. アルバムタイトルの下に表示する年月日（期間）を算出
             const firstDateObj = getValidDate(photos[0]);
             const lastDateObj = getValidDate(photos[photos.length - 1]);
             if (firstDateObj && lastDateObj) {
@@ -975,7 +985,6 @@
                 document.getElementById('albumDateSubtitle').innerText = dateSubtitle;
             }
 
-            // 3. 撮影時間の分布を見て動的にグループ分け（クラスタリング）する（2時間空いたら分割）
             const GAP_THRESHOLD_SECONDS = 2 * 60 * 60; 
 
             const groups = [];
@@ -998,7 +1007,6 @@
                 currentGroup.items.push({ data, date });
             });
 
-            // グループごとに画面へ描画していく
             albumContainer.innerHTML = '';
 
             groups.forEach((group, groupIndex) => {
@@ -1006,14 +1014,16 @@
                 const hour = firstDate.getHours();
                 const timeRangeStr = `${hour}時頃`;
 
-                // --- ① 見出しカード（グループヘッダー）：各グループの最初に配置 ---
+                /* --- グループ専用の列コンテナを作成（見出しと1枚目の写真を縦に内包） --- */
+                const groupColumn = document.createElement('div');
+                groupColumn.className = 'time-group-column';
+
                 const headerDiv = document.createElement('div');
                 headerDiv.className = 'time-group-header';
                 headerDiv.innerHTML = `⏰ <span style="color: var(--primary-color);">${timeRangeStr}</span> の写真 <span style="font-size: 0.85em; opacity: 0.7; margin-left: 4px;">(${group.items.length}枚)</span>`;
                 
-                albumContainer.appendChild(headerDiv);
+                groupColumn.appendChild(headerDiv);
 
-                // --- ② そのグループに属する写真カードを順番に生成 ---
                 group.items.forEach(({ data, date }, index) => {
                     const formattedDateStr = `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
 
@@ -1049,8 +1059,19 @@
                         openModal(data.imageUrl, data.comment, formattedDateStr);
                     });
 
-                    albumContainer.appendChild(card);
+                    // 1枚目はグループ列（見出しの下）に追加、2枚目以降はアルバムコンテナへ直接追加して横に流す
+                    if (index === 0) {
+                        groupColumn.appendChild(card);
+                    } else {
+                        albumContainer.appendChild(groupColumn);
+                        albumContainer.appendChild(card);
+                    }
                 });
+
+                // 写真が1枚だけでループが終わった場合もここでグループ列をコンテナに追加
+                if (group.items.length === 1) {
+                    albumContainer.appendChild(groupColumn);
+                }
             });
 
             const deleteButtons = document.querySelectorAll('.delete-btn');
