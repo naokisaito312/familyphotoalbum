@@ -1279,9 +1279,6 @@
                     card.style.setProperty('--offset-y', `${Number(randomOffsetY)}px`);
                                            
                     card.innerHTML = `
-                        <button class="delete-btn focusable" data-id="${data.id}" title="削除" tabindex="0">
-                            <img src="rsc/delete.svg" class="delete-icon" alt="削除">
-                        </button>
                         <img src="${data.imageUrl}" alt="Memory">
                         ${data.comment ? `
                             <div class="sticky-note">
@@ -1292,7 +1289,21 @@
                             <div class="photo-date" style="margin-top: 8px;">${formattedDateStr}</div>
                         `}
                     `;
+                    // ゴミ箱ボタンをカードの外（ラッパー直下）に作成して追加
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.className = 'delete-btn focusable';
+                    deleteBtn.setAttribute('data-id', data.id);
+                    deleteBtn.setAttribute('title', '削除');
+                    deleteBtn.tabIndex = 0;
+                    deleteBtn.innerHTML = `<img src="rsc/delete.svg" class="delete-icon" alt="削除">`;
+                    
+                    deleteBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        openDeleteModal(data.id);
+                    });
 
+                    cardWrapper.appendChild(card);
+                    cardWrapper.appendChild(deleteBtn); // ここでラッパーに追加
                     // --- 長押し・タッチ操作のハンドリング（維持） ---
                     const clearHold = () => {
                         clearTimeout(holdTimer);
