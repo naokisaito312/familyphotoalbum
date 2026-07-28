@@ -302,7 +302,6 @@
             vertical-align: top;
             position: relative;
             z-index: 2;
-            /* 見出しと写真の間に十分な間隔を確保して絶対に見出しに被らないようにする */
             gap: 90px;
         }
 
@@ -332,22 +331,21 @@
         }
 
         .group-edit-icon {
-            width: 18px;                     /* アイコンのサイズを調整 */
+            width: 18px;
             height: 18px;
             object-fit: contain;
             opacity: 0;
             width: 0;
-            margin-right: 0;                 /* 非表示時のマージン */
+            margin-right: 0;
             transition: opacity 0.2s ease, width 0.2s ease, margin 0.2s ease;
-            filter: brightness(0) invert(1); /* 黒いSVGを白色に変更 */
+            filter: brightness(0) invert(1);
         }
         
-        /* ホバー時またはフォーカス時にアイコンを表示し、テキストとのマージン（間隔）を確保 */
         .group-header-badge:hover .group-edit-icon,
         .group-header-badge:focus .group-edit-icon {
             opacity: 1;
             width: 18px;
-            margin-right: 6px;               /* テキストとの間の余白を設定 */
+            margin-right: 6px;
         }
         
         .photo-card {
@@ -363,19 +361,50 @@
             width: 260px; 
             position: relative;
             cursor: pointer;
-            /* 上方向へのマイナスオフセットを禁止し、下方向（0以上）にのみずれるように固定 */
             transform: translateY(var(--offset-y, 0px)) rotate(var(--rotate, 0deg));
         }
 
         .delete-btn {
-            position: absolute; top: -10px; right: -10px; background: #ffffff; color: #e65b5b;
-            border: 1px solid rgba(0,0,0,0.05); border-radius: 50%; width: 32px; height: 32px;
-            font-size: 16px; font-weight: bold; cursor: pointer; display: flex; align-items: center;
-            justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.15); transition: all 0.2s ease;
-            opacity: 0; transform: scale(0.8); z-index: 20;
+            position: absolute;
+            bottom: -45px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(30, 30, 35, 0.70);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            transition: all 0.2s ease;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 20;
+        }
+        
+        .delete-icon {
+            width: 14px;
+            height: 14px;
+            object-fit: contain;
+            filter: brightness(0) invert(1);
+        }
+        
+        .photo-card-wrapper:hover .delete-btn,
+        .delete-btn.focusable:focus {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        
+        .delete-btn.focusable:focus {
+            background: rgba(230, 91, 91, 0.85) !important;
+            border-color: #ffffff !important;
         }
 
-        .photo-card:hover .delete-btn { opacity: 1; transform: scale(1); }
         .photo-card img { 
             width: 100%; height: auto; max-height: 380px; object-fit: contain; 
             border-radius: var(--img-radius); display: block; 
@@ -768,20 +797,9 @@
             deleteModalOverlay.classList.remove('active');
             isDeleteModalOpen = false;
             pendingDeletePhotoId = null;
-
-            const restoreFocus = () => {
-                if (isEnterPressed) {
-                    setTimeout(restoreFocus, 50);
-                    return;
-                }
-                if (lastFocusedElement) {
-                    const wrapper = lastFocusedElement.closest('.photo-card-wrapper');
-                    if (wrapper) wrapper.classList.remove('holding');
-                    lastFocusedElement.focus();
-                }
-            };
-
-            setTimeout(restoreFocus, 100);
+            if (lastFocusedElement) {
+                lastFocusedElement.focus();
+            }
         }
 
         cancelDeleteBtn.addEventListener('click', closeDeleteModal);
@@ -835,7 +853,6 @@
             if (!activeEditingGroupKey) return;
             const newTitle = groupTitleInput.value.trim();
             
-            // 1. ローカルストレージに即時保存（確実な表示のため）
             let localHeadings = {};
             try {
                 const saved = localStorage.getItem(`album_headings_${albumId}`);
@@ -845,7 +862,6 @@
             localStorage.setItem(`album_headings_${albumId}`, JSON.stringify(localHeadings));
             albumCustomHeadings = localHeadings;
 
-            // 2. Firebase（Firestore）への保存試行
             try {
                 const albumRef = doc(db, "albums", albumId);
                 const albumSnap = await getDoc(albumRef);
@@ -861,15 +877,12 @@
             }
 
             closeEditModal();
-            // 画面を再描画して即座に新しい見出しを表示
             renderAlbumUI();
         });
 
         function getFocusables() {
             return Array.from(document.querySelectorAll('.focusable'));
         }
-
-        let isEnterPressed = false; 
 
         document.addEventListener('keydown', (e) => {
             if (isDeleteModalOpen) {
@@ -949,25 +962,7 @@
 
             if (e.key === 'Enter') {
                 e.preventDefault();
-    
-                if (active && active.classList.contains('photo-card')) {
-                    const wrapper = active.closest('.photo-card-wrapper');
-                    if (!e.repeat && !isEnterPressed) {
-                        isEnterPressed = true;
-                        isHoldTriggered = false;
-    
-                        holdingVisualTimer = setTimeout(() => {
-                            if (wrapper) wrapper.classList.add('holding');
-                        }, VISUAL_DELAY);
-    
-                        holdTimer = setTimeout(() => {
-                            isHoldTriggered = true;
-                            if (wrapper) wrapper.classList.remove('holding');
-                            const photoId = active.getAttribute('data-id');
-                            openDeleteModal(photoId);
-                        }, HOLD_DURATION);
-                    }
-                } else if (!e.repeat) {
+                if (!e.repeat && active) {
                     if (active.classList.contains('theme-dot')) {
                         active.click();
                     } else if (active.classList.contains('delete-btn')) {
@@ -1030,18 +1025,7 @@
 
         document.addEventListener('keyup', (e) => {
             if (e.key === 'Enter') {
-                if (holdingVisualTimer) {
-                    clearTimeout(holdingVisualTimer);
-                    holdingVisualTimer = null;
-                }
-                if (holdTimer) {
-                    clearTimeout(holdTimer);
-                    holdTimer = null;
-                }
-
-                document.querySelectorAll('.photo-card-wrapper.holding').forEach(el => el.classList.remove('holding'));
-
-                if (!isHoldTriggered && !isDeleteModalOpen && !isEditModalOpen && !isModalOpen && !justClosedModal) {
+                if (!isDeleteModalOpen && !isEditModalOpen && !isModalOpen && !justClosedModal) {
                     const active = document.activeElement;
                     if (active && active.classList.contains('photo-card')) {
                         const imgUrl = active.getAttribute('data-img');
@@ -1050,9 +1034,6 @@
                         openModal(imgUrl, comment, dateStr);
                     }
                 }
-
-                isEnterPressed = false;
-                isHoldTriggered = false;
                 justClosedModal = false;
             }
         });
@@ -1213,9 +1194,8 @@
 
                         cardWrapper.appendChild(headerBadge);
                     } else {
-                        // 2枚目以降は見出しがない分の高さを調整するための空スペース、またはマージンを持たせる
                         const spacer = document.createElement('div');
-                        spacer.style.height = '35px'; // 見出しの高さ＋ギャップ分に相当する調整
+                        spacer.style.height = '35px';
                         cardWrapper.appendChild(spacer);
                     }
 
@@ -1228,14 +1208,15 @@
                     card.setAttribute('data-date', formattedDateStr);
 
                     const randomRotate = (Math.sin((groupIndex * 10 + index) * 999) * 10).toFixed(1); 
-                    
                     let randomOffsetY = index === 0 ? (Math.cos((groupIndex * 10 + index) * 888) * 35).toFixed(1) : (Math.abs(Math.cos((groupIndex * 10 + index) * 888)) * 20).toFixed(1);
                     
                     card.style.setProperty('--rotate', `${randomRotate}deg`);
                     card.style.setProperty('--offset-y', `${Number(randomOffsetY)}px`);
                                            
                     card.innerHTML = `
-                        <button class="delete-btn" data-id="${data.id}" title="削除" tabindex="-1">×</button>
+                        <button class="delete-btn focusable" data-id="${data.id}" title="削除" tabindex="0">
+                            <img src="rsc/delete.svg" class="delete-icon" alt="削除">
+                        </button>
                         <img src="${data.imageUrl}" alt="Memory">
                         ${data.comment ? `
                             <div class="sticky-note">
@@ -1247,8 +1228,52 @@
                         `}
                     `;
 
+                    // --- 長押し・タッチ操作のハンドリング（維持） ---
+                    const clearHold = () => {
+                        clearTimeout(holdTimer);
+                        clearTimeout(holdingVisualTimer);
+                        cardWrapper.classList.remove('holding');
+                        isHoldTriggered = false;
+                    };
+
+                    card.addEventListener('mousedown', (e) => {
+                        if (e.target.classList.contains('delete-btn')) return;
+                        isHoldTriggered = false;
+                        holdingVisualTimer = setTimeout(() => {
+                            cardWrapper.classList.add('holding');
+                        }, VISUAL_DELAY);
+                        holdTimer = setTimeout(() => {
+                            isHoldTriggered = true;
+                            cardWrapper.classList.remove('holding');
+                            openDeleteModal(data.id);
+                        }, HOLD_DURATION);
+                    });
+
+                    card.addEventListener('mouseup', clearHold);
+                    card.addEventListener('mouseleave', clearHold);
+
+                    card.addEventListener('touchstart', (e) => {
+                        if (e.target.classList.contains('delete-btn')) return;
+                        isHoldTriggered = false;
+                        holdingVisualTimer = setTimeout(() => {
+                            cardWrapper.classList.add('holding');
+                        }, VISUAL_DELAY);
+                        holdTimer = setTimeout(() => {
+                            isHoldTriggered = true;
+                            cardWrapper.classList.remove('holding');
+                            openDeleteModal(data.id);
+                        }, HOLD_DURATION);
+                    }, { passive: true });
+
+                    card.addEventListener('touchend', clearHold);
+                    card.addEventListener('touchmove', clearHold);
+
                     card.addEventListener('click', (e) => {
                         if (e.target.classList.contains('delete-btn')) return;
+                        if (isHoldTriggered) {
+                            isHoldTriggered = false;
+                            return;
+                        }
                         openModal(data.imageUrl, data.comment, formattedDateStr);
                     });
 
