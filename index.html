@@ -20,16 +20,20 @@
 
         * { box-sizing: border-box; }
 
-        /* ==========================================================================
-           デザインテーマ ＆ カードデザイン拡張
-           ========================================================================== */
-        /* --- 1. デフォルト: 暖色クラシック (ポラロイド・あたたかみ) --- */
-        :root, body[data-theme="default"] {
+        :root {
+            /* ページ全体のデフォルト背景など */
             --bg-gradient: linear-gradient(135deg, #fefaf6 0%, #f7ede2 50%, #f5e6d8 100%);
-            --primary-color: #f7a072;
-            --primary-hover: #f38345;
             --text-main: #3d3531;
             --text-sub: #8c7d75;
+        }
+
+        /* ==========================================================================
+           デザインテーマ ＆ カードデザイン拡張（個別カード対応）
+           ========================================================================== */
+        /* --- 1. デフォルト: 暖色クラシック (ポラロイド・あたたかみ) --- */
+        .album-card, .album-card[data-theme="default"] {
+            --primary-color: #f7a072;
+            --primary-hover: #f38345;
             --card-bg: #ffffff;
             --card-border: 1px solid rgba(255, 255, 255, 0.9);
             --card-radius: 16px;
@@ -38,17 +42,13 @@
             --title-font: 'Quicksand', 'M PLUS Rounded 1c', sans-serif;
             --title-gradient: linear-gradient(45deg, #4a3e3d, #8f6b58);
             --glass-bg: rgba(255, 255, 255, 0.75);
-            --glass-border: rgba(255, 255, 255, 0.85);
             --focus-glow: 0 0 0 4px #f7a072, 0 0 25px rgba(247, 160, 114, 0.65);
         }
 
         /* --- 2. パステルスイート (ポップ・マステ風装飾) --- */
-        body[data-theme="pastel"] {
-            --bg-gradient: linear-gradient(135deg, #fff5f7 0%, #ffedf2 50%, #f0fff4 100%);
+        .album-card[data-theme="pastel"] {
             --primary-color: #ff9ebb;
             --primary-hover: #ff7599;
-            --text-main: #4a353d;
-            --text-sub: #9e7d89;
             --card-bg: #ffffff;
             --card-border: 2px dashed #ffc0d0;
             --card-radius: 24px;
@@ -57,17 +57,13 @@
             --title-font: 'M PLUS Rounded 1c', sans-serif;
             --title-gradient: linear-gradient(45deg, #633b4d, #a86b84);
             --glass-bg: rgba(255, 255, 255, 0.85);
-            --glass-border: rgba(255, 255, 255, 0.9);
             --focus-glow: 0 0 0 4px #ff9ebb, 0 0 25px rgba(255, 158, 187, 0.65);
         }
 
         /* --- 3. シーサイドブルー (モダン・クリア) --- */
-        body[data-theme="ocean"] {
-            --bg-gradient: linear-gradient(135deg, #eef9ff 0%, #e1f3fe 50%, #d8f0fa 100%);
+        .album-card[data-theme="ocean"] {
             --primary-color: #43b0f1;
             --primary-hover: #1c92d2;
-            --text-main: #1e3240;
-            --text-sub: #637f94;
             --card-bg: rgba(255, 255, 255, 0.85);
             --card-border: 1px solid #bce3fb;
             --card-radius: 10px;
@@ -76,17 +72,13 @@
             --title-font: 'Quicksand', sans-serif;
             --title-gradient: linear-gradient(45deg, #1c3b57, #3a7bd5);
             --glass-bg: rgba(255, 255, 255, 0.8);
-            --glass-border: rgba(255, 255, 255, 0.9);
             --focus-glow: 0 0 0 4px #43b0f1, 0 0 25px rgba(67, 176, 241, 0.65);
         }
 
         /* --- 4. ノスタルジックヴィンテージ (クラシック・ステッチ感) --- */
-        body[data-theme="vintage"] {
-            --bg-gradient: linear-gradient(135deg, #f4efe9 0%, #e8dfd5 50%, #ded3c5 100%);
+        .album-card[data-theme="vintage"] {
             --primary-color: #a0826c;
             --primary-hover: #836551;
-            --text-main: #362f2d;
-            --text-sub: #7a6e6a;
             --card-bg: #f7f3ec;
             --card-border: 2px dashed #bdaaa0;
             --card-radius: 4px;
@@ -95,17 +87,13 @@
             --title-font: 'Shippori Mincho', serif;
             --title-gradient: linear-gradient(45deg, #3d312a, #735a4c);
             --glass-bg: rgba(248, 244, 239, 0.85);
-            --glass-border: rgba(255, 255, 255, 0.6);
             --focus-glow: 0 0 0 4px #a0826c, 0 0 25px rgba(160, 130, 108, 0.65);
         }
 
         /* --- 5. シネマティックダーク (スタイリッシュ・ゴールド枠) --- */
-        body[data-theme="dark"] {
-            --bg-gradient: linear-gradient(135deg, #141215 0%, #1f1b22 50%, #100e12 100%);
+        .album-card[data-theme="dark"] {
             --primary-color: #e0a96d;
             --primary-hover: #cca047;
-            --text-main: #f0ebe5;
-            --text-sub: #a89f91;
             --card-bg: #221d26;
             --card-border: 1px solid rgba(224, 169, 109, 0.3);
             --card-radius: 12px;
@@ -114,7 +102,6 @@
             --title-font: 'Shippori Mincho', serif;
             --title-gradient: linear-gradient(45deg, #ffffff, #e0a96d);
             --glass-bg: rgba(30, 25, 35, 0.85);
-            --glass-border: rgba(255, 255, 255, 0.1);
             --focus-glow: 0 0 0 4px #e0a96d, 0 0 30px rgba(224, 169, 109, 0.8);
         }
 
@@ -122,7 +109,7 @@
             background: var(--bg-gradient);
             min-height: 100vh;
             color: var(--text-main);
-            font-family: var(--title-font), -apple-system, sans-serif;
+            font-family: 'Quicksand', -apple-system, sans-serif;
             margin: 0;
             padding: 40px;
             display: flex;
@@ -151,10 +138,9 @@
             font-size: 2.8em;
             font-weight: 700;
             margin: 0 0 10px 0;
-            background: var(--title-gradient);
+            background: linear-gradient(45deg, #4a3e3d, #8f6b58);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            font-family: var(--title-font);
         }
 
         .subtitle {
@@ -224,11 +210,12 @@
         /* 新規作成用カード */
         .create-album-card {
             border: 2px dashed var(--text-sub);
-            background: var(--glass-bg) !important;
+            background: rgba(255, 255, 255, 0.75) !important;
             justify-content: center;
             align-items: center;
             height: 420px;
             width: 360px;
+            --primary-color: #f7a072;
         }
 
         .create-album-icon {
@@ -311,7 +298,7 @@
         .album-title {
             font-size: 1.3em;
             font-weight: 700;
-            color: var(--text-main);
+            color: #3d3531;
             margin: 5px 0 3px 0;
             text-align: center;
             width: 100%;
@@ -319,6 +306,9 @@
             overflow: hidden;
             text-overflow: ellipsis;
             font-family: var(--title-font);
+            background: var(--title-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
         .album-date {
@@ -368,7 +358,7 @@
 
         .edit-album-btn {
             border: 2px solid var(--text-sub);
-            color: var(--text-main);
+            color: #3d3531;
         }
         .edit-album-btn:hover, .edit-album-btn:focus {
             background: var(--primary-color);
