@@ -457,6 +457,57 @@
             if (firstCard && !isModalOpen) firstCard.focus();
         });
 
+        // 2D空間座標に基づく方向キー移動のヘルパー関数
+        function findBestTarget(currentElement, direction) {
+            const focusables = Array.from(document.querySelectorAll('.focusable'));
+            if (focusables.length <= 1) return null;
+
+            const currRect = currentElement.getBoundingClientRect();
+            const currX = currRect.left + currRect.width / 2;
+            const currY = currRect.top + currRect.height / 2;
+
+            let bestTarget = null;
+            let minScore = Infinity;
+
+            for (const el of focusables) {
+                if (el === currentElement) continue;
+                const rect = el.getBoundingClientRect();
+                const x = rect.left + rect.width / 2;
+                const y = rect.top + rect.height / 2;
+
+                let primaryDistance = 0;
+                let secondaryDistance = 0;
+
+                if (direction === 'ArrowRight') {
+                    if (x <= currX) continue; // 右側にないものは除外
+                    primaryDistance = x - currX;       // 横方向の距離
+                    secondaryDistance = Math.abs(y - currY); // 縦方向のズレ
+                } else if (direction === 'ArrowLeft') {
+                    if (x >= currX) continue; // 左側にないものは除外
+                    primaryDistance = currX - x;
+                    secondaryDistance = Math.abs(y - currY);
+                } else if (direction === 'ArrowDown') {
+                    if (y <= currY) continue; // 下側にないものは除外
+                    primaryDistance = y - currY;       // 縦方向の距離
+                    secondaryDistance = Math.abs(x - currX); // 横方向のズレ
+                } else if (direction === 'ArrowUp') {
+                    if (y >= currY) continue; // 上側にないものは除外
+                    primaryDistance = currY - y;
+                    secondaryDistance = Math.abs(x - currX);
+                }
+
+                // 移動方向の近さを重視しつつ、真上・真下・真横からのズレが少ないものを優先するスコア計算
+                const score = primaryDistance + secondaryDistance * 2.5;
+
+                if (score < minScore) {
+                    minScore = score;
+                    bestTarget = el;
+                }
+            }
+
+            return bestTarget;
+        }
+
         // TVリモコン・キーボード操作対応
         document.addEventListener('keydown', (e) => {
             if (isModalOpen) {
@@ -477,58 +528,20 @@
                 return;
             }
 
+            const active = document.activeElement;
             const focusables = Array.from(document.querySelectorAll('.focusable'));
             if (focusables.length === 0) return;
 
-            const active = document.activeElement;
-            let index = focusables.indexOf(active);
-
-            if (index === -1) {
+            if (!focusables.includes(active)) {
                 focusables[0].focus();
                 return;
             }
 
-            // グリッドの1行あたりの列数を自動計算する
-            let columns = 1;
-            if (focusables.length > 1) {
-                const firstTop = focusables[0].getBoundingClientRect().top;
-                for (let i = 1; i < focusables.length; i++) {
-                    if (focusables[i].getBoundingClientRect().top !== firstTop) {
-                        columns = i;
-                        break;
-                    }
-                    if (i === focusables.length - 1) {
-                        columns = focusables.length;
-                    }
-                }
-            }
-
-            if (e.key === 'ArrowRight') {
+            if (['ArrowRight', 'ArrowLeft', 'ArrowDown', 'ArrowUp'].includes(e.key)) {
                 e.preventDefault();
-                (focusables[index + 1] || focusables[0]).focus();
-            } else if (e.key === 'ArrowLeft') {
-                e.preventDefault();
-                (focusables[index - 1] || focusables[focusables.length - 1]).focus();
-            } else if (e.key === 'ArrowDown') {
-                e.preventDefault();
-                const nextIndex = index + columns;
-                if (nextIndex < focusables.length) {
-                    focusables[nextIndex].focus();
-                } else {
-                    // 最下行にいる場合は一番上の同じ列付近へループまたはそのまま
-                    focusables[index % columns].focus();
-                }
-            } else if (e.key === 'ArrowUp') {
-                e.preventDefault();
-                const prevIndex = index - columns;
-                if (prevIndex >= 0) {
-                    focusables[prevIndex].focus();
-                } else {
-                    // 最上行にいる場合は一番下の同じ列付近へループ
-                    const targetCol = index % columns;
-                    const lastRowStart = Math.floor((focusables.length - 1) / columns) * columns;
-                    const targetIndex = Math.min(lastRowStart + targetCol, focusables.length - 1);
-                    focusables[targetIndex].focus();
+                const target = findBestTarget(active, e.key);
+                if (target) {
+                    target.focus();
                 }
             } else if (e.key === 'Enter') {
                 if (active) active.click();
