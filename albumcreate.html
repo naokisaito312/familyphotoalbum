@@ -856,18 +856,11 @@
         let isDeleteModalOpen = false;
         let pendingDeletePhotoId = null;
 
-        let targetNextElement = null; // スコープに合わせて適切に宣言・配置してください
+        let pendingDeletedPhotoId = null; // 削除対象IDの退避用
 
         function openDeleteModal(photoId, triggerElement) {
             pendingDeletePhotoId = photoId;
             lastFocusedElement = triggerElement || document.activeElement;
-            
-            // ▼ ここで削除対象の「次のカード（なければ前のカード）」を予め特定して保持する
-            targetNextElement = null;
-            const currentCard = document.querySelector(`.photo-card.focusable[data-id="${photoId}"]`);
-            if (currentCard) {
-                targetNextElement = currentCard.nextElementSibling || currentCard.previousElementSibling;
-            }
 
             deleteModalOverlay.classList.add('active');
             isDeleteModalOpen = true;
@@ -877,31 +870,50 @@
             }, 50);
         }
 
-        function closeDeleteModal(nextFocusTarget = null) {
+        function closeDeleteModal(wasDeleted = false, deletedPhotoId = null) {
             deleteModalOverlay.classList.remove('active');
             isDeleteModalOpen = false;
             pendingDeletePhotoId = null;
 
             setTimeout(() => {
-                // 1. 削除処理などで「次のフォーカス先」が明確に指定されている場合
-                if (nextFocusTarget && typeof nextFocusTarget.focus === 'function') {
-                    nextFocusTarget.focus();
-                    if (typeof nextFocusTarget.scrollIntoView === 'function') {
-                        nextFocusTarget.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                // 1. 写真を削除した場合：新しく描画されたカードから次のカードを探す
+                if (wasDeleted && deletedPhotoId) {
+                    const photoCards = Array.from(document.querySelectorAll('.photo-card.focusable'));
+                    
+                    // 削除されたID以外の残っているカードを取得
+                    // ※リアルタイムリスナーですでにDOMから消えているため、
+                    //   「削除されたインデックスと同じ位置」または「全体の最後のカード」などを特定する
+                    // ここではシンプルに、残ったカードの中から適切なものをフォーカスします
+                    if (photoCards.length > 0) {
+                        // 削除された要素の代わりに、次にフォーカスすべきカード（または先頭・末尾）を決定
+                        // （ここでは残ったカードの先頭、あるいは最後にフォーカスするなど調整可能ですが、
+                        //   一般的には削除されたカードがあった位置のカードを指定するのがスマートです）
+                        let targetCard = photoCards[0]; // フォールバックとして先頭
+                        
+                        // もし削除対象のインデックスを維持したい場合は、削除前にインデックスを控えておくアプローチもあります。
+                        // 下記の confirmDeleteBtn の実装と連動させます。
+                        if (window.targetFocusCardId) {
+                            const found = photoCards.find(c => c.getAttribute('data-id'] === window.targetFocusCardId);
+                            if (found) targetCard = found;
+                            window.targetFocusCardId = null;
+                        }
+
+                        targetCard.focus();
+                        if (typeof targetCard.scrollIntoView === 'function') {
+                            targetCard.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                        }
+                        return;
                     }
-                    targetNextElement = null;
-                    return;
                 }
 
-                // 2. キャンセル時など、開く直前に保持していた元の要素（写真カードなど）に戻す場合
+                // 2. キャンセル時など：元の要素に戻す
                 if (lastFocusedElement && typeof lastFocusedElement.focus === 'function') {
                     lastFocusedElement.focus();
                     if (typeof lastFocusedElement.scrollIntoView === 'function') {
                         lastFocusedElement.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
                     }
                 }
-                targetNextElement = null;
-            }, 100);
+            }, 150); // レンダリング完了を少し待つために150msに調整
         }
 
         cancelDeleteBtn.addEventListener('click', () => closeDeleteModal());
@@ -909,28 +921,33 @@
         confirmDeleteBtn.addEventListener('click', async () => {
             if (!pendingDeletePhotoId) return;
             
-            // 削除前に、現在の写真カード一覧から「次の写真」の要素を見つけておく
+            // 削除する前に、現在のカード一覧から「次にフォーカスすべきカードのID」を特定しておく
             const photoCards = Array.from(document.querySelectorAll('.photo-card.focusable'));
-            let nextFocusTarget = null;
+            let targetCardId = null;
             
             for (let i = 0; i < photoCards.length; i++) {
                 if (photoCards[i].getAttribute('data-id') === pendingDeletePhotoId) {
-                    // 次のカードがあればそれを、最後なら一つ前のカードを候補にする
+                    // 次のカードがあればそのID、なければ一つ前のカードのIDを保持
                     if (i + 1 < photoCards.length) {
-                        nextFocusTarget = photoCards[i + 1];
+                        targetCardId = photoCards[i + 1].getAttribute('data-id');
                     } else if (i - 1 >= 0) {
-                        nextFocusTarget = photoCards[i - 1];
+                        targetCardId = photoCards[i - 1].getAttribute('data-id');
                     }
                     break;
                 }
             }
+            
+            // グローバルな一時変数に記憶させる（再描画後に参照するため）
+            window.targetFocusCardId = targetCardId;
+            const deleteId = pendingDeletePhotoId;
 
             try {
-                await deleteDoc(doc(db, "shared_photos", pendingDeletePhotoId));
-                closeDeleteModal(nextFocusTarget);
+                await deleteDoc(doc(db, "shared_photos", deleteId));
+                closeDeleteModal(true, deleteId);
             } catch (firestoreError) {
                 console.error("Firestoreの削除エラー:", firestoreError);
-                closeDeleteModal();
+                window.targetFocusCardId = null;
+                closeDeleteModal(false);
             }
         });
 
