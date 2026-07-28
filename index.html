@@ -122,31 +122,31 @@
             height: 420px;
         }
 
-        /* --- テーマ別のカード背景スタイル --- */
-        .album-card.theme-default {
-            background: rgba(255, 255, 255, 0.85);
+        /* --- テーマ別のカード背景スタイル（詳細度を上げて確実に適用） --- */
+        .album-card.album-card.theme-default {
+            background: rgba(255, 255, 255, 0.85) !important;
         }
-        .album-card.theme-warm {
-            background: linear-gradient(135deg, rgba(255, 243, 230, 0.9) 0%, rgba(255, 224, 204, 0.85) 100%);
-            border-color: rgba(255, 204, 179, 0.6);
+        .album-card.album-card.theme-warm {
+            background: linear-gradient(135deg, rgba(255, 243, 230, 0.9) 0%, rgba(255, 224, 204, 0.85) 100%) !important;
+            border-color: rgba(255, 204, 179, 0.6) !important;
         }
-        .album-card.theme-cool {
-            background: linear-gradient(135deg, rgba(230, 243, 255, 0.9) 0%, rgba(204, 229, 255, 0.85) 100%);
-            border-color: rgba(179, 217, 255, 0.6);
+        .album-card.album-card.theme-cool {
+            background: linear-gradient(135deg, rgba(230, 243, 255, 0.9) 0%, rgba(204, 229, 255, 0.85) 100%) !important;
+            border-color: rgba(179, 217, 255, 0.6) !important;
         }
-        .album-card.theme-pastel {
-            background: linear-gradient(135deg, rgba(243, 230, 255, 0.9) 0%, rgba(235, 204, 255, 0.85) 100%);
-            border-color: rgba(220, 179, 255, 0.6);
+        .album-card.album-card.theme-pastel {
+            background: linear-gradient(135deg, rgba(243, 230, 255, 0.9) 0%, rgba(235, 204, 255, 0.85) 100%) !important;
+            border-color: rgba(220, 179, 255, 0.6) !important;
         }
-        .album-card.theme-nature {
-            background: linear-gradient(135deg, rgba(230, 255, 238, 0.9) 0%, rgba(204, 245, 216, 0.85) 100%);
-            border-color: rgba(179, 235, 196, 0.6);
+        .album-card.album-card.theme-nature {
+            background: linear-gradient(135deg, rgba(230, 255, 238, 0.9) 0%, rgba(204, 245, 216, 0.85) 100%) !important;
+            border-color: rgba(179, 235, 196, 0.6) !important;
         }
 
         /* 新規作成用カード */
         .create-album-card {
             border: 2px dashed #e2cfc4;
-            background: rgba(255, 255, 255, 0.5);
+            background: rgba(255, 255, 255, 0.5) !important;
             justify-content: center;
             align-items: center;
             height: 420px;
