@@ -1331,6 +1331,9 @@
                         openDeleteModal(data.id);
                     });
 
+                    deleteBtn.addEventListener('focus', handleFocusIn);
+                    deleteBtn.addEventListener('blur', handleFocusOut);
+                    
                     cardWrapper.appendChild(card);
                     cardWrapper.appendChild(deleteBtn); // ここでラッパーに追加
                     // --- 長押し・タッチ操作のハンドリング（維持） ---
