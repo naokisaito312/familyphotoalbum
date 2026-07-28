@@ -1057,8 +1057,8 @@
                     const randomOffsetY = (Math.cos((groupIndex * 10 + index) * 888) * 35).toFixed(1);
                     
                     card.style.setProperty('--rotate', `${randomRotate}deg`);
-                    card.style.setProperty('--offset-y', `${Number(randomOffsetY) + (index === 0 ? 18 : 0)}px`); // ←先頭カードだけに +18px されている
-
+                    card.style.setProperty('--offset-y', `${Number(randomOffsetY)}px`);
+                                           
                     card.innerHTML = `
                         <button class="delete-btn" data-id="${data.id}" title="削除" tabindex="-1">×</button>
                         <img src="${data.imageUrl}" alt="Memory">
