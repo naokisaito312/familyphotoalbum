@@ -302,7 +302,8 @@
             vertical-align: top;
             position: relative;
             z-index: 2;
-            gap: 70px;
+            /* 見出しと写真の間に十分な間隔を確保して絶対に見出しに被らないようにする */
+            gap: 90px;
         }
 
         /* --- 見出しバッジ --- */
@@ -343,6 +344,7 @@
             width: 260px; 
             position: relative;
             cursor: pointer;
+            /* 上方向へのマイナスオフセットを禁止し、下方向（0以上）にのみずれるように固定 */
             transform: translateY(var(--offset-y, 0px)) rotate(var(--rotate, 0deg));
         }
 
@@ -1200,11 +1202,8 @@
 
                     const randomRotate = (Math.sin((groupIndex * 10 + index) * 999) * 10).toFixed(1); 
                     
-                    // 修正点：縦方向のオフセットでマイナス（上向き）になるのを防ぎ、下方向（0以上）にのみずれるように制限
-                    let randomOffsetY = (Math.cos((groupIndex * 10 + index) * 888) * 35).toFixed(1);
-                    if (Number(randomOffsetY) < 0) {
-                        randomOffsetY = 0;
-                    }
+                    // 修正点：縦方向のオフセットが絶対にマイナス（上方向）にならないよう完全に0以上に制限
+                    let randomOffsetY = (Math.abs(Math.cos((groupIndex * 10 + index) * 888)) * 35).toFixed(1);
                     
                     card.style.setProperty('--rotate', `${randomRotate}deg`);
                     card.style.setProperty('--offset-y', `${Number(randomOffsetY)}px`);
