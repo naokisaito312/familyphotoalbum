@@ -196,11 +196,25 @@
             position: relative;
         }
 
+        .title-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
         h1 {
             text-align: center; font-size: 2.2em; font-weight: 700; letter-spacing: -0.02em; margin: 0;
             background: var(--title-gradient);
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
             transition: background 0.4s ease;
+        }
+
+        .album-date-subtitle {
+            font-size: 0.9em;
+            color: var(--text-sub);
+            font-weight: 500;
+            letter-spacing: 0.05em;
         }
 
         /* --- テーマ切り替えパレット --- */
@@ -261,6 +275,24 @@
         .album-container::-webkit-scrollbar-track { background: transparent; }
         .album-container::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.15); border-radius: 10px; }
         .album-container::-webkit-scrollbar-thumb:hover { background: rgba(0, 0, 0, 0.3); }
+
+        .time-group-header {
+            display: inline-flex;
+            align-items: center;
+            padding: 10px 18px;
+            margin: 0 10px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 14px;
+            font-weight: bold;
+            font-size: 1em;
+            color: var(--text-main);
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            flex-shrink: 0;
+            align-self: center;
+        }
 
         .photo-card {
             display: inline-flex; 
@@ -327,7 +359,7 @@
         }
 
         .qr-container img { 
-            width: 95px;  /* 従来より大きく調整[cite: 6] */
+            width: 95px;
             height: 95px; 
             display: block; 
             margin: 0 auto; 
@@ -355,6 +387,7 @@
             text-align: center;
             gap: 20px;
             padding: 30px;
+            white-space: normal;
         }
 
         .empty-qr-box {
@@ -369,7 +402,7 @@
         }
 
         .empty-qr-box img {
-            width: 220px; /* ユーザーの最初のアクション用に大きく表示[cite: 6] */
+            width: 220px;
             height: 220px;
             display: block;
             margin: 0 auto 12px auto;
@@ -473,6 +506,7 @@
             box-shadow: 0 20px 40px rgba(0,0,0,0.4);
             max-width: 420px;
             width: 90%;
+            white-space: normal;
         }
 
         .delete-dialog h3 {
@@ -523,7 +557,10 @@
     </div>
 
     <header class="album-header">
-        <h1 id="albumTitle">アルバム</h1>
+        <div class="title-wrapper">
+            <h1 id="albumTitle">アルバム</h1>
+            <div class="album-date-subtitle" id="albumDateSubtitle"></div>
+        </div>
         <!-- タイトルの右側にあるQRコード（写真がある時に表示） -->
         <div class="qr-container" id="qrContainer">
             <img id="qrImage" src="" alt="QR Code">
@@ -876,13 +913,21 @@
         const albumContainer = document.getElementById('albumContainer');
         const q = query(collection(db, "shared_photos"), where("albumId", "==", albumId));
         
+        // 補助関数：有効なDateオブジェクトを取得
+        function getValidDate(item) {
+            const target = item.takenAt || item.createdAt;
+            if (!target) return null;
+            let d = typeof target.toDate === 'function' ? target.toDate() : new Date(target);
+            return isNaN(d.getTime()) ? null : d;
+        }
+
         onSnapshot(q, (snapshot) => {
             albumContainer.innerHTML = '';
             const qrContainerElement = document.getElementById('qrContainer');
             
             if (snapshot.empty) {
-                // 写真がゼロの時は、ヘッダーの小さめQRを非表示にして、中央にさらに大きなQRコードを表示
                 qrContainerElement.style.display = 'none';
+                document.getElementById('albumDateSubtitle').innerText = '';
 
                 const emptyWrapper = document.createElement('div');
                 emptyWrapper.className = 'empty-album-wrapper';
@@ -900,7 +945,6 @@
                 return;
             }
 
-            // 写真がある場合はヘッダーのQRコードを表示する
             qrContainerElement.style.display = 'block';
 
             const photos = [];
@@ -913,24 +957,34 @@
                 return timeA - timeB;
             });
 
-            // 2. 撮影時間の分布を見て動的にグループ分け（クラスタリング）する
-            // 閾値：写真と写真の間隔が「2時間 (7200秒)」以上空いたら別の群（イベント）とみなす
+            // 2. アルバムタイトルの下に表示する年月日（期間）を算出
+            const firstDateObj = getValidDate(photos[0]);
+            const lastDateObj = getValidDate(photos[photos.length - 1]);
+            if (firstDateObj && lastDateObj) {
+                const fYear = firstDateObj.getFullYear();
+                const fMonth = firstDateObj.getMonth() + 1;
+                const fDay = firstDateObj.getDate();
+                const lYear = lastDateObj.getFullYear();
+                const lMonth = lastDateObj.getMonth() + 1;
+                const lDay = lastDateObj.getDate();
+
+                let dateSubtitle = `${fYear}年${fMonth}月${fDay}日`;
+                if (fYear !== lYear || fMonth !== lMonth || fDay !== lDay) {
+                    dateSubtitle += ` 〜 ${lMonth}月${lDay}日`;
+                }
+                document.getElementById('albumDateSubtitle').innerText = dateSubtitle;
+            }
+
+            // 3. 撮影時間の分布を見て動的にグループ分け（クラスタリング）する（2時間空いたら分割）
             const GAP_THRESHOLD_SECONDS = 2 * 60 * 60; 
 
             const groups = [];
             let currentGroup = null;
 
             photos.forEach((data) => {
-                const targetDateObj = data.takenAt || data.createdAt;
-                let date = new Date();
-                if (targetDateObj) {
-                    date = typeof targetDateObj.toDate === 'function' ? targetDateObj.toDate() : new Date(targetDateObj);
-                }
-                if (isNaN(date.getTime())) return;
+                const date = getValidDate(data) || new Date();
+                const timestamp = date.getTime() / 1000;
 
-                const timestamp = date.getTime() / 1000; // 秒単位
-
-                // 初回、または前の写真から一定時間以上空いている場合は新しいグループを作成
                 if (!currentGroup || (timestamp - currentGroup.lastTimestamp > GAP_THRESHOLD_SECONDS)) {
                     currentGroup = {
                         startTime: date,
@@ -940,45 +994,22 @@
                     groups.push(currentGroup);
                 }
 
-                // グループの最終タイムスタンプを更新し、写真を追加
                 currentGroup.lastTimestamp = timestamp;
                 currentGroup.items.push({ data, date });
             });
 
             // グループごとに画面へ描画していく
-            albumContainer.innerHTML = ''; // コンテナをクリア
+            albumContainer.innerHTML = '';
 
             groups.forEach((group, groupIndex) => {
                 const firstDate = group.items[0].date;
-
-                const year = firstDate.getFullYear();
-                const month = firstDate.getMonth() + 1;
-                const day = firstDate.getDate();
-                const dateStr = `${year}年${month}月${day}日`;
-
                 const hour = firstDate.getHours();
-                // 「13時頃」のようなシンプルな表現にする
                 const timeRangeStr = `${hour}時頃`;
 
-                // --- ① 見出しカード（グループヘッダー）を作成 ---
+                // --- ① 見出しカード（グループヘッダー）：年月日を省き「○時頃」のみにシンプル化 ---
                 const headerDiv = document.createElement('div');
                 headerDiv.className = 'time-group-header';
-                
-                // グリッドレイアウトで全体にまたがるように設定（または横スクロール用のスタイルに適宜調整）
-                headerDiv.style.gridColumn = '1 / -1'; 
-                headerDiv.style.width = '100%';
-                headerDiv.style.margin = '24px 0 12px 0';
-                headerDiv.style.padding = '12px 18px';
-                headerDiv.style.background = 'var(--glass-bg)';
-                headerDiv.style.backdropFilter = 'blur(10px)';
-                headerDiv.style.borderRadius = '14px';
-                headerDiv.style.fontWeight = 'bold';
-                headerDiv.style.fontSize = '1.1em';
-                headerDiv.style.color = 'var(--text-main)';
-                headerDiv.style.border = '1px solid var(--glass-border)';
-                headerDiv.style.boxShadow = '0 4px 12px rgba(0,0,0,0.04)';
-                
-                headerDiv.innerHTML = `📅 ${dateStr} &nbsp; <span style="color: var(--primary-color);">⏰ ${timeRangeStr}</span> の写真 (${group.items.length}枚)`;
+                headerDiv.innerHTML = `⏰ <span style="color: var(--primary-color);">${timeRangeStr}</span> の写真 <span style="font-size: 0.85em; opacity: 0.7; margin-left: 4px;">(${group.items.length}枚)</span>`;
                 
                 albumContainer.appendChild(headerDiv);
 
