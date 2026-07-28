@@ -310,7 +310,6 @@
         .group-header-badge {
             display: inline-flex;
             align-items: center;
-            gap: 6px;
             padding: 8px 18px;
             background: rgba(30, 30, 35, 0.50);
             backdrop-filter: blur(12px);
@@ -330,24 +329,6 @@
         .group-header-badge:hover {
             background: rgba(50, 45, 55, 0.75);
             transform: translateY(-2px);
-        }
-
-        /* 編集用SVGアイコン: 初期状態は非表示（透明＆幅ゼロにするなど） */
-        .group-edit-icon {
-            width: 14px;
-            height: 14px;
-            object-fit: contain;
-            opacity: 0;
-            width: 0;
-            transition: opacity 0.2s ease, width 0.2s ease;
-            filter: invert(1); /* 白系に合わせる場合（アイコンの色に応じて調整してください） */
-        }
-
-        /* ホバー時またはフォーカス時にアイコンを表示する */
-        .group-header-badge:hover .group-edit-icon,
-        .group-header-badge:focus .group-edit-icon {
-            opacity: 1;
-            width: 14px;
         }
 
         .photo-card {
@@ -1202,12 +1183,7 @@
                         headerBadge.tabIndex = 0;
                         headerBadge.setAttribute('data-group-key', groupKey);
                         headerBadge.setAttribute('data-current-text', displayTitle);
-                        
-                        // 絵文字の代わりに rsc/edit.svg を読み込む img タグを挿入
-                        headerBadge.innerHTML = `
-                            <img src="rsc/edit.svg" class="group-edit-icon" alt="編集">
-                            <span style="color: #f0ebe5;">${displayTitle}</span>
-                        `;
+                        headerBadge.innerHTML = `<span style="margin-left: 4px; color: #f0ebe5;">✏️ ${displayTitle}</span>`;
                         
                         headerBadge.addEventListener('click', () => {
                             openEditModal(groupKey, displayTitle);
@@ -1215,9 +1191,9 @@
 
                         cardWrapper.appendChild(headerBadge);
                     } else {
-                        // 2枚目以降は見出しがない分の高さを調整するための空スペース
+                        // 2枚目以降は見出しがない分の高さを調整するための空スペース、またはマージンを持たせる
                         const spacer = document.createElement('div');
-                        spacer.style.height = '35px';
+                        spacer.style.height = '35px'; // 見出しの高さ＋ギャップ分に相当する調整
                         cardWrapper.appendChild(spacer);
                     }
 
@@ -1234,7 +1210,7 @@
                     let randomOffsetY = index === 0 ? (Math.cos((groupIndex * 10 + index) * 888) * 35).toFixed(1) : (Math.abs(Math.cos((groupIndex * 10 + index) * 888)) * 20).toFixed(1);
                     
                     card.style.setProperty('--rotate', `${randomRotate}deg`);
-                    card.style.setProperty('--offset-y`, `${Number(randomOffsetY)}px`);
+                    card.style.setProperty('--offset-y', `${Number(randomOffsetY)}px`);
                                            
                     card.innerHTML = `
                         <button class="delete-btn" data-id="${data.id}" title="削除" tabindex="-1">×</button>
