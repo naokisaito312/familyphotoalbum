@@ -327,7 +327,7 @@
         /* --- アルバム下部のアクションボタングループ（編集・削除） --- */
         .album-action-buttons {
             display: flex;
-            gap: 12px;
+            gap: 16px;
             margin-top: 15px;
             opacity: 0;
             pointer-events: none;
@@ -344,7 +344,7 @@
         }
 
         .album-action-btn {
-            background: var(--card-bg);
+            background: #ffffff; /* しっかりとした白背景に変更 */
             width: 48px;
             height: 48px;
             border-radius: 50%;
@@ -352,12 +352,12 @@
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2); /* 影を濃くして浮き立たせる */
             transition: all 0.2s;
         }
 
         .edit-album-btn {
-            border: 2px solid var(--text-sub);
+            border: 2px solid #b5a49a; /* 枠線を少し濃く調整 */
             color: #3d3531;
         }
         .edit-album-btn:hover, .edit-album-btn:focus {
@@ -370,7 +370,8 @@
             width: 22px;
             height: 22px;
             object-fit: contain;
-            filter: brightness(0) saturate(100%) invert(45%) sepia(20%) saturate(600%) hue-rotate(345deg) brightness(95%) contrast(90%);
+            /* アイコンの色をはっきりしたこげ茶色に固定 */
+            filter: brightness(0) saturate(100%) invert(23%) sepia(10%) saturate(600%) hue-rotate(345deg) brightness(90%) contrast(90%);
             transition: filter 0.2s;
         }
         .edit-album-btn:hover img, .edit-album-btn:focus img {
@@ -378,7 +379,7 @@
         }
 
         .delete-album-btn {
-            border: 2px solid #f2dede;
+            border: 2px solid #f5c6cb;
             color: #d9534f;
         }
         .delete-album-btn:hover, .delete-album-btn:focus {
