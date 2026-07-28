@@ -305,7 +305,7 @@
             display: inline-flex;
             align-items: center;
             padding: 6px 14px;
-            margin-bottom: 100px;
+            margin-bottom: 12px;
             background: rgba(30, 30, 35, 0.90); /* 薄い黒色ベース */
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
@@ -1057,7 +1057,7 @@
                     const randomOffsetY = (Math.cos((groupIndex * 10 + index) * 888) * 35).toFixed(1);
                     
                     card.style.setProperty('--rotate', `${randomRotate}deg`);
-                    card.style.setProperty('--offset-y', `${Number(randomOffsetY) + (index === 0 ? 18 : 0)}px`); // 先頭カードを少し下側に下げて重なりを防止
+                    card.style.setProperty('--offset-y`, `${Number(randomOffsetY)}px`); // ← +18px の補正を削除
 
                     card.innerHTML = `
                         <button class="delete-btn" data-id="${data.id}" title="削除" tabindex="-1">×</button>
