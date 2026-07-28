@@ -395,7 +395,7 @@
         }
         
         .photo-card-wrapper:hover .delete-btn,
-        .photo-card.focusable:focus ~ .delete-btn,
+        .photo-card-wrapper.focused .delete-btn,
         .delete-btn.focusable:focus {
             opacity: 1;
             pointer-events: auto;
@@ -1207,7 +1207,14 @@
                     card.setAttribute('data-img', data.imageUrl || '');
                     card.setAttribute('data-comment', data.comment || '');
                     card.setAttribute('data-date', formattedDateStr);
-
+                    
+                    card.addEventListener('focus', () => {
+                        cardWrapper.classList.add('focused');
+                    });
+                    card.addEventListener('blur', () => {
+                        cardWrapper.classList.remove('focused');
+                    });
+                    
                     const randomRotate = (Math.sin((groupIndex * 10 + index) * 999) * 10).toFixed(1); 
                     let randomOffsetY = index === 0 ? (Math.cos((groupIndex * 10 + index) * 888) * 35).toFixed(1) : (Math.abs(Math.cos((groupIndex * 10 + index) * 888)) * 20).toFixed(1);
                     
