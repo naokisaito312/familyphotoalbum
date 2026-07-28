@@ -212,12 +212,19 @@
             font-size: 1.3em;
             font-weight: 700;
             color: #3d3531;
-            margin: 5px 0 5px 0;
+            margin: 5px 0 3px 0;
             text-align: center;
             width: 100%;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+        }
+
+        .album-date {
+            font-size: 0.85em;
+            color: #a08e85;
+            font-weight: 500;
+            margin-bottom: 3px;
         }
 
         .album-count {
@@ -465,8 +472,8 @@
                 <input type="text" id="editAlbumNameInput" class="modal-input modal-focusable" placeholder="アルバム名を入力">
             </div>
             <div class="modal-input-group">
-                <label class="modal-label">作成日時</label>
-                <input type="datetime-local" id="editAlbumDateInput" class="modal-input modal-focusable">
+                <label class="modal-label">作成日</label>
+                <input type="date" id="editAlbumDateInput" class="modal-input modal-focusable">
             </div>
             <div class="modal-buttons">
                 <button type="button" class="modal-btn cancel modal-focusable" id="cancelEditBtn">キャンセル</button>
@@ -596,9 +603,7 @@
             const year = dateObj.getFullYear();
             const month = String(dateObj.getMonth() + 1).padStart(2, '0');
             const day = String(dateObj.getDate()).padStart(2, '0');
-            const hours = String(dateObj.getHours()).padStart(2, '0');
-            const minutes = String(dateObj.getMinutes()).padStart(2, '0');
-            editAlbumDateInput.value = `${year}-${month}-${day}T${hours}:${minutes}`;
+            editAlbumDateInput.value = `${year}-${month}-${day}`;
 
             editModalOverlay.classList.add('active');
             setTimeout(() => {
@@ -629,7 +634,8 @@
             try {
                 const updateData = { name: newName };
                 if (newDateVal) {
-                    updateData.createdAt = Timestamp.fromDate(new Date(newDateVal));
+                    // 日付のみが選択された場合、その日の0時0分0秒としてTimestampに変換
+                    updateData.createdAt = Timestamp.fromDate(new Date(newDateVal + 'T00:00:00'));
                 }
                 await updateDoc(doc(db, "albums", targetId), updateData);
             } catch (error) {
@@ -727,6 +733,19 @@
                 const albumId = docSnap.id;
                 const albumTitle = albumData.name || albumData.title || "無題のアルバム";
 
+                // 作成日時のフォーマット処理（YYYY年M月D日）
+                let formattedDate = "";
+                const createdAtData = albumData.createdAt;
+                if (createdAtData) {
+                    let dateObj = createdAtData.toDate ? createdAtData.toDate() : new Date(createdAtData);
+                    if (!isNaN(dateObj)) {
+                        const y = dateObj.getFullYear();
+                        const m = dateObj.getMonth() + 1;
+                        const d = dateObj.getDate();
+                        formattedDate = `${y}年${m}月${d}日`;
+                    }
+                }
+
                 const photosQuery = query(
                     collection(db, "shared_photos"),
                     where("albumId", "==", albumId)
@@ -765,6 +784,7 @@
                 card.innerHTML = `
                     ${stackHtml}
                     <div class="album-title">${albumTitle}</div>
+                    <div class="album-date">${formattedDate}</div>
                     <div class="album-count">${photoSnaps.size > 0 ? `${photoSnaps.size} 枚の写真` : '0 枚'}</div>
                 `;
 
