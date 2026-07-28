@@ -91,7 +91,6 @@
             border-radius: 3px;
         }
 
-        /* アルバムが1つもない場合は中央に配置 */
         .album-container.has-empty-state {
             justify-content: center;
             align-items: center;
@@ -122,23 +121,23 @@
             height: 420px;
         }
 
-        /* --- テーマ別のカード背景スタイル（Firebaseの値を反映） --- */
-        .album-card.album-card.theme-default {
+        /* --- テーマ別のカード背景スタイル --- */
+        .album-card.theme-default {
             background: rgba(255, 255, 255, 0.85) !important;
         }
-        .album-card.album-card.theme-warm {
+        .album-card.theme-warm {
             background: linear-gradient(135deg, rgba(255, 243, 230, 0.9) 0%, rgba(255, 224, 204, 0.85) 100%) !important;
             border-color: rgba(255, 204, 179, 0.6) !important;
         }
-        .album-card.album-card.theme-cool {
+        .album-card.theme-cool {
             background: linear-gradient(135deg, rgba(230, 243, 255, 0.9) 0%, rgba(204, 229, 255, 0.85) 100%) !important;
             border-color: rgba(179, 217, 255, 0.6) !important;
         }
-        .album-card.album-card.theme-pastel {
+        .album-card.theme-pastel {
             background: linear-gradient(135deg, rgba(243, 230, 255, 0.9) 0%, rgba(235, 204, 255, 0.85) 100%) !important;
             border-color: rgba(220, 179, 255, 0.6) !important;
         }
-        .album-card.album-card.theme-nature {
+        .album-card.theme-nature {
             background: linear-gradient(135deg, rgba(230, 255, 238, 0.9) 0%, rgba(204, 245, 216, 0.85) 100%) !important;
             border-color: rgba(179, 235, 196, 0.6) !important;
         }
@@ -273,7 +272,6 @@
             transform: translateY(0);
         }
 
-        /* 編集・削除共通ボタンデザイン */
         .album-action-btn {
             background: #ffffff;
             width: 48px;
@@ -494,7 +492,7 @@
         </div>
     </div>
 
-    <!-- アルバム編集モーダル -->
+    <!-- アルバム編集モーダル（テーマ選択を削除） -->
     <div class="modal-overlay" id="editModalOverlay">
         <div class="modal-content">
             <div class="modal-title">アルバム情報の編集</div>
@@ -505,16 +503,6 @@
             <div class="modal-input-group">
                 <label class="modal-label">作成日</label>
                 <input type="date" id="editAlbumDateInput" class="modal-input modal-focusable">
-            </div>
-            <div class="modal-input-group">
-                <label class="modal-label">テーマカラー</label>
-                <select id="editAlbumThemeInput" class="modal-select modal-focusable">
-                    <option value="default">スタンダード (白)</option>
-                    <option value="warm">温かみ (オレンジ系)</option>
-                    <option value="cool">クール (ブルー系)</option>
-                    <option value="pastel">パステル (パープル系)</option>
-                    <option value="nature">ネイチャー (グリーン系)</option>
-                </select>
             </div>
             <div class="modal-buttons">
                 <button type="button" class="modal-btn cancel modal-focusable" id="cancelEditBtn">キャンセル</button>
@@ -565,7 +553,6 @@
         const editModalOverlay = document.getElementById('editModalOverlay');
         const editAlbumNameInput = document.getElementById('editAlbumNameInput');
         const editAlbumDateInput = document.getElementById('editAlbumDateInput');
-        const editAlbumThemeInput = document.getElementById('editAlbumThemeInput');
         const cancelEditBtn = document.getElementById('cancelEditBtn');
         const confirmEditBtn = document.getElementById('confirmEditBtn');
 
@@ -628,14 +615,13 @@
             }
         });
 
-        // アルバム編集モーダルを開く処理
-        function openEditModal(albumId, currentName, createdAtData, currentTheme) {
+        // アルバム編集モーダルを開く処理（テーマ引数を削除）
+        function openEditModal(albumId, currentName, createdAtData) {
             pendingEditAlbumId = albumId;
             lastFocusedElement = document.activeElement;
             isEditModalOpen = true;
 
             editAlbumNameInput.value = currentName || "";
-            editAlbumThemeInput.value = currentTheme || "default";
             
             let dateObj = new Date();
             if (createdAtData && createdAtData.toDate) {
@@ -674,14 +660,12 @@
             const targetId = pendingEditAlbumId;
             const newName = editAlbumNameInput.value.trim() || "無題のアルバム";
             const newDateVal = editAlbumDateInput.value;
-            const newTheme = editAlbumThemeInput.value || "default";
 
             closeEditModal();
 
             try {
                 const updateData = { 
-                    name: newName,
-                    theme: newTheme
+                    name: newName
                 };
                 if (newDateVal) {
                     updateData.createdAt = Timestamp.fromDate(new Date(newDateVal + 'T00:00:00'));
@@ -812,7 +796,7 @@
                 wrapper.className = 'album-card-wrapper';
 
                 const card = document.createElement('div');
-                // テーマに応じたクラスを動的に付与
+                // テーマクラスが確実に付与されるように修正
                 card.className = `album-card theme-${albumTheme} focusable`;
                 card.dataset.type = 'card';
                 card.tabIndex = 0;
@@ -849,7 +833,7 @@
                 const actionButtonsGroup = document.createElement('div');
                 actionButtonsGroup.className = 'album-action-buttons';
 
-                // 編集ボタン
+                // 編集ボタン（クリック時にテーマを渡さないように変更）
                 const editBtn = document.createElement('button');
                 editBtn.className = 'album-action-btn edit-album-btn focusable';
                 editBtn.dataset.type = 'edit';
@@ -857,7 +841,7 @@
                 editBtn.innerHTML = `<img src="rsc/edit.svg" alt="編集">`;
                 editBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
-                    openEditModal(albumId, albumTitle, albumData.createdAt, albumTheme);
+                    openEditModal(albumId, albumTitle, albumData.createdAt);
                 });
 
                 // ゴミ箱ボタン
