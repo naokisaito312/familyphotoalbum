@@ -191,6 +191,23 @@
             transition: all 0.2s cubic-bezier(0.25, 1, 0.5, 1) !important;
         }
 
+        /* ゴミ箱にフォーカスがある、またはカードがフォーカス/ホバーされている時に変形を維持 */
+        .photo-card-wrapper:hover .photo-card,
+        .photo-card-wrapper.focused .photo-card {
+            transform: scale(1.05) !important;
+            box-shadow: 0 15px 35px -5px rgba(60, 40, 30, 0.2), 0 5px 15px -3px rgba(0, 0, 0, 0.1) !important;
+            z-index: 100 !important;
+        }
+
+        /* ただし、ゴミ箱自体にフォーカスがある時はカード自体の外枠グロー（フォーカス枠）は出さないようにする場合 */
+        /* ※ .photo-card 自体の :focus によるグローを、ラッパー経由で制御します */
+        .photo-card.focusable:focus {
+            box-shadow: var(--focus-glow) !important;
+            transform: translateY(-6px) scale(1.05) !important;
+            z-index: 100 !important;
+            border-color: var(--primary-color) !important;
+        }
+        
         .album-header {
             display: flex;
             align-items: center;
@@ -1268,12 +1285,21 @@
                     card.setAttribute('data-comment', data.comment || '');
                     card.setAttribute('data-date', formattedDateStr);
                     
-                    card.addEventListener('focus', () => {
+                    // カードおよびゴミ箱のフォーカス状態を管理してラッパーに反映
+                    const handleFocusIn = () => {
                         cardWrapper.classList.add('focused');
-                    });
-                    card.addEventListener('blur', () => {
-                        cardWrapper.classList.remove('focused');
-                    });
+                    };
+                    const handleFocusOut = (e) => {
+                        // フォーカスの移動先が同じラッパー内（カード ⇔ ゴミ箱）の場合はクラスを外さない
+                        setTimeout(() => {
+                            if (!cardWrapper.contains(document.activeElement)) {
+                                cardWrapper.classList.remove('focused');
+                            }
+                        }, 10);
+                    };
+
+                    card.addEventListener('focus', handleFocusIn);
+                    card.addEventListener('blur', handleFocusOut);
                     
                     const randomRotate = (Math.sin((groupIndex * 10 + index) * 999) * 10).toFixed(1); 
                     let randomOffsetY = index === 0 ? (Math.cos((groupIndex * 10 + index) * 888) * 35).toFixed(1) : (Math.abs(Math.cos((groupIndex * 10 + index) * 888)) * 20).toFixed(1);
