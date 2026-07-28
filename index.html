@@ -261,27 +261,31 @@
             transform: scale(1.08);
         }
 
-        /* --- モーダルポップアップ --- */
+        /* --- モーダルポップアップ共通（albumcreate.html 準拠） --- */
         .modal-overlay {
             position: fixed;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(61, 53, 49, 0.4);
-            backdrop-filter: blur(5px);
-            display: flex;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(15, 12, 10, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            display: none;
             align-items: center;
             justify-content: center;
-            z-index: 1000;
             opacity: 0;
             pointer-events: none;
             transition: opacity 0.3s ease;
+            z-index: 9999;
         }
+        
         .modal-overlay.active {
+            display: flex !important;
             opacity: 1;
             pointer-events: auto;
         }
+
         .modal-content {
             background: #ffffff;
             padding: 35px;
@@ -350,6 +354,40 @@
         .modal-btn.submit:hover {
             background: #e89163;
         }
+
+        /* --- 削除ダイアログ固有のデザイン（albumcreate.html 準拠） --- */
+        .delete-dialog {
+            background: #ffffff;
+            padding: 30px 40px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            max-width: 440px;
+            width: 90%;
+            white-space: normal;
+        }
+        .delete-dialog h3 {
+            margin: 0 0 10px 0;
+            color: #3d3531;
+            font-size: 1.4em;
+        }
+        .delete-dialog p {
+            margin: 0 0 20px 0;
+            color: #8c7d75;
+            font-size: 0.95em;
+        }
+        .delete-dialog-actions {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+        .modal-btn.danger {
+            background: #e74c3c;
+            color: #ffffff;
+        }
+        .modal-btn.danger:hover {
+            background: #d63927;
+        }
     </style>
 </head>
 <body>
@@ -369,6 +407,18 @@
             <div class="modal-buttons">
                 <button type="button" class="modal-btn cancel modal-focusable" id="cancelModalBtn">キャンセル</button>
                 <button type="button" class="modal-btn submit modal-focusable" id="submitModalBtn">作成する</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- アルバム削除確認ダイアログ（albumcreate.html と共通のデザイン） -->
+    <div class="modal-overlay" id="deleteModalOverlay">
+        <div class="delete-dialog">
+            <h3 id="deleteDialogTitle">アルバムを削除しますか？</h3>
+            <p id="deleteDialogDesc">この操作は取り消せません。</p>
+            <div class="delete-dialog-actions">
+                <button id="cancelDeleteBtn" class="modal-btn cancel modal-focusable" tabindex="0">キャンセル</button>
+                <button id="confirmDeleteBtn" class="modal-btn danger modal-focusable" tabindex="0">削除する</button>
             </div>
         </div>
     </div>
@@ -398,7 +448,17 @@
         const cancelModalBtn = document.getElementById('cancelModalBtn');
         const submitModalBtn = document.getElementById('submitModalBtn');
 
+        // 削除モーダル関連要素
+        const deleteModalOverlay = document.getElementById('deleteModalOverlay');
+        const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+        const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+        const deleteDialogTitle = document.getElementById('deleteDialogTitle');
+        const deleteDialogDesc = document.getElementById('deleteDialogDesc');
+
         let isModalOpen = false;
+        let isDeleteModalOpen = false;
+        let pendingDeleteAlbumId = null;
+        let lastFocusedElement = null;
 
         function openCreateModal() {
             isModalOpen = true;
@@ -443,20 +503,46 @@
             }
         });
 
-        // アルバム削除処理
-        async function deleteAlbum(albumId, albumTitle) {
-            if (!confirm(`「${albumTitle}」を削除してもよろしいですか？\n（紐づく写真はアルバム作成画面から個別に管理できます）`)) return;
+        // アルバム削除ダイアログを開く処理
+        function openDeleteModal(albumId, albumTitle) {
+            pendingDeleteAlbumId = albumId;
+            lastFocusedElement = document.activeElement;
+            isDeleteModalOpen = true;
+
+            deleteDialogTitle.innerText = `「${albumTitle}」を削除しますか？`;
+            deleteDialogDesc.innerText = "この操作は取り消せません。\n（紐づく写真はアルバム作成画面から個別に管理できます）";
+
+            deleteModalOverlay.classList.add('active');
+            setTimeout(() => {
+                cancelDeleteBtn.focus();
+            }, 50);
+        }
+
+        function closeDeleteModal() {
+            isDeleteModalOpen = false;
+            deleteModalOverlay.classList.remove('active');
+            pendingDeleteAlbumId = null;
+            if (lastFocusedElement) {
+                lastFocusedElement.focus();
+            }
+        }
+
+        cancelDeleteBtn.addEventListener('click', closeDeleteModal);
+
+        confirmDeleteBtn.addEventListener('click', async () => {
+            if (!pendingDeleteAlbumId) return;
             try {
-                await deleteDoc(doc(db, "albums", albumId));
+                await deleteDoc(doc(db, "albums", pendingDeleteAlbumId));
+                closeDeleteModal();
             } catch (error) {
                 console.error("アルバムの削除に失敗しました:", error);
                 alert("アルバムの削除に失敗しました。");
             }
-        }
+        });
 
         // アルバム一覧のリアルタイム取得
         onSnapshot(collection(db, "albums"), async (snapshot) => {
-            if (isModalOpen) return;
+            if (isModalOpen || isDeleteModalOpen) return;
             
             albumContainer.innerHTML = '';
 
@@ -550,7 +636,7 @@
                 `;
                 deleteBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
-                    deleteAlbum(albumId, albumTitle);
+                    openDeleteModal(albumId, albumTitle);
                 });
 
                 wrapper.appendChild(deleteBtn);
@@ -558,13 +644,13 @@
             }
 
             const firstCard = document.querySelector('.album-card.focusable');
-            if (firstCard && !isModalOpen) firstCard.focus();
+            if (firstCard && !isModalOpen && !isDeleteModalOpen) firstCard.focus();
         });
 
         // キーボード・TVリモコン操作対応
         document.addEventListener('keydown', (e) => {
             if (isModalOpen) {
-                const modalFocusables = Array.from(document.querySelectorAll('.modal-focusable'));
+                const modalFocusables = Array.from(document.querySelectorAll('#createModal .modal-focusable'));
                 const active = document.activeElement;
                 let index = modalFocusables.indexOf(active);
 
@@ -577,6 +663,28 @@
                 } else if (e.key === 'Escape') {
                     e.preventDefault();
                     closeCreateModal();
+                }
+                return;
+            }
+
+            if (isDeleteModalOpen) {
+                const deleteFocusables = [cancelDeleteBtn, confirmDeleteBtn];
+                const active = document.activeElement;
+                let index = deleteFocusables.indexOf(active);
+
+                if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+                    e.preventDefault();
+                    if (index === -1) {
+                        cancelDeleteBtn.focus();
+                    } else {
+                        (deleteFocusables[index === 0 ? 1 : 0]).focus();
+                    }
+                } else if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (active) active.click();
+                } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    closeDeleteModal();
                 }
                 return;
             }
@@ -609,7 +717,6 @@
             if (e.key === 'ArrowRight') {
                 e.preventDefault();
                 const nextIndex = (currentWrapperIndex + 1) % wrappers.length;
-                // ゴミ箱にフォーカスがある状態で左右キーを押した場合は、常に「隣のアルバムカード（.album-card）」に移動する
                 const targetEl = wrappers[nextIndex].querySelector('.album-card');
                 if (targetEl) {
                     targetEl.focus();
@@ -618,7 +725,6 @@
             } else if (e.key === 'ArrowLeft') {
                 e.preventDefault();
                 const prevIndex = (currentWrapperIndex - 1 + wrappers.length) % wrappers.length;
-                // ゴミ箱にフォーカスがある状態で左右キーを押した場合は、常に「隣のアルバムカード（.album-card）」に移動する
                 const targetEl = wrappers[prevIndex].querySelector('.album-card');
                 if (targetEl) {
                     targetEl.focus();
