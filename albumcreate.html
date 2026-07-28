@@ -1052,13 +1052,8 @@
                     const groupContainer = active.closest('.photo-group') || active.closest('section') || active.parentElement;
                     const badge = groupContainer ? groupContainer.querySelector('.group-header-badge') : null;
                     
-                    if (badge) {
-                        badge.focus();
-                        badge.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                    } else {
-                        const firstThemeDot = document.querySelector('.theme-dot.focusable');
-                        if (firstThemeDot) firstThemeDot.focus();
-                    }
+                    badge.focus();
+                    badge.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                 }
             }
             /* --- 2. ゴミ箱アイコン（.delete-btn）の操作 --- */
