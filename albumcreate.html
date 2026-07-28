@@ -1014,10 +1014,10 @@
                     }
                 }
 
-                // 2. グループ見出しの編集だった場合 ★ここを追加
-                if (editedType === 'group' && editedGroupKey) {
-                    // 見出し要素に付与しているセレクタや属性名に合わせて変更してください
-                    const targetGroupHeading = document.querySelector(`.group-heading.focusable[data-group-id="${editedGroupKey}"]`);
+                // 2. グループ見出しの編集だった場合
+                if (editedType === 'group' && editedKey) {
+                    // 生成時の属性名 [data-group-key] に合わせて取得する
+                    const targetGroupHeading = document.querySelector(`.group-header-badge.focusable[data-group-key="${editedKey}"]`);
                     if (targetGroupHeading) {
                         targetGroupHeading.focus();
                         if (typeof targetGroupHeading.scrollIntoView === 'function') {
