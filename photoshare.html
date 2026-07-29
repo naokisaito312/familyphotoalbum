@@ -2,768 +2,241 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="view-transition" content="same-origin">
-    <title>Memory Album</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Photo Share | Memory Album</title>
     <!-- Webフォント -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;500;700&family=Quicksand:wght@500;700&family=Shippori+Mincho:wght@500;700&family=Yusei+Magic&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;500;700&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
+
+    <!-- ★ 追加: Exif読み込み用ライブラリ (EXIF.js) -->
+    <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
 
     <style>
-        /* ==========================================================================
-           デザインテーマ ＆ カードデザイン拡張
-           ========================================================================== */
-        /* --- 1. デフォルト: 暖色クラシック (ポラロイド・あたたかみ) --- */
-        :root, body[data-theme="default"] {
-            --bg-gradient: linear-gradient(135deg, #fefaf6 0%, #f7ede2 50%, #f5e6d8 100%);
+        /* (スタイルはそのまま変更なし) */
+        :root {
             --primary-color: #f7a072;
             --primary-hover: #f38345;
             --text-main: #3d3531;
             --text-sub: #8c7d75;
-            --card-bg: #ffffff;
-            --card-border: 1px solid rgba(255, 255, 255, 0.9);
-            --card-radius: 16px;
-            --card-shadow: 0 15px 35px -5px rgba(60, 40, 30, 0.12), 0 5px 15px -3px rgba(0, 0, 0, 0.05);
-            --img-radius: 10px;
-            --title-font: 'Quicksand', 'M PLUS Rounded 1c', sans-serif;
-            --title-gradient: linear-gradient(45deg, #4a3e3d, #8f6b58);
-            --note-bg: #fffdf0;
-            --note-border: 3px solid #f2e394;
-            --note-radius: 4px 4px 12px 4px;
-            --note-transform: rotate(-1deg);
-            --glass-bg: rgba(255, 255, 255, 0.75);
-            --glass-border: rgba(255, 255, 255, 0.85);
-            --focus-glow: 0 0 0 4px #f7a072, 0 0 25px rgba(247, 160, 114, 0.65);
-            
-            /* 見出しタグ用変数（マステ風付箋） */
-            --badge-font: 'Yusei Magic', 'M PLUS Rounded 1c', sans-serif;
-            --badge-bg: #fff3db;
-            --badge-border: 2px solid #e8c48b;
-            --badge-text: #4a3528;
-            --badge-shadow: 0 8px 20px rgba(90, 70, 50, 0.16);
-            --badge-hover-bg: #ffe7bf;
-            --badge-tape: rgba(247, 160, 114, 0.5);
-        }
-
-        /* --- 2. パステルスイート (ポップ・マステ風装飾) --- */
-        body[data-theme="pastel"] {
-            --bg-gradient: linear-gradient(135deg, #fff5f7 0%, #ffedf2 50%, #f0fff4 100%);
-            --primary-color: #ff9ebb;
-            --primary-hover: #ff7599;
-            --text-main: #4a353d;
-            --text-sub: #9e7d89;
-            --card-bg: #ffffff;
-            --card-border: 2px dashed #ffc0d0;
-            --card-radius: 24px;
-            --card-shadow: 0 12px 28px rgba(255, 180, 200, 0.2);
-            --img-radius: 16px;
-            --title-font: 'M PLUS Rounded 1c', sans-serif;
-            --title-gradient: linear-gradient(45deg, #633b4d, #a86b84);
-            --note-bg: #fffbf3;
-            --note-border: 2px solid #ffd185;
-            --note-radius: 12px;
-            --note-transform: rotate(1deg);
             --glass-bg: rgba(255, 255, 255, 0.85);
             --glass-border: rgba(255, 255, 255, 0.9);
-            --focus-glow: 0 0 0 4px #ff9ebb, 0 0 25px rgba(255, 158, 187, 0.65);
-
-            --badge-font: 'M PLUS Rounded 1c', sans-serif;
-            --badge-bg: #ffe6f0;
-            --badge-border: 2px solid #ff9ebb;
-            --badge-text: #6b3b4f;
-            --badge-shadow: 0 8px 20px rgba(255, 150, 170, 0.22);
-            --badge-hover-bg: #ffd1e4;
-            --badge-tape: rgba(255, 158, 187, 0.55);
-        }
-        body[data-theme="pastel"] .photo-card::before {
-            content: "";
-            position: absolute;
-            top: -10px;
-            left: 50%;
-            transform: translateX(-50%) rotate(-2deg);
-            width: 70px;
-            height: 20px;
-            background: rgba(255, 220, 150, 0.7);
-            border-left: 2px dashed rgba(255,255,255,0.5);
-            border-right: 2px dashed rgba(255,255,255,0.5);
-            z-index: 5;
+            --shadow-card: 0 12px 30px -5px rgba(60, 40, 30, 0.1), 0 4px 12px -2px rgba(0, 0, 0, 0.04);
+            --shadow-btn: 0 8px 20px rgba(247, 160, 114, 0.35);
         }
 
-        /* --- 3. シーサイドブルー (モダン・クリア) --- */
-        body[data-theme="ocean"] {
-            --bg-gradient: linear-gradient(135deg, #eef9ff 0%, #e1f3fe 50%, #d8f0fa 100%);
-            --primary-color: #43b0f1;
-            --primary-hover: #1c92d2;
-            --text-main: #1e3240;
-            --text-sub: #637f94;
-            --card-bg: rgba(255, 255, 255, 0.85);
-            --card-border: 1px solid #bce3fb;
-            --card-radius: 10px;
-            --card-shadow: 0 10px 30px rgba(30, 80, 120, 0.1);
-            --img-radius: 6px;
-            --title-font: 'Quicksand', sans-serif;
-            --title-gradient: linear-gradient(45deg, #1c3b57, #3a7bd5);
-            --note-bg: rgba(230, 245, 255, 0.7);
-            --note-border: 1px solid #82cdff;
-            --note-radius: 8px;
-            --note-transform: rotate(0deg);
-            --glass-bg: rgba(255, 255, 255, 0.8);
-            --glass-border: rgba(255, 255, 255, 0.9);
-            --focus-glow: 0 0 0 4px #43b0f1, 0 0 25px rgba(67, 176, 241, 0.65);
-
-            --badge-font: 'Quicksand', 'M PLUS Rounded 1c', sans-serif;
-            --badge-bg: #dcf0ff;
-            --badge-border: 2px solid #73c4f5;
-            --badge-text: #184666;
-            --badge-shadow: 0 8px 20px rgba(67, 176, 241, 0.16);
-            --badge-hover-bg: #c7e7ff;
-            --badge-tape: rgba(67, 176, 241, 0.45);
+        * {
+            box-sizing: border-box;
+            touch-action: manipulation;
         }
-
-        /* --- 4. ノスタルジックヴィンテージ (クラシック・ステッチ感) --- */
-        body[data-theme="vintage"] {
-            --bg-gradient: linear-gradient(135deg, #f4efe9 0%, #e8dfd5 50%, #ded3c5 100%);
-            --primary-color: #a0826c;
-            --primary-hover: #836551;
-            --text-main: #362f2d;
-            --text-sub: #7a6e6a;
-            --card-bg: #f7f3ec;
-            --card-border: 2px dashed #bdaaa0;
-            --card-radius: 4px;
-            --card-shadow: 0 10px 25px rgba(50, 40, 30, 0.15);
-            --img-radius: 2px;
-            --title-font: 'Shippori Mincho', serif;
-            --title-gradient: linear-gradient(45deg, #3d312a, #735a4c);
-            --note-bg: #eae3d5;
-            --note-border: 1px solid #c4b5a3;
-            --note-radius: 2px;
-            --note-transform: rotate(-1.5deg);
-            --glass-bg: rgba(248, 244, 239, 0.85);
-            --glass-border: rgba(255, 255, 255, 0.6);
-            --focus-glow: 0 0 0 4px #a0826c, 0 0 25px rgba(160, 130, 108, 0.65);
-
-            --badge-font: 'Shippori Mincho', serif;
-            --badge-bg: #e6dad0;
-            --badge-border: 2px solid #a89384;
-            --badge-text: #42342c;
-            --badge-shadow: 0 8px 20px rgba(60, 45, 35, 0.18);
-            --badge-hover-bg: #dbcbc0;
-            --badge-tape: rgba(160, 130, 108, 0.45);
-        }
-
-        /* --- 5. シネマティックダーク (スタイリッシュ・ゴールド枠) --- */
-        body[data-theme="dark"] {
-            --bg-gradient: linear-gradient(135deg, #141215 0%, #1f1b22 50%, #100e12 100%);
-            --primary-color: #e0a96d;
-            --primary-hover: #cca047;
-            --text-main: #f0ebe5;
-            --text-sub: #a89f91;
-            --card-bg: #221d26;
-            --card-border: 1px solid rgba(224, 169, 109, 0.3);
-            --card-radius: 12px;
-            --card-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
-            --img-radius: 8px;
-            --title-font: 'Shippori Mincho', serif;
-            --title-gradient: linear-gradient(45deg, #ffffff, #e0a96d);
-            --note-bg: #2c2632;
-            --note-border: 1px solid #e0a96d;
-            --note-radius: 6px;
-            --note-transform: rotate(0deg);
-            --glass-bg: rgba(30, 25, 35, 0.85);
-            --glass-border: rgba(255, 255, 255, 0.1);
-            --focus-glow: 0 0 0 4px #e0a96d, 0 0 30px rgba(224, 169, 109, 0.8);
-
-            --badge-font: 'Shippori Mincho', serif;
-            --badge-bg: #32283a;
-            --badge-border: 2px solid #e0a96d;
-            --badge-text: #f5cf9e;
-            --badge-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
-            --badge-hover-bg: #3e3348;
-            --badge-tape: rgba(224, 169, 109, 0.4);
-        }
-
-        /* --- ページ遷移アニメーション --- */
-        ::view-transition-old(root) { animation: fade-zoom-out 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
-        ::view-transition-new(root) { animation: fade-zoom-in 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
-
-        @keyframes fade-zoom-out { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(0.96); } }
-        @keyframes fade-zoom-in { from { opacity: 0; transform: scale(1.04); } to { opacity: 1; transform: scale(1); } }
-
-        * { box-sizing: border-box; }
 
         body {
-            background: var(--bg-gradient);
+            background: linear-gradient(135deg, #fefaf6 0%, #f7ede2 50%, #f5e6d8 100%);
             min-height: 100vh;
             color: var(--text-main);
-            font-family: var(--title-font);
+            font-family: 'Quicksand', 'M PLUS Rounded 1c', -apple-system, sans-serif;
             margin: 0;
-            padding: 30px 40px;
-            overflow-y: hidden;
-            position: relative;
-            transition: background 0.4s ease, color 0.4s ease;
-        }
-
-        /* --- TV GUI風 フォーカス強調表示 --- */
-        :focus { outline: none; }
-
-        .focusable:focus {
-            box-shadow: var(--focus-glow) !important;
-            transform: translateY(-6px) scale(1.05) !important;
-            z-index: 100 !important;
-            border-color: var(--primary-color) !important;
-        }
-
-        .group-header-badge.focusable:focus {
-            transform: translateY(-4px) scale(1.08) rotate(0deg) !important;
-            background: var(--badge-hover-bg) !important;
-        }
-
-        .delete-btn:focus, .photo-edit-btn:focus {
-            opacity: 1 !important;
-            transform: scale(1.2) !important;
-            box-shadow: 0 0 0 3px var(--primary-color), 0 0 15px rgba(247, 160, 114, 0.6) !important;
-        }
-
-        .photo-card-wrapper:hover .photo-card,
-        .photo-card-wrapper.focused .photo-card {
-            transform: scale(1.05) !important;
-            box-shadow: 0 15px 35px -5px rgba(60, 40, 30, 0.2), 0 5px 15px -3px rgba(0, 0, 0, 0.1) !important;
-            z-index: 100 !important;
-        }
-
-        .photo-card.focusable:focus {
-            box-shadow: var(--focus-glow) !important;
-            transform: translateY(-6px) scale(1.05) !important;
-            z-index: 100 !important;
-            border-color: var(--primary-color) !important;
-        }
-        
-        .album-header {
+            padding: 24px 16px 40px 16px;
             display: flex;
-            align-items: center;
             justify-content: center;
-            gap: 25px;
-            margin-bottom: 20px;
-            padding: 10px 20px;
-            position: relative;
-        }
-
-        .title-wrapper {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 4px;
-        }
-
-        h1 {
-            text-align: center; font-size: 2.2em; font-weight: 700; letter-spacing: -0.02em; margin: 0;
-            background: var(--title-gradient);
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-            transition: background 0.4s ease;
-        }
-
-        .album-date-subtitle {
-            font-size: 0.9em;
-            color: var(--text-sub);
-            font-weight: 500;
-            letter-spacing: 0.05em;
-        }
-
-        /* --- テーマ切り替えパレット --- */
-        .theme-bar {
-            position: fixed;
-            top: 25px;
-            left: 30px;
-            background: var(--glass-bg);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            padding: 8px 16px;
-            border-radius: 24px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-            border: 1px solid var(--glass-border);
-            z-index: 100;
-        }
-
-        .theme-label {
-            font-size: 11px;
-            font-weight: 700;
-            color: var(--text-sub);
-        }
-
-        .theme-dot {
-            width: 26px;
-            height: 26px;
-            border-radius: 50%;
-            border: 2px solid #ffffff;
-            cursor: pointer;
-            transition: all 0.25s cubic-bezier(0.25, 1, 0.5, 1);
-            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-            position: relative;
-        }
-
-        .theme-dot.active {
-            transform: scale(1.25);
-            box-shadow: 0 0 0 3px var(--primary-color), 0 4px 12px rgba(0,0,0,0.25);
-            border-color: #ffffff;
-            z-index: 2;
-        }
-
-        .theme-dot[data-theme="default"] { background: #f7a072; }
-        .theme-dot[data-theme="pastel"] { background: #ff9ebb; }
-        .theme-dot[data-theme="ocean"] { background: #43b0f1; }
-        .theme-dot[data-theme="vintage"] { background: #a0826c; }
-        .theme-dot[data-theme="dark"] { background: #2a252d; border-color: #e0a96d; }
-
-        /* --- アルバムカード領域 --- */
-        .album-container {
-            display: flex; flex-direction: row; align-items: flex-start; overflow-x: auto;
-            white-space: nowrap; padding: 40px 20px 60px 20px; height: 75vh; scroll-behavior: smooth;
-        }
-
-        .album-container::-webkit-scrollbar { height: 4px; }
-        .album-container::-webkit-scrollbar-track { background: transparent; }
-        .album-container::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.15); border-radius: 10px; }
-        .album-container::-webkit-scrollbar-thumb:hover { background: rgba(0, 0, 0, 0.3); }
-
-        /* --- グループコンテナ --- */
-        .time-group-column {
-            display: inline-flex;
-            flex-direction: row;
             align-items: flex-start;
-            flex-shrink: 0;
-            margin-right: 100px;
-            vertical-align: top;
-            position: relative;
-            z-index: 2;
         }
 
-        .photo-card-wrapper {
-            display: inline-flex;
-            flex-direction: column;
-            align-items: center;
-            flex-shrink: 0;
-            margin: 30px 12px 0 12px;
-            vertical-align: top;
-            position: relative;
-            z-index: 2;
-            padding-bottom: 50px;
-        }
-
-        /* --- 見出しバッジ（大きく、より目立つマステ付き手書き付箋風） --- */
-        .group-header-badge {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            padding: 14px 28px 12px 28px;
-            min-width: 150px;
-            background: var(--badge-bg);
-            border: var(--badge-border);
-            border-radius: 8px;
-            font-family: var(--badge-font);
-            font-weight: 700;
-            font-size: 1.25em;
-            color: var(--badge-text);
-            box-shadow: var(--badge-shadow);
-            white-space: nowrap;
-            flex-shrink: 0;
-            cursor: pointer;
-            transition: all 0.25s ease;
-            margin-bottom: 75px;
-            transform: rotate(-1.5deg);
-            position: relative;
-        }
-
-        /* マスキングテープ風の装飾 */
-        .group-header-badge::before {
-            content: "";
-            position: absolute;
-            top: -11px;
-            left: 50%;
-            transform: translateX(-50%) rotate(1deg);
-            width: 70px;
-            height: 20px;
-            background: var(--badge-tape);
-            border-left: 2px dashed rgba(255, 255, 255, 0.6);
-            border-right: 2px dashed rgba(255, 255, 255, 0.6);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            pointer-events: none;
-            z-index: 2;
-        }
-        
-        .group-header-badge:hover {
-            background: var(--badge-hover-bg);
-            transform: translateY(-2px) rotate(0deg);
-        }
-
-        .group-edit-icon {
-            width: 20px;
-            height: 20px;
-            object-fit: contain;
-            opacity: 0;
-            width: 0;
-            margin-right: 0;
-            transition: opacity 0.2s ease, width 0.2s ease, margin 0.2s ease;
-            filter: brightness(0) saturate(100%) invert(30%);
-        }
-        
-        .group-header-badge:hover .group-edit-icon,
-        .group-header-badge:focus .group-edit-icon {
-            opacity: 1;
-            width: 20px;
-            margin-right: 8px;
-        }
-        
-        .photo-card {
-            display: inline-flex; 
-            flex-direction: column; 
-            background: var(--card-bg); 
-            padding: 12px;
-            border-radius: var(--card-radius); 
-            box-shadow: var(--card-shadow);
-            border: var(--card-border);
-            transition: transform 0.35s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.35s ease; 
-            flex-shrink: 0; 
-            width: 260px; 
-            position: relative;
-            cursor: pointer;
-            transform: translateY(var(--offset-y, 0px)) rotate(var(--rotate, 0deg));
-        }
-
-        /* --- 写真下部のアクションボタン群（Edit & Delete） --- */
-        .photo-actions-container {
-            position: absolute;
-            bottom: -22px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 10px;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.2s ease;
-            z-index: 20;
-        }
-
-        .photo-card-wrapper:hover .photo-actions-container,
-        .photo-card-wrapper.focused .photo-actions-container {
-            opacity: 1;
-            pointer-events: auto;
-        }
-
-        .photo-edit-btn, .delete-btn {
-            background: rgba(30, 30, 35, 0.70);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-            transition: all 0.2s ease;
-        }
-        
-        .action-icon {
-            width: 20px;
-            height: 20px;
-            object-fit: contain;
-            filter: brightness(0) invert(1);
-        }
-        
-        .delete-btn.focusable:focus {
-            background: rgba(230, 91, 91, 0.85) !important;
-            border-color: #ffffff !important;
-        }
-
-        .photo-edit-btn.focusable:focus {
-            background: var(--primary-color) !important;
-            border-color: #ffffff !important;
-        }
-
-        .photo-card img { 
-            width: 100%; height: auto; max-height: 380px; object-fit: contain; 
-            border-radius: var(--img-radius); display: block; 
-        }
-
-        .sticky-note {
-            background: var(--note-bg); 
-            margin-top: 15px; 
-            padding: 12px 14px 10px 14px;
-            border-radius: var(--note-radius); 
-            box-shadow: 2px 4px 12px rgba(0,0,0,0.06); 
-            position: relative;
-            transform: var(--note-transform); 
-            border-left: var(--note-border);
-            transition: all 0.4s ease;
-        }
-
-        .photo-comment { color: var(--text-main); font-size: 13px; font-weight: 500; line-height: 1.5; white-space: normal; word-wrap: break-word; text-align: left; }
-        .photo-date { font-size: 10px; font-weight: 700; color: var(--text-sub); text-align: right; margin-top: 8px; }
-
-        /* --- QRコード --- */
-        .qr-container {
-            position: relative; 
-            top: auto;
-            right: auto;
+        .container {
+            width: 100%;
+            max-width: 440px;
             background: var(--glass-bg);
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
-            padding: 12px 16px;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
-            border-radius: 18px;
-            text-align: center;
-            z-index: 10;
             border: 1px solid var(--glass-border);
-            width: auto;
-            flex-shrink: 0;
-        }
-
-        .qr-container img { 
-            width: 95px;
-            height: 95px; 
-            display: block; 
-            margin: 0 auto; 
-            border-radius: 8px; 
-            background: #ffffff; 
-            padding: 5px; 
-        }
-
-        .qr-text { 
-            font-size: 11px; 
-            color: var(--text-main); 
-            margin-top: 6px; 
-            white-space: nowrap; 
-            font-weight: 700; 
-            line-height: 1.2; 
-        }
-
-        .empty-album-wrapper {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            margin: auto;
-            text-align: center;
-            gap: 20px;
-            padding: 30px;
-            white-space: normal;
-        }
-
-        .empty-qr-box {
-            background: var(--glass-bg);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            padding: 24px 30px;
+            padding: 24px 20px;
             border-radius: 24px;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.12);
-            border: 1px solid var(--glass-border);
-            display: inline-block;
+            box-shadow: var(--shadow-card);
+            text-align: center;
         }
 
-        .empty-qr-box img {
-            width: 220px;
-            height: 220px;
+        h2 {
+            font-size: 1.5em;
+            font-weight: 700;
+            margin: 0 0 6px 0;
+            background: linear-gradient(45deg, #4a3e3d, #8f6b58);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            font-size: 12px;
+            color: var(--text-sub);
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .album-select-wrapper {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .album-select-wrapper label {
             display: block;
-            margin: 0 auto 12px auto;
-            border-radius: 12px;
-            background: #ffffff;
-            padding: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-sub);
+            margin-bottom: 6px;
+            margin-left: 4px;
         }
 
-        .empty-qr-label {
-            font-size: 1.1em;
+        .album-select-wrapper select {
+            width: 100%;
+            padding: 12px 14px;
+            border-radius: 14px;
+            border: 1px solid rgba(140, 125, 117, 0.25);
+            background: #ffffff;
+            font-family: inherit;
+            font-size: 15px;
             font-weight: 700;
             color: var(--text-main);
-            margin-top: 10px;
+            outline: none;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+            transition: border-color 0.2s ease;
         }
 
-        .empty-album-text {
-            color: var(--text-sub);
-            font-size: 15px;
-            line-height: 1.6;
+        .album-select-wrapper select:focus {
+            border-color: var(--primary-color);
         }
 
-        /* --- モーダル共通 --- */
-        .modal-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100vw; height: 100vh;
-            background: rgba(15, 12, 10, 0.85);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            display: none;
+        .file-select-btn {
+            display: flex;
             align-items: center;
             justify-content: center;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s ease;
-            z-index: 9999;
-        }
-        
-        .modal-overlay.active {
-            display: flex !important;
-            opacity: 1;
-            pointer-events: auto;
+            gap: 8px;
+            width: 100%;
+            padding: 14px;
+            background: #ffffff;
+            border: 2px dashed rgba(247, 160, 114, 0.6);
+            border-radius: 16px;
+            color: var(--primary-hover);
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-bottom: 20px;
         }
 
-        .modal-content {
-            position: relative;
-            max-width: 90vw;
-            max-height: 90vh;
+        .file-select-btn:active {
+            transform: scale(0.98);
+            background: #fffefb;
+        }
+
+        input[type="file"] { display: none; }
+
+        .photo-list {
             display: flex;
             flex-direction: column;
-            align-items: center;
-            transform: scale(0.9);
-            transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+            gap: 16px;
+            margin-bottom: 24px;
         }
 
-        .modal-overlay.active .modal-content {
-            transform: scale(1);
-        }
-
-        .modal-content img {
-            max-width: 85vw;
-            max-height: 75vh;
-            object-fit: contain;
-            border-radius: 16px;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-        }
-
-        .modal-caption {
-            background: rgba(255, 255, 255, 0.95);
-            color: #3d3531;
-            padding: 16px 24px;
-            border-radius: 16px;
-            margin-top: 20px;
-            max-width: 600px;
-            text-align: center;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-            white-space: normal;
-        }
-
-        .modal-comment { font-size: 16px; font-weight: 700; margin-bottom: 6px; color: #2b2523; }
-        .modal-date { font-size: 12px; color: #8c7d75; font-weight: 500; }
-
-        .delete-dialog, .edit-dialog {
+        .photo-item {
             background: #ffffff;
-            padding: 30px 40px;
-            border-radius: 20px;
-            text-align: center;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-            max-width: 440px;
-            width: 90%;
-            white-space: normal;
-        }
-
-        .delete-dialog h3, .edit-dialog h3 { margin: 0 0 10px 0; color: #3d3531; font-size: 1.4em; }
-        .delete-dialog p, .edit-dialog p { margin: 0 0 20px 0; color: #8c7d75; font-size: 0.95em; }
-
-        .edit-input {
-            width: 100%;
-            padding: 12px 16px;
-            font-size: 1.1em;
-            border: 2px solid #ddd;
-            border-radius: 10px;
-            margin-bottom: 25px;
-            font-family: inherit;
-            color: #3d3531;
-            outline: none;
-            transition: border-color 0.2s;
-        }
-
-        .edit-input:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 10px rgba(247, 160, 114, 0.3);
-        }
-
-        .delete-dialog-actions, .edit-dialog-actions {
+            border-radius: 18px;
+            padding: 12px;
+            box-shadow: 0 6px 16px rgba(60, 40, 30, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.8);
             display: flex;
-            justify-content: center;
-            gap: 20px;
+            flex-direction: column;
+            gap: 10px;
         }
 
-        .modal-btn {
-            padding: 12px 28px;
+        .photo-item img {
+            width: 100%;
+            max-height: 260px;
+            object-fit: contain;
             border-radius: 12px;
-            border: 2px solid transparent;
-            font-size: 1em;
-            font-weight: bold;
-            cursor: pointer;
-            background: #f0ece9;
-            color: #3d3531;
-            transition: all 0.2s ease;
+            background: #faf7f4;
         }
 
-        .modal-btn.primary { background: var(--primary-color); color: #ffffff; }
-        .modal-btn.danger { background: #e74c3c; color: #ffffff; }
+        .photo-item textarea {
+            width: 100%;
+            height: 70px;
+            padding: 10px 12px;
+            border-radius: 12px;
+            border: 1px solid rgba(140, 125, 117, 0.2);
+            background: #fdfbf7;
+            font-family: inherit;
+            font-size: 16px;
+            color: var(--text-main);
+            resize: none;
+            box-sizing: border-box;
+            transition: border-color 0.2s ease;
+        }
+
+        .photo-item textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .upload-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #f7a072 0%, #f38345 100%);
+            color: white;
+            border: none;
+            border-radius: 16px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: var(--shadow-btn);
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+
+        .upload-btn:active {
+            transform: scale(0.98);
+        }
+
+        .upload-btn:disabled {
+            background: #d8ceca;
+            box-shadow: none;
+            cursor: not-allowed;
+        }
+
+        #errorMsg {
+            color: #e65b5b;
+            font-size: 12px;
+            font-weight: 500;
+            margin-top: 12px;
+            word-break: break-all;
+        }
     </style>
 </head>
 <body>
-    <div class="theme-bar" id="themeBar">
-        <span class="theme-label">テーマ</span>
-        <div class="theme-dot focusable active" tabindex="0" data-theme="default" title="暖色クラシック"></div>
-        <div class="theme-dot focusable" tabindex="0" data-theme="pastel" title="パステルスイート"></div>
-        <div class="theme-dot focusable" tabindex="0" data-theme="ocean" title="シーサイドブルー"></div>
-        <div class="theme-dot focusable" tabindex="0" data-theme="vintage" title="ノスタルジック"></div>
-        <div class="theme-dot focusable" tabindex="0" data-theme="dark" title="シネマティック"></div>
+
+    <div class="container">
+        <h2>写真をシェア</h2>
+        <div class="subtitle">テレビのアルバムへ思い出を送ります</div>
+
+        <div class="album-select-wrapper">
+            <label for="albumSelect">📁 送り先のアルバム</label>
+            <select id="albumSelect">
+                <option value="" disabled selected>アルバムを読み込み中...</option>
+            </select>
+        </div>
+
+        <label for="fileInput" class="file-select-btn">
+            <span>📷 写真を選ぶ (複数可)</span>
+        </label>
+        <input type="file" id="fileInput" accept="image/*" multiple>
+
+        <div id="photoList" class="photo-list"></div>
+
+        <button id="uploadBtn" class="upload-btn">アルバムに送る</button>
+        <div id="errorMsg"></div>
     </div>
 
-    <header class="album-header">
-        <div class="title-wrapper">
-            <h1 id="albumTitle">アルバム</h1>
-            <div class="album-date-subtitle" id="albumDateSubtitle"></div>
-        </div>
-        <div class="qr-container" id="qrContainer">
-            <img id="qrImage" src="" alt="QR Code">
-            <div class="qr-text">スマホで送る</div>
-        </div>
-    </header>
-
-    <div class="album-container" id="albumContainer"></div>
-
-    <div class="modal-overlay" id="modalOverlay">
-        <div class="modal-content">
-            <img id="modalImg" src="" alt="Enlarged Memory">
-            <div class="modal-caption" id="modalCaption">
-                <div class="modal-comment" id="modalComment"></div>
-                <div class="modal-date" id="modalDate"></div>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal-overlay" id="deleteModalOverlay">
-        <div class="delete-dialog">
-            <h3>写真を削除しますか？</h3>
-            <p>この操作は取り消せません。</p>
-            <div class="delete-dialog-actions">
-                <button id="cancelDeleteBtn" class="modal-btn focusable" tabindex="0">キャンセル</button>
-                <button id="confirmDeleteBtn" class="modal-btn danger focusable" tabindex="0">削除する</button>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal-overlay" id="editModalOverlay">
-        <div class="edit-dialog">
-            <h3 id="editModalTitle">見出しの編集</h3>
-            <p id="editModalDesc">このグループの自由なタイトルを入力してください。</p>
-            <input type="text" id="groupTitleInput" class="edit-input" placeholder="">
-            <div class="edit-dialog-actions">
-                <button id="cancelEditBtn" class="modal-btn focusable" tabindex="0">キャンセル</button>
-                <button id="confirmEditBtn" class="modal-btn primary focusable" tabindex="0">保存する</button>
-            </div>
-        </div>
-    </div>
-
+    <!-- Firebase SDK -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { 
-            getFirestore, collection, query, where, onSnapshot, doc, getDoc, updateDoc, deleteDoc, setDoc 
-        } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
           apiKey: "AIzaSyAt3p_mTcyr7XH0xSWcPI9VCU1mzzr4IEk",
@@ -779,823 +252,212 @@
         const db = getFirestore(app);
 
         const urlParams = new URLSearchParams(window.location.search);
-        const albumId = urlParams.get('albumId');
+        const defaultAlbumId = urlParams.get('albumId');
 
-        let justClosedModal = false;
-        
-        if (!albumId) {
-            alert("アルバムIDが見つかりません。一覧に戻ります。");
-            window.location.href = "index.html";
-        }
+        const albumSelect = document.getElementById('albumSelect');
+        const fileInput = document.getElementById('fileInput');
+        const photoList = document.getElementById('photoList');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const errorMsg = document.getElementById('errorMsg');
 
-        async function applyTheme(themeName, saveToDb = true) {
-            document.body.setAttribute('data-theme', themeName);
+        let selectedFilesData = [];
 
-            document.querySelectorAll('.theme-dot').forEach(dot => {
-                if (dot.getAttribute('data-theme') === themeName) {
-                    dot.classList.add('active');
-                } else {
-                    dot.classList.remove('active');
-                }
-            });
+        async function loadAlbums() {
+            try {
+                const querySnapshot = await getDocs(collection(db, "albums"));
+                albumSelect.innerHTML = '';
 
-            if (saveToDb && albumId) {
-                try {
-                    const albumRef = doc(db, "albums", albumId);
-                    await updateDoc(albumRef, { theme: themeName });
-                } catch (err) {
-                    console.error("テーマの保存に失敗しました:", err);
-                }
-            }
-        }
-
-        document.querySelectorAll('.theme-dot').forEach(dot => {
-            dot.addEventListener('click', () => {
-                const selectedTheme = dot.getAttribute('data-theme');
-                applyTheme(selectedTheme, true);
-            });
-        });
-
-        const modalOverlay = document.getElementById('modalOverlay');
-        const modalImg = document.getElementById('modalImg');
-        const modalComment = document.getElementById('modalComment');
-        const modalDate = document.getElementById('modalDate');
-        const modalCaption = document.getElementById('modalCaption');
-        let isModalOpen = false;
-        let lastFocusedElement = null;
-
-        function openModal(imgUrl, comment, dateStr) {
-            lastFocusedElement = document.activeElement;
-            modalImg.src = imgUrl;
-
-            if (comment || dateStr) {
-                modalCaption.style.display = 'block';
-                modalComment.innerText = comment || '';
-                modalDate.innerText = dateStr || '';
-            } else {
-                modalCaption.style.display = 'none';
-            }
-
-            modalOverlay.classList.add('active');
-            isModalOpen = true;
-        }
-
-        function closeModal() {
-            modalOverlay.classList.remove('active');
-            isModalOpen = false;
-            if (lastFocusedElement) {
-                lastFocusedElement.focus();
-            }
-        }
-
-        modalOverlay.addEventListener('click', closeModal);
-
-        const deleteModalOverlay = document.getElementById('deleteModalOverlay');
-        const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
-        const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
-        let isDeleteModalOpen = false;
-        let pendingDeletePhotoId = null;
-
-        // 削除モーダルを開く関数
-        function openDeleteModal(photoId, triggerElement) {
-            pendingDeletePhotoId = photoId;
-            // キャンセル時に戻るための要素として、トリガーになったカードを確実に保持
-            lastFocusedElement = triggerElement || document.activeElement;
-
-            deleteModalOverlay.classList.add('active');
-            isDeleteModalOpen = true;
-            
-            setTimeout(() => {
-                cancelDeleteBtn.focus();
-            }, 50);
-        }
-
-        // 削除モーダルを閉じる関数（キャンセル時など）
-        function closeDeleteModal(isCancelled = false) {
-            deleteModalOverlay.classList.remove('active');
-            isDeleteModalOpen = false;
-            pendingDeletePhotoId = null;
-
-            setTimeout(() => {
-                // キャンセル時は元の写真カード（lastFocusedElement）にフォーカスを戻す
-                if (isCancelled && lastFocusedElement && typeof lastFocusedElement.focus === 'function') {
-                    lastFocusedElement.focus();
-                    if (typeof lastFocusedElement.scrollIntoView === 'function') {
-                        lastFocusedElement.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-                    }
+                if (querySnapshot.empty) {
+                    const opt = document.createElement('option');
+                    opt.value = '';
+                    opt.textContent = 'アルバムが見つかりません';
+                    albumSelect.appendChild(opt);
                     return;
                 }
 
-                // 削除実行後の場合は、指定されたターゲットカードにフォーカス
-                if (window.targetFocusCardId) {
-                    const foundCard = document.querySelector(`.photo-card.focusable[data-id="${window.targetFocusCardId}"]`);
-                    window.targetFocusCardId = null;
-                    if (foundCard) {
-                        foundCard.focus();
-                        if (typeof foundCard.scrollIntoView === 'function') {
-                            foundCard.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-                        }
-                        return;
-                    }
-                }
+                let foundDefault = false;
 
-                // 残っているカードの先頭にフォールバック
-                const photoCards = Array.from(document.querySelectorAll('.photo-card.focusable'));
-                if (photoCards.length > 0) {
-                    const targetCard = photoCards[0];
-                    targetCard.focus();
-                    if (typeof targetCard.scrollIntoView === 'function') {
-                        targetCard.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-                    }
-                }
-            }, 200);
-        }
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    const albumTitle = data.name || data.title || `アルバム (${doc.id.substring(0, 6)})`;
 
-        // キャンセルボタンのイベント
-        cancelDeleteBtn.addEventListener('click', () => closeDeleteModal(true));
+                    const option = document.createElement('option');
+                    option.value = doc.id;
+                    option.textContent = albumTitle;
 
-        // 削除実行ボタンのイベント
-        confirmDeleteBtn.addEventListener('click', async () => {
-            if (!pendingDeletePhotoId) return;
-            
-            // 削除処理の前に、現在のカード一覧から「次にフォーカスすべきカードのID」を特定しておく
-            const photoCards = Array.from(document.querySelectorAll('.photo-card.focusable'));
-            let targetCardId = null;
-            
-            for (let i = 0; i < photoCards.length; i++) {
-                if (photoCards[i].getAttribute('data-id') === pendingDeletePhotoId) {
-                    // 次のカードがあればそのID、なければ一つ前のカードのIDを保持
-                    if (i + 1 < photoCards.length) {
-                        targetCardId = photoCards[i + 1].getAttribute('data-id');
-                    } else if (i - 1 >= 0) {
-                        targetCardId = photoCards[i - 1].getAttribute('data-id');
-                    }
-                    break;
-                }
-            }
-            
-            window.targetFocusCardId = targetCardId;
-            const deleteId = pendingDeletePhotoId;
-
-            try {
-                // 削除実行時はキャンセルフラグを false としてモーダルを閉じる
-                closeDeleteModal(false);
-                await deleteDoc(doc(db, "shared_photos", deleteId));
-            } catch (firestoreError) {
-                console.error("Firestoreの削除エラー:", firestoreError);
-                window.targetFocusCardId = null;
-                alert("削除に失敗しました。");
-            }
-        });
-
-        /* --- 編集モーダル（グループ見出し & 写真コメント共通） --- */
-        const editModalOverlay = document.getElementById('editModalOverlay');
-        const cancelEditBtn = document.getElementById('cancelEditBtn');
-        const confirmEditBtn = document.getElementById('confirmEditBtn');
-        const groupTitleInput = document.getElementById('groupTitleInput');
-        const editModalTitle = document.getElementById('editModalTitle');
-        const editModalDesc = document.getElementById('editModalDesc');
-        
-        let isEditModalOpen = false;
-        let editModeType = null; // 'group' または 'photo'
-        let activeEditingKey = null; // groupKey または photoId
-
-        function openEditModalForGroup(groupKey, currentText, triggerElement) {
-            editModeType = 'group';
-            activeEditingKey = groupKey;
-            lastFocusedElement = triggerElement || document.activeElement;
-            
-            editModalTitle.innerText = "見出しの編集";
-            editModalDesc.innerText = "このグループの自由なタイトルを入力してください。";
-            groupTitleInput.placeholder = "例: 楽しかったランチタイム";
-            groupTitleInput.value = currentText;
-
-            editModalOverlay.classList.add('active');
-            isEditModalOpen = true;
-
-            setTimeout(() => {
-                groupTitleInput.focus();
-            }, 50);
-        }
-
-        function openEditModalForPhoto(photoId, currentComment, triggerElement) {
-            editModeType = 'photo';
-            activeEditingKey = photoId;
-            lastFocusedElement = triggerElement || document.activeElement;
-            
-            editModalTitle.innerText = "写真コメントの編集";
-            editModalDesc.innerText = "この写真に添えるコメントを入力してください。";
-            groupTitleInput.placeholder = "例: みんなでピース！";
-            groupTitleInput.value = currentComment || "";
-
-            editModalOverlay.classList.add('active');
-            isEditModalOpen = true;
-
-            setTimeout(() => {
-                groupTitleInput.focus();
-            }, 50);
-        }
-
-        function closeEditModal() {
-            // 保存直前の編集対象IDを一時保存しておく
-            const editedKey = activeEditingKey;
-            const editedType = editModeType;
-
-            editModalOverlay.classList.remove('active');
-            isEditModalOpen = false;
-            editModeType = null;
-            activeEditingKey = null;
-
-            setTimeout(() => {
-                // 1. 写真コメントの編集だった場合
-                if (editedType === 'photo' && editedKey) {
-                    const targetCard = document.querySelector(`.photo-card.focusable[data-id="${editedKey}"]`);
-                    if (targetCard) {
-                        targetCard.focus();
-                        if (typeof targetCard.scrollIntoView === 'function') {
-                            targetCard.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-                        }
-                        return;
-                    }
-                }
-
-                // 2. グループ見出しの編集だった場合
-                if (editedType === 'group' && editedKey) {
-                    // 生成時の属性名 [data-group-key] に合わせて取得する
-                    const targetGroupHeading = document.querySelector(`.group-header-badge.focusable[data-group-key="${editedKey}"]`);
-                    if (targetGroupHeading) {
-                        targetGroupHeading.focus();
-                        if (typeof targetGroupHeading.scrollIntoView === 'function') {
-                            targetGroupHeading.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-                        }
-                        return;
-                    }
-                }
-
-                // 3. フォールバック
-                if (lastFocusedElement && typeof lastFocusedElement.focus === 'function') {
-                    lastFocusedElement.focus();
-                    if (typeof lastFocusedElement.scrollIntoView === 'function') {
-                        lastFocusedElement.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-                    }
-                }
-            }, 100);
-        }
-
-        cancelEditBtn.addEventListener('click', closeEditModal);
-
-        confirmEditBtn.addEventListener('click', async () => {
-            if (!activeEditingKey) return;
-            const newVal = groupTitleInput.value.trim();
-            
-            if (editModeType === 'group') {
-                let localHeadings = {};
-                try {
-                    const saved = localStorage.getItem(`album_headings_${albumId}`);
-                    if (saved) localHeadings = JSON.parse(saved);
-                } catch(e) {}
-                localHeadings[activeEditingKey] = newVal;
-                localStorage.setItem(`album_headings_${albumId}`, JSON.stringify(localHeadings));
-                albumCustomHeadings = localHeadings;
-
-                try {
-                    const albumRef = doc(db, "albums", albumId);
-                    const albumSnap = await getDoc(albumRef);
-                    let customHeadings = {};
-                    if (albumSnap.exists() && albumSnap.data().customHeadings) {
-                        customHeadings = albumSnap.data().customHeadings;
-                    }
-                    customHeadings[activeEditingKey] = newVal;
-                    await setDoc(albumRef, { customHeadings }, { merge: true });
-                } catch (err) {
-                    console.warn("Firestoreへの見出し保存がスキップされました（ローカルには保存済み）:", err);
-                }
-            } else if (editModeType === 'photo') {
-                try {
-                    const photoRef = doc(db, "shared_photos", activeEditingKey);
-                    await updateDoc(photoRef, { comment: newVal });
-                } catch (err) {
-                    console.error("写真コメントの更新に失敗しました:", err);
-                    alert("コメントの更新に失敗しました。");
-                }
-            }
-
-            closeEditModal();
-            renderAlbumUI();
-        });
-
-        function getFocusables() {
-            return Array.from(document.querySelectorAll('.focusable'));
-        }
-
-        document.addEventListener('keydown', (e) => {
-            if (isDeleteModalOpen) {
-                if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
-                    e.preventDefault();
-                    if (document.activeElement === cancelDeleteBtn) {
-                        confirmDeleteBtn.focus();
-                    } else {
-                        cancelDeleteBtn.focus();
-                    }
-                } else if (e.key === 'Enter') {
-                    e.preventDefault();
-                    if (!e.repeat) {
-                        justClosedModal = true;
-                        document.activeElement.click();
-                    }
-                } else if (e.key === 'Escape' || e.key === 'b' || e.key === 'B') {
-                    e.preventDefault();
-                    closeDeleteModal();
-                }
-                return;
-            }
-
-            if (isEditModalOpen) {
-                if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
-                    e.preventDefault();
-                    if (document.activeElement === groupTitleInput) {
-                        cancelEditBtn.focus();
-                    } else if (document.activeElement === cancelEditBtn) {
-                        confirmEditBtn.focus();
-                    } else {
-                        groupTitleInput.focus();
-                    }
-                } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-                    e.preventDefault();
-                    if (document.activeElement === groupTitleInput) {
-                        cancelEditBtn.focus();
-                    } else {
-                        groupTitleInput.focus();
-                    }
-                } else if (e.key === 'Enter') {
-                    e.preventDefault();
-                    if (!e.repeat) {
-                        if (document.activeElement === cancelEditBtn) {
-                            closeEditModal();
-                        } else {
-                            confirmEditBtn.click();
-                        }
-                    }
-                } else if (e.key === 'Escape' || e.key === 'b' || e.key === 'B') {
-                    if (document.activeElement !== groupTitleInput) {
-                        e.preventDefault();
-                        closeEditModal();
-                    }
-                }
-                return;
-            }
-
-            if (isModalOpen) {
-                if (e.key === 'b' || e.key === 'B' || e.key === 'Escape') {
-                    e.preventDefault();
-                    closeModal();
-                }
-                return;
-            }
-
-            if (e.key === 'b' || e.key === 'B') {
-                window.location.href = "index.html";
-                return;
-            }
-
-            const active = document.activeElement;
-
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                if (!e.repeat && active) {
-                    if (active.classList.contains('theme-dot')) {
-                        active.click();
-                    } else if (active.classList.contains('delete-btn') || active.classList.contains('photo-edit-btn')) {
-                        active.click();
-                    } else if (active.classList.contains('group-header-badge')) {
-                        const groupKey = active.getAttribute('data-group-key');
-                        const currentText = active.getAttribute('data-current-text');
-                        openEditModalForGroup(groupKey, currentText, active);
-                    } else if (active.classList.contains('photo-card')) {
-                        active.click();
-                    }
-                }
-                return;
-            }
-
-            if (!active || !active.classList.contains('focusable')) {
-                const firstPhoto = document.querySelector('.photo-card.focusable');
-                if (firstPhoto) firstPhoto.focus();
-                return;
-            }
-
-            /* --- 1. 写真カード（.photo-card）の操作 --- */
-            if (active.classList.contains('photo-card')) {
-                if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
-                    e.preventDefault();
-                    const photoCards = Array.from(document.querySelectorAll('.photo-card.focusable'));
-                    const idx = photoCards.indexOf(active);
-                    if (idx !== -1) {
-                        const nextIdx = e.key === 'ArrowRight' 
-                            ? (idx + 1) % photoCards.length 
-                            : (idx - 1 + photoCards.length) % photoCards.length;
-                        const target = photoCards[nextIdx];
-                        target.focus();
-                        target.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-                    }
-                } else if (e.key === 'ArrowDown') {
-                    e.preventDefault();
-                    const wrapper = active.closest('.photo-card-wrapper');
-                    const editBtn = wrapper ? wrapper.querySelector('.photo-edit-btn') : null;
-                    if (editBtn) editBtn.focus();
-                } else if (e.key === 'ArrowUp') {
-                    e.preventDefault();
-                    
-                    // ▼ 上キーで見出しへ移動する際、直前のカードのフォーカス状態（ボタン表示）を即座に消す
-                    const currentWrapper = active.closest('.photo-card-wrapper');
-                    if (currentWrapper) {
-                        currentWrapper.classList.remove('focused');
+                    if (doc.id === defaultAlbumId) {
+                        option.selected = true;
+                        foundDefault = true;
                     }
 
-                    const groupColumn = active.closest('.time-group-column');
-                    const badge = groupColumn ? groupColumn.querySelector('.group-header-badge') : null;
-                    
-                    if (badge) {
-                        badge.focus();
-                        badge.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                    } else {
-                        const firstThemeDot = document.querySelector('.theme-dot.focusable');
-                        if (firstThemeDot) firstThemeDot.focus();
-                    }
-                }
-            }
-            /* --- 2. 写真編集・削除ボタンの操作 --- */
-            else if (active.classList.contains('photo-edit-btn')) {
-                if (e.key === 'ArrowUp') {
-                    e.preventDefault();
-                    const wrapper = active.closest('.photo-card-wrapper');
-                    const card = wrapper ? wrapper.querySelector('.photo-card.focusable') : null;
-                    if (card) card.focus();
-                } else if (e.key === 'ArrowRight') {
-                    e.preventDefault();
-                    const wrapper = active.closest('.photo-card-wrapper');
-                    const deleteBtn = wrapper ? wrapper.querySelector('.delete-btn') : null;
-                    if (deleteBtn) deleteBtn.focus();
-                }
-            }
-            else if (active.classList.contains('delete-btn')) {
-                if (e.key === 'ArrowUp') {
-                    e.preventDefault();
-                    const wrapper = active.closest('.photo-card-wrapper');
-                    const card = wrapper ? wrapper.querySelector('.photo-card.focusable') : null;
-                    if (card) card.focus();
-                } else if (e.key === 'ArrowLeft') {
-                    e.preventDefault();
-                    const wrapper = active.closest('.photo-card-wrapper');
-                    const editBtn = wrapper ? wrapper.querySelector('.photo-edit-btn') : null;
-                    if (editBtn) editBtn.focus();
-                } else if (e.key === 'ArrowRight') {
-                    e.preventDefault();
-                    const photoCards = Array.from(document.querySelectorAll('.photo-card.focusable'));
-                    const currentWrapper = active.closest('.photo-card-wrapper');
-                    const currentCard = currentWrapper ? currentWrapper.querySelector('.photo-card.focusable') : null;
-                    const idx = photoCards.indexOf(currentCard);
-                    if (idx !== -1 && idx < photoCards.length - 1) {
-                        const targetCard = photoCards[idx + 1];
-                        targetCard.focus();
-                        targetCard.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-                    }
-                }
-            }
-            /* --- 3. 見出し（.group-header-badge）の操作 --- */
-            else if (active.classList.contains('group-header-badge')) {
-                if (e.key === 'ArrowDown') {
-                    e.preventDefault();
-                    const card = active.closest('.photo-card-wrapper').querySelector('.photo-card');
-                    if (card) card.focus();
-                } else if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
-                    e.preventDefault();
-                    const badges = Array.from(document.querySelectorAll('.group-header-badge.focusable'));
-                    const idx = badges.indexOf(active);
-                    if (idx !== -1) {
-                        const nextIdx = e.key === 'ArrowRight' 
-                            ? (idx + 1) % badges.length 
-                            : (idx - 1 + badges.length) % badges.length;
-                        const target = badges[nextIdx];
-                        target.focus();
-                        target.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-                    }
-                } else if (e.key === 'ArrowUp') {
-                    e.preventDefault();
-                    const firstThemeDot = document.querySelector('.theme-dot.focusable');
-                    if (firstThemeDot) firstThemeDot.focus();
-                }
-            }
-            /* --- 4. テーマドットなどその他の要素 --- */
-            else {
-                const focusables = getFocusables();
-                const currentIndex = focusables.indexOf(active);
-                if (currentIndex === -1) return;
-
-                if (e.key === 'ArrowRight') {
-                    e.preventDefault();
-                    const next = focusables[currentIndex + 1] || focusables[0];
-                    next.focus();
-                } else if (e.key === 'ArrowLeft') {
-                    e.preventDefault();
-                    const prev = focusables[currentIndex - 1] || focusables[focusables.length - 1];
-                    prev.focus();
-                } else if (e.key === 'ArrowDown') {
-                    e.preventDefault();
-                    if (active.classList.contains('theme-dot')) {
-                        const firstPhoto = document.querySelector('.photo-card.focusable');
-                        if (firstPhoto) firstPhoto.focus();
-                    }
-                }
-            }
-        });
-
-        document.addEventListener('keyup', (e) => {
-            if (e.key === 'Enter') {
-                if (!isDeleteModalOpen && !isEditModalOpen && !isModalOpen && !justClosedModal) {
-                    const active = document.activeElement;
-                    if (active && active.classList.contains('photo-card')) {
-                        const imgUrl = active.getAttribute('data-img');
-                        const comment = active.getAttribute('data-comment');
-                        const dateStr = active.getAttribute('data-date');
-                        openModal(imgUrl, comment, dateStr);
-                    }
-                }
-                justClosedModal = false;
-            }
-        });
-
-        let albumCustomHeadings = {};
-        let latestPhotosSnapshot = null;
-
-        async function fetchAlbumInfo() {
-            try {
-                try {
-                    const saved = localStorage.getItem(`album_headings_${albumId}`);
-                    if (saved) albumCustomHeadings = JSON.parse(saved);
-                } catch(e) {}
-
-                const albumRef = doc(db, "albums", albumId);
-                const albumSnap = await getDoc(albumRef);
-                if (albumSnap.exists()) {
-                    const data = albumSnap.data();
-                    const title = data.name || data.title || "無題のアルバム";
-                    document.getElementById('albumTitle').innerText = title;
-                    document.title = `${title} | Memory Album`;
-
-                    if (data.theme) {
-                        applyTheme(data.theme, false);
-                    }
-                    if (data.customHeadings) {
-                        albumCustomHeadings = { ...albumCustomHeadings, ...data.customHeadings };
-                    }
-                }
-            } catch (error) {
-                console.error("アルバム情報の取得エラー:", error);
-            }
-        }
-
-        const baseUrl = window.location.origin + window.location.pathname.replace(/albumcreate\.html$/, '');
-        const shareUrl = `${baseUrl}photoshare.html?albumId=${albumId}`;
-        const generatedQrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(shareUrl)}`;
-        
-        document.getElementById('qrImage').src = generatedQrSrc;
-
-        const albumContainer = document.getElementById('albumContainer');
-        const q = query(collection(db, "shared_photos"), where("albumId", "==", albumId));
-        
-        function getValidDate(item) {
-            const target = item.takenAt || item.createdAt;
-            if (!target) return new Date();
-            let d = typeof target.toDate === 'function' ? target.toDate() : new Date(target);
-            return isNaN(d.getTime()) ? new Date() : d;
-        }
-
-        function renderAlbumUI() {
-            if (!latestPhotosSnapshot) return;
-            const snapshot = latestPhotosSnapshot;
-
-            albumContainer.innerHTML = '';
-            const qrContainerElement = document.getElementById('qrContainer');
-            
-            if (snapshot.empty) {
-                qrContainerElement.style.display = 'none';
-                document.getElementById('albumDateSubtitle').innerText = '';
-
-                const emptyWrapper = document.createElement('div');
-                emptyWrapper.className = 'empty-album-wrapper';
-                emptyWrapper.innerHTML = `
-                    <div class="empty-qr-box">
-                        <img src="${generatedQrSrc}" alt="Large QR Code">
-                        <div class="empty-qr-label">スマホで撮影して写真を送信</div>
-                    </div>
-                    <div class="empty-album-text">
-                        まだ写真がありません。上のQRコードをスマホで読み取って最初の思い出を追加してください。<br>
-                        <small style="opacity:0.7; margin-top:6px; display:inline-block;">[B]キーでアルバム一覧へ戻る</small>
-                    </div>
-                `;
-                albumContainer.appendChild(emptyWrapper);
-                return;
-            }
-
-            qrContainerElement.style.display = 'block';
-
-            const photos = [];
-            snapshot.forEach((doc) => { photos.push({ id: doc.id, ...doc.data() }); });
-            
-            photos.sort((a, b) => {
-                const dateA = getValidDate(a).getTime();
-                const dateB = getValidDate(b).getTime();
-                return dateA - dateB;
-            });
-
-            const firstDateObj = getValidDate(photos[0]);
-            const lastDateObj = getValidDate(photos[photos.length - 1]);
-            
-            const totalDurationSeconds = (lastDateObj.getTime() - firstDateObj.getTime()) / 1000;
-
-            let GAP_THRESHOLD_SECONDS = 30 * 60;
-            if (totalDurationSeconds > 6 * 60 * 60) {
-                GAP_THRESHOLD_SECONDS = 45 * 60;
-            } else if (totalDurationSeconds < 60 * 60) {
-                GAP_THRESHOLD_SECONDS = 10 * 60;
-            }
-            
-            if (firstDateObj && lastDateObj) {
-                const fYear = firstDateObj.getFullYear();
-                const fMonth = firstDateObj.getMonth() + 1;
-                const fDay = firstDateObj.getDate();
-                const lYear = lastDateObj.getFullYear();
-                const lMonth = lastDateObj.getMonth() + 1;
-                const lDay = lastDateObj.getDate();
-
-                let dateSubtitle = `${fYear}年${fMonth}月${fDay}日`;
-                if (fYear !== lYear || fMonth !== lMonth || fDay !== lDay) {
-                    dateSubtitle += ` 〜 ${lMonth}月${lDay}日`;
-                }
-                document.getElementById('albumDateSubtitle').innerText = dateSubtitle;
-            }
-
-            const groups = [];
-            let currentGroup = null;
-
-            photos.forEach((data) => {
-                const date = getValidDate(data);
-                const timestamp = date.getTime() / 1000;
-
-                if (!currentGroup || (timestamp - currentGroup.lastTimestamp > GAP_THRESHOLD_SECONDS)) {
-                    currentGroup = {
-                        lastTimestamp: timestamp,
-                        items: []
-                    };
-                    groups.push(currentGroup);
-                }
-
-                currentGroup.lastTimestamp = timestamp;
-                currentGroup.items.push({ data, date });
-            });
-
-            albumContainer.innerHTML = '';
-
-            groups.forEach((group, groupIndex) => {
-                const groupColumn = document.createElement('div');
-                groupColumn.className = 'time-group-column';
-
-                const groupKey = `group_${groupIndex}`;
-                const hour = group.items[0].date.getHours();
-                const defaultTimeRangeStr = `${hour}時頃`;
-                const displayTitle = albumCustomHeadings[groupKey] !== undefined ? albumCustomHeadings[groupKey] : defaultTimeRangeStr;
-
-                group.items.forEach(({ data, date }, index) => {
-                    const formattedDateStr = `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
-
-                    const cardWrapper = document.createElement('div');
-                    cardWrapper.className = 'photo-card-wrapper';
-
-                    if (index === 0) {
-                        const headerBadge = document.createElement('div');
-                        headerBadge.className = 'group-header-badge focusable';
-                        headerBadge.tabIndex = 0;
-                        headerBadge.setAttribute('data-group-key', groupKey);
-                        headerBadge.setAttribute('data-current-text', displayTitle);
-                        headerBadge.innerHTML = `
-                            <img src="rsc/edit.svg" class="group-edit-icon" alt="編集">
-                            <span>${displayTitle}</span>
-                        `;
-                                                
-                        headerBadge.addEventListener('click', (e) => {
-                            openEditModalForGroup(groupKey, displayTitle, headerBadge);
-                        });
-
-                        cardWrapper.appendChild(headerBadge);
-                    } else {
-                        const spacer = document.createElement('div');
-                        spacer.style.height = '35px';
-                        cardWrapper.appendChild(spacer);
-                    }
-
-                    const card = document.createElement('div');
-                    card.className = 'photo-card focusable';
-                    card.tabIndex = 0;
-                    card.setAttribute('data-id', data.id);
-                    card.setAttribute('data-img', data.imageUrl || '');
-                    card.setAttribute('data-comment', data.comment || '');
-                    card.setAttribute('data-date', formattedDateStr);
-                    
-                    const handleFocusIn = () => {
-                        cardWrapper.classList.add('focused');
-                    };
-                    const handleFocusOut = () => {
-                        setTimeout(() => {
-                            if (!cardWrapper.contains(document.activeElement)) {
-                                cardWrapper.classList.remove('focused');
-                            }
-                        }, 10);
-                    };
-
-                    card.addEventListener('focus', handleFocusIn);
-                    card.addEventListener('blur', handleFocusOut);
-                    
-                    const randomRotate = (Math.sin((groupIndex * 10 + index) * 999) * 10).toFixed(1); 
-                    let randomOffsetY = index === 0 ? (Math.cos((groupIndex * 10 + index) * 888) * 35).toFixed(1) : (Math.abs(Math.cos((groupIndex * 10 + index) * 888)) * 20).toFixed(1);
-                    
-                    card.style.setProperty('--rotate', `${randomRotate}deg`);
-                    card.style.setProperty('--offset-y', `${Number(randomOffsetY)}px`);
-                                           
-                    card.innerHTML = `
-                        <img src="${data.imageUrl}" alt="Memory">
-                        ${data.comment ? `
-                            <div class="sticky-note">
-                                <div class="photo-comment">${data.comment}</div>
-                                <div class="photo-date">${formattedDateStr}</div>
-                            </div>
-                        ` : `
-                            <div class="photo-date" style="margin-top: 8px;">${formattedDateStr}</div>
-                        `}
-                    `;
-
-                    // アクションボタンをまとめるコンテナ（Edit & Delete）
-                    const actionsContainer = document.createElement('div');
-                    actionsContainer.className = 'photo-actions-container';
-
-                    // 編集ボタン (rsc/edit.svg)
-                    const editBtn = document.createElement('button');
-                    editBtn.className = 'photo-edit-btn focusable';
-                    editBtn.setAttribute('title', 'コメント編集');
-                    editBtn.tabIndex = 0;
-                    editBtn.innerHTML = `<img src="rsc/edit.svg" class="action-icon" alt="編集">`;
-                    
-                    editBtn.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        openEditModalForPhoto(data.id, data.comment || "", card);
-                    });
-                    editBtn.addEventListener('focus', handleFocusIn);
-                    editBtn.addEventListener('blur', handleFocusOut);
-
-                    // 削除ボタン (rsc/delete.svg)
-                    const deleteBtn = document.createElement('button');
-                    deleteBtn.className = 'delete-btn focusable';
-                    deleteBtn.setAttribute('title', '削除');
-                    deleteBtn.tabIndex = 0;
-                    deleteBtn.innerHTML = `<img src="rsc/delete.svg" class="action-icon" alt="削除">`;
-                    
-                    deleteBtn.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        openDeleteModal(data.id, card);
-                    });
-                    deleteBtn.addEventListener('focus', handleFocusIn);
-                    deleteBtn.addEventListener('blur', handleFocusOut);
-
-                    actionsContainer.appendChild(editBtn);
-                    actionsContainer.appendChild(deleteBtn);
-                    
-                    cardWrapper.appendChild(card);
-                    cardWrapper.appendChild(actionsContainer);
-
-                    card.addEventListener('click', (e) => {
-                        if (e.target.closest('.photo-actions-container')) return;
-                        openModal(data.imageUrl, data.comment, formattedDateStr);
-                    });
-
-                    groupColumn.appendChild(cardWrapper);
+                    albumSelect.appendChild(option);
                 });
 
-                albumContainer.appendChild(groupColumn);
-            });
-
-            if (!isModalOpen && !isDeleteModalOpen && !isEditModalOpen) {
-                const active = document.activeElement;
-                if (!active || (!active.classList.contains('focusable') && !active.classList.contains('delete-btn') && !active.classList.contains('photo-edit-btn'))) {
-                    const firstPhoto = document.querySelector('.photo-card.focusable');
-                    if (firstPhoto) firstPhoto.focus();
+                if (!foundDefault && defaultAlbumId) {
+                    const customOpt = document.createElement('option');
+                    customOpt.value = defaultAlbumId;
+                    customOpt.textContent = `選択中のアルバム (${defaultAlbumId.substring(0, 6)})`;
+                    customOpt.selected = true;
+                    albumSelect.insertBefore(customOpt, albumSelect.firstChild);
                 }
+            } catch (err) {
+                console.error("アルバム一覧の取得に失敗:", err);
+                albumSelect.innerHTML = '<option value="">アルバム一覧の取得失敗</option>';
             }
         }
 
-        onSnapshot(q, async (snapshot) => {
-            latestPhotosSnapshot = snapshot;
-            await fetchAlbumInfo();
-            renderAlbumUI();
+        loadAlbums();
+
+        // ★ Exif文字列（"YYYY:MM:DD HH:MM:SS"）を Date オブジェクトに変換するヘルパー関数
+        function parseExifDate(exifDateTimeStr) {
+            if (!exifDateTimeStr) return null;
+            try {
+                const parts = exifDateTimeStr.split(' ');
+                if (parts.length !== 2) return null;
+                const dateParts = parts[0].split(':');
+                const timeParts = parts[1].split(':');
+                if (dateParts.length !== 3 || timeParts.length !== 3) return null;
+
+                return new Date(
+                    parseInt(dateParts[0], 10),
+                    parseInt(dateParts[1], 10) - 1,
+                    parseInt(dateParts[2], 10),
+                    parseInt(timeParts[0], 10),
+                    parseInt(timeParts[1], 10),
+                    parseInt(timeParts[2], 10)
+                );
+            } catch (e) {
+                return null;
+            }
+        }
+
+        fileInput.addEventListener('change', (e) => {
+            photoList.innerHTML = '';
+            selectedFilesData = [];
+            const files = Array.from(e.target.files);
+
+            files.forEach((file, index) => {
+                // ★ EXIF.js を使ってExif情報を非同期で解析する
+                EXIF.getData(file, function() {
+                    const exifDateTime = EXIF.getTag(this, "DateTimeOriginal") || EXIF.getTag(this, "DateTime");
+                    let takenDate = parseExifDate(exifDateTime);
+                    
+                    // Exifが無い、または解析できない場合はファイルの最終更新日時を使用
+                    if (!takenDate || isNaN(takenDate.getTime())) {
+                        takenDate = new Date(file.lastModified);
+                    }
+
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        const itemDiv = document.createElement('div');
+                        itemDiv.className = 'photo-item';
+
+                        const img = document.createElement('img');
+                        img.src = event.target.result;
+
+                        const textarea = document.createElement('textarea');
+                        textarea.placeholder = `写真 ${index + 1} のコメントを入力...`;
+
+                        selectedFilesData.push({
+                            file: file,
+                            textarea: textarea,
+                            takenAt: takenDate // 抽出した撮影日時を保持
+                        });
+
+                        itemDiv.appendChild(img);
+                        itemDiv.appendChild(textarea);
+                        photoList.appendChild(itemDiv);
+                    };
+                    reader.readAsDataURL(file);
+                });
+            });
+        });
+
+        function convertToBase64(file, maxWidth = 800, quality = 0.7) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.src = e.target.result;
+                    img.onload = () => {
+                        let width = img.width;
+                        let height = img.height;
+
+                        if (width > maxWidth) {
+                            height = Math.round((height * maxWidth) / width);
+                            width = maxWidth;
+                        }
+
+                        const canvas = document.createElement('canvas');
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+
+                        const dataUrl = canvas.toDataURL('image/jpeg', quality);
+                        resolve(dataUrl);
+                    };
+                    img.onerror = (err) => reject(err);
+                };
+                reader.onerror = (err) => reject(err);
+            });
+        }
+
+        uploadBtn.addEventListener('click', async () => {
+            errorMsg.innerText = '';
+            const targetAlbumId = albumSelect.value;
+
+            if (selectedFilesData.length === 0) {
+                alert('写真を選択してください');
+                return;
+            }
+            if (!targetAlbumId) {
+                alert('送信先のアルバムを選択してください。');
+                return;
+            }
+
+            if (document.activeElement) {
+                document.activeElement.blur();
+            }
+
+            uploadBtn.disabled = true;
+
+            try {
+                const total = selectedFilesData.length;
+                
+                for (let i = 0; i < total; i++) {
+                    const item = selectedFilesData[i];
+                    uploadBtn.innerText = `送信中... (${i + 1}/${total})`;
+
+                    const base64Image = await convertToBase64(item.file);
+                    const comment = item.textarea.value.trim();
+
+                    // ★ Firestoreに保存する際、createdAtの代わりに（あるいは併用して）取得した撮影日時 `takenAt` を保存する
+                    await addDoc(collection(db, "shared_photos"), {
+                        albumId: targetAlbumId,
+                        imageUrl: base64Image,
+                        comment: comment,
+                        createdAt: serverTimestamp(), // アップロード日時
+                        takenAt: item.takenAt         // 撮影日時 (Exifまたはファイル更新日時)
+                    });
+                }
+
+                alert(`${total}枚の送信が完了しました！`);
+                fileInput.value = '';
+                photoList.innerHTML = '';
+                selectedFilesData = [];
+
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+
+            } catch (error) {
+                console.error("Error uploading: ", error);
+                errorMsg.innerText = 'エラー詳細: ' + (error.message || error);
+                alert('送信に失敗しました。');
+            } finally {
+                uploadBtn.disabled = false;
+                uploadBtn.innerText = 'アルバムに送る';
+            }
         });
     </script>
 </body>
