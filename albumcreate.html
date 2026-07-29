@@ -639,9 +639,9 @@
             color: #3d3531;
             padding: 16px 24px;
             border-radius: 16px;
-            /* margin-top: 20px; <- 削除または上書き */
-            flex: 1; /* 可能な限りスペースを広げる */
-            text-align: left; /* 左寄せのほうが見た目が収まりやすい場合もあります */
+            margin-top: 20px;
+            max-width: 600px;
+            text-align: center;
             box-shadow: 0 10px 30px rgba(0,0,0,0.3);
             white-space: normal;
         }
@@ -649,48 +649,6 @@
         .modal-comment { font-size: 16px; font-weight: 700; margin-bottom: 6px; color: #2b2523; }
         .modal-date { font-size: 12px; color: #8c7d75; font-weight: 500; }
 
-        /* --- 追加：コメントとQRコードを横並びにするコンテナ --- */
-        .modal-info-row {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            margin-top: 20px;
-            max-width: 90vw;
-        }
-        
-        /* 拡大モーダル内のQRコード領域 */
-        .modal-qr-box {
-            margin-top: 0; /* 横並びにするためマージン削除 */
-            background: transparent; /* 背景を透明にする */
-            padding: 0;              /* 余白をなくす */
-            border-radius: 0;
-            display: flex;
-            flex-direction: column;  /* QRコードの下にテキストを配置 */
-            align-items: center;
-            gap: 6px;                /* 画像とテキストの間隔 */
-            box-shadow: none;        /* 影をなくす */
-            flex-shrink: 0;
-        }
-
-        .modal-qr-box img {
-            width: 75px;
-            height: 75px;
-            background: #ffffff;     /* QRコード自体の読み取りやすさのため白を残す */
-            padding: 4px;
-            border-radius: 6px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.15); /* 必要であれば微小な影だけ残す */
-        }
-
-        .modal-qr-text {
-            font-size: 11px;
-            font-weight: 700;
-            color: #ffffff;          /* 背景が暗いモーダル上のため、文字色を白またはお好みに調整 */
-            text-shadow: 0 1px 3px rgba(0,0,0,0.5); /* 視認性を上げるための文字影 */
-            text-align: center;
-            line-height: 1.4;
-            white-space: nowrap;
-        }
-        
         .delete-dialog, .edit-dialog {
             background: #ffffff;
             padding: 30px 40px;
@@ -771,20 +729,9 @@
     <div class="modal-overlay" id="modalOverlay">
         <div class="modal-content">
             <img id="modalImg" src="" alt="Enlarged Memory">
-            
-            <!-- コメントとQRコードを横並びにするためのコンテナ -->
-            <div class="modal-info-row">
-                <div class="modal-caption" id="modalCaption">
-                    <div class="modal-comment" id="modalComment"></div>
-                    <div class="modal-date" id="modalDate"></div>
-                </div>
-                
-                <div class="modal-qr-box" id="modalQrBox">
-                    <img id="modalQrImg" src="" alt="Photo QR Code">
-                    <div class="modal-qr-text">
-                        写真をダウンロード
-                    </div>
-                </div>
+            <div class="modal-caption" id="modalCaption">
+                <div class="modal-comment" id="modalComment"></div>
+                <div class="modal-date" id="modalDate"></div>
             </div>
         </div>
     </div>
@@ -874,7 +821,6 @@
         const modalComment = document.getElementById('modalComment');
         const modalDate = document.getElementById('modalDate');
         const modalCaption = document.getElementById('modalCaption');
-        const modalQrImg = document.getElementById('modalQrImg');
         let isModalOpen = false;
         let lastFocusedElement = null;
 
@@ -882,9 +828,6 @@
             lastFocusedElement = document.activeElement;
             modalImg.src = imgUrl;
 
-            // 写真単体の直接ダウンロード用QRコードを生成 (外部API等を利用)
-            modalQrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(imgUrl)}`;
-            
             if (comment || dateStr) {
                 modalCaption.style.display = 'block';
                 modalComment.innerText = comment || '';
