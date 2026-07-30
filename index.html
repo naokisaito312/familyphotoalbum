@@ -390,6 +390,38 @@
             transform: scale(1.08);
         }
 
+        /* --- スマホ表示時の縦リスト対応（画面幅 768px 以下） --- */
+        @media screen and (max-width: 768px) {
+            body {
+                padding: 20px 15px; /* スマホ向けに全体の余白を調整 */
+            }
+
+            .album-container {
+                flex-direction: column; /* 縦方向に並べる */
+                overflow-x: visible;   /* 横スクロールを解除 */
+                align-items: center;   /* 中央寄せに */
+                gap: 30px;
+                padding: 10px 0;
+            }
+
+            .album-card-wrapper {
+                width: 100%;
+                max-width: 380px;      /* スマホでもカードが大きくなりすぎないように制限 */
+                align-self: center;
+            }
+
+            .album-card, .create-album-card {
+                width: 100%;           /* カード幅を親要素に合わせる */
+            }
+
+            /* スマホでは常時アクションボタンを表示させる（ホバー操作ができないため） */
+            .album-action-buttons {
+                opacity: 1;
+                pointer-events: auto;
+                transform: translateY(0);
+                justify-content: center;
+            }
+        }
         /* --- モーダルポップアップ共通 --- */
         .modal-overlay {
             position: fixed;
