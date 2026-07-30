@@ -246,6 +246,14 @@
             color: var(--text-main);
         }
 
+        .create-album-subtext {
+            font-size: 0.85em;
+            color: var(--text-sub);
+            font-weight: 500;
+            margin-top: 6px;
+            text-align: center;
+        }
+        
         /* 写真サムネイルスタック */
         .photo-stack-wrapper {
             width: 100%;
@@ -853,6 +861,7 @@
             createCard.innerHTML = `
                 <div class="create-album-icon">＋</div>
                 <div class="create-album-text">新しいアルバムを作成する</div>
+                <div class="create-album-subtext">無料で作れるアルバムは10個です</div>
             `;
             createCard.addEventListener('click', openCreateModal);
             createWrapper.appendChild(createCard);
