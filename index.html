@@ -129,6 +129,12 @@
             border-color: var(--primary-color) !important;
         }
 
+        /* アクションボタン（Edit / Delete）自体のフォーカス拡大設定を上書き・追加 */
+        .album-action-btn.focusable:focus {
+            transform: translateY(-4px) scale(1.18) !important;
+            z-index: 110 !important;
+        }
+
         header {
             text-align: center;
             margin-bottom: 30px;
@@ -353,7 +359,7 @@
             justify-content: center;
             cursor: pointer;
             box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2); /* 影を濃くして浮き立たせる */
-            transition: all 0.2s;
+            transition: all 0.2s cubic-bezier(0.25, 1, 0.5, 1);
         }
 
         .edit-album-btn {
@@ -365,7 +371,7 @@
             background: #3d3531;
             color: #ffffff;
             border-color: #3d3531;
-            transform: scale(1.08);
+            transform: translateY(-4px) scale(1.18);
         }
         .edit-album-btn img {
             width: 22px;
@@ -387,7 +393,7 @@
             background: #d9534f;
             color: #ffffff;
             border-color: #d9534f;
-            transform: scale(1.08);
+            transform: translateY(-4px) scale(1.18);
         }
 
         /* --- スマホ表示時の縦リスト対応（画面幅 768px 以下） --- */
